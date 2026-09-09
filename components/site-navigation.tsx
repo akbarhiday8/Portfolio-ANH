@@ -40,11 +40,11 @@ export function SiteNavigation() {
         <Sheet>
           <SheetTrigger className="menu-trigger" aria-label="Open navigation"><Menu size={19} /></SheetTrigger>
           <SheetContent className="mobile-sheet" showCloseButton side="right">
-            <SheetTitle className="sheet-title">Index / 2026</SheetTitle>
+            <SheetTitle className="sheet-title">Navigation / 2026</SheetTitle>
             <nav aria-label="Mobile navigation">
-              {links.map((link, index) => (
+              {links.map((link) => (
                 <SheetClose key={link.id} render={<a href={`#${link.id}`} />}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>{link.label}
+                  {link.label}
                 </SheetClose>
               ))}
             </nav>
