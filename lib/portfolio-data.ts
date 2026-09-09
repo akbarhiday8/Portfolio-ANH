@@ -8,7 +8,7 @@ export const portfolioData = {
       'A multidisciplinary professional passionate about solving real problems through technology, structured thinking, and continuous learning.',
     about:
       'I work across technology, operations, administration, and documentation—bringing structure to complex work and turning ideas into practical outcomes.',
-    artwork: '/profile-artwork.png',
+    artwork: '/profile-artwork.webp',
   },
   statistics: [
     { value: '4+', label: 'Years Experience' },
