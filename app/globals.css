@@ -56,9 +56,8 @@ h1 span:last-child { color:var(--red); animation-delay:.48s; }
 .section-index h2 { margin-top:22px; font:400 clamp(28px,2.3vw,36px)/.95 var(--serif); text-transform:uppercase; }
 .section-index p { max-width:150px; margin-top:20px; border-left:1px solid #a4a19a; padding-left:11px; color:#74716b; font-size:11px; line-height:1.55; letter-spacing:.1em; text-transform:uppercase; }
 .about { min-height:400px; }
-.about:before,.about:after,.journey:before,.journey:after { content:''; position:absolute; z-index:0; pointer-events:none; background:url('/mountain-ornament-transparent.png') center bottom/cover no-repeat; filter:grayscale(1) contrast(.92); }
-.about:before { top:-86px; left:-5%; width:25%; height:150px; opacity:.28; transform:scaleX(-1); }
-.about:after { right:-2%; bottom:-24px; width:36%; height:175px; opacity:.72; }
+.about:after,.journey:after { content:''; position:absolute; z-index:0; pointer-events:none; background-image:url('/mountain-corner-v2.png'); background-repeat:no-repeat; background-size:100% 100%; background-position:right bottom; mask-image:linear-gradient(to right,transparent 0%,#000 30%); }
+.about:after { right:-36px; bottom:-26px; width:440px; height:200px; opacity:.24; }
 .about-grid,.journey-grid { position:relative; z-index:1; }
 .about-grid { display:grid; grid-template-columns:20% 35% 45%; padding:58px 0 50px; }
 .about-copy { padding:4px 48px 0 0; border-right:1px solid #a8a59f; }
@@ -70,8 +69,7 @@ h1 span:last-child { color:var(--red); animation-delay:.48s; }
 .capabilities p { margin-top:6px; color:#67645e; font-size:12px; line-height:1.4; }
 
 .journey-grid { min-height:300px; display:grid; grid-template-columns:20% 1fr 10%; align-items:center; }
-.journey:before { left:-5%; bottom:-34px; width:27%; height:145px; opacity:.34; transform:scaleX(-1); }
-.journey:after { right:-2%; bottom:-34px; width:38%; height:155px; opacity:.74; }
+.journey:after { right:-18px; bottom:-45px; width:540px; height:175px; opacity:.3; }
 .journey .section-index { align-self:start; padding-top:50px; }
 .timeline { position:relative; display:grid; grid-template-columns:repeat(4,1fr); align-self:center; margin-top:20px; }
 .timeline:before { content:''; position:absolute; top:5px; left:0; right:0; height:1px; background:#555; transform:scaleX(0); transform-origin:left; transition:transform .8s ease; }
@@ -171,6 +169,8 @@ footer { height:78px; border-top:1px solid #3b3a37; background:#0d0e0f; color:wh
   .hero-portrait { width:min(100%,610px); top:-35px; right:50%; transform:translateX(50%); }
   .edge-copy { right:5px; }
   .about-grid,.journey-grid,.indexed-grid { display:block; padding-block:50px; }
+  .about:after { width:320px; height:160px; right:-75px; bottom:-38px; opacity:.17; }
+  .journey:after { width:360px; height:200px; right:-100px; bottom:-32px; opacity:.22; }
   .section-index { margin-bottom:44px; }
   .section-index p { margin-top:18px; }
   .about-copy { padding:0 0 35px; border:0; }
