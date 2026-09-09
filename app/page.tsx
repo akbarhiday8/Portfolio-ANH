@@ -2,11 +2,10 @@ import Image from 'next/image';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, Code2, FileBadge2, Gamepad2, GraduationCap,
-  Link2, Mail, Monitor, ShieldCheck, Compass,
+  Link2, Mail, Monitor, ShieldCheck,
 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
@@ -28,7 +27,7 @@ export default function Home() {
   const { profile, statistics, capabilities, journey, experience, projects, certifications, socials } = portfolioData;
 
   return (
-    <main id="top">
+    <main>
       <MotionController />
 
       <header className="masthead-shell">
@@ -37,12 +36,11 @@ export default function Home() {
             <strong>ANH</strong><span>Portofolio Pribadi</span>
           </a>
           <SiteNavigation />
-          <ThemeToggle />
           <a className="header-cta" href="#contact">Mari Terhubung <ArrowRight size={14} /></a>
         </div>
       </header>
 
-      <section className="hero page-wrap" aria-labelledby="hero-title">
+      <section className="hero page-wrap" id="top" aria-labelledby="hero-title">
         <div className="hero-copy">
           <p className="eyebrow">Discipline turns plans<br />into progress</p>
           <h1 id="hero-title"><span>Akbar</span><span>Nur</span></h1>
@@ -62,7 +60,6 @@ export default function Home() {
       </section>
 
       <section className="about compact-section" id="about" aria-labelledby="about-heading">
-        <Compass className="about-compass" size={210} strokeWidth={0.55} aria-hidden="true" />
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
@@ -103,7 +100,6 @@ export default function Home() {
       <section className="work compact-section" id="work" aria-label="Karya pilihan">
         <div className="section-wrap indexed-grid">
           <SectionIndex title="Karya Pilihan" caption="Gagasan / menjadi karya" />
-          <div className="work-stamp" aria-hidden="true"><strong>ANH</strong><span>Arsip Pilihan<br />Karya &amp; Gagasan</span></div>
           <div className="work-main">
             <div className="project-grid" id="work-heading">
               {projects.map((project, index) => <article className="project" key={project.index} data-reveal>
@@ -129,7 +125,7 @@ export default function Home() {
       </section>
 
       <section className="contact" id="contact" aria-labelledby="contact-heading">
-        <Image className="contact-art" src="/footer-castle-art.png" fill sizes="100vw" alt="" />
+        <Image className="contact-art" src="/footer-castle-art.webp" fill sizes="100vw" alt="" />
         <div className="section-wrap contact-grid">
           <SectionIndex title="Mari Terhubung" caption="Terbuka untuk peluang / dan kolaborasi" />
           <div className="contact-copy" data-reveal>

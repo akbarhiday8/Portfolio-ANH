@@ -9,7 +9,10 @@ export function MotionController() {
     updateMasthead();
     window.addEventListener('scroll', updateMasthead, { passive: true });
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      window.matchMedia('(max-width: 850px)').matches
+    ) {
       return () => window.removeEventListener('scroll', updateMasthead);
     }
     const elements = document.querySelectorAll<HTMLElement>('[data-reveal]');
