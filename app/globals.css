@@ -14,6 +14,7 @@
   --red-bright:#ad283a;
   --nav-glass:rgba(247,246,242,.78);
   --nav-shadow:rgba(23,21,18,.06);
+  --editorial-rail:clamp(260px,18vw,300px);
   --serif:Georgia,'Times New Roman',serif;
   --sans:var(--font-geist),Arial,sans-serif;
 }
@@ -71,7 +72,7 @@ h1 span:last-child { color:var(--red); animation-delay:.26s; }
 
 .compact-section { position:relative; border-top:1px solid var(--rule); overflow:hidden; }
 .section-index i { display:block; width:48px; height:4px; background:var(--red); }
-.section-index h2 { margin-top:22px; font:400 clamp(30px,2.5vw,40px)/.95 var(--serif); text-transform:uppercase; }
+.section-index h2 { margin-top:22px; font:400 clamp(30px,2.35vw,38px)/.95 var(--serif); text-transform:uppercase; }
 .section-index p { max-width:165px; margin-top:20px; border-left:1px solid var(--rule); padding-left:11px; color:var(--muted); font-size:12px; line-height:1.55; letter-spacing:.1em; text-transform:uppercase; }
 .about { min-height:430px; background:var(--surface-quiet); }
 .journey:after { content:''; position:absolute; z-index:0; pointer-events:none; background-image:url('/mountain-corner-v2.webp'); background-repeat:no-repeat; background-size:100% 100%; background-position:right bottom; mask-image:linear-gradient(to right,transparent 0%,#000 30%); }
@@ -88,7 +89,7 @@ h1 span:last-child { color:var(--red); animation-delay:.26s; }
 .capabilities p { margin-top:6px; color:var(--muted); font-size:13px; line-height:1.4; }
 
 .journey { background:var(--paper); }
-.journey-grid { min-height:320px; display:grid; grid-template-columns:18% 1fr 11%; align-items:center; }
+.journey-grid { min-height:320px; display:grid; grid-template-columns:var(--editorial-rail) minmax(0,1fr) clamp(130px,11vw,170px); column-gap:24px; align-items:center; }
 .journey:after { right:-18px; bottom:-45px; width:540px; height:175px; opacity:.3; }
 .journey .section-index { align-self:start; padding-top:50px; }
 .timeline { position:relative; display:grid; grid-template-columns:repeat(4,1fr); align-self:center; margin-top:20px; }
@@ -107,7 +108,7 @@ h1 span:last-child { color:var(--red); animation-delay:.26s; }
 .journey-next svg { border:1px solid var(--muted); width:37px; height:31px; padding:7px; flex:none; color:var(--red-bright); }
 .journey-next p { color:var(--gray); font-size:11px; line-height:1.5; letter-spacing:.11em; text-transform:uppercase; }
 
-.indexed-grid { position:relative; display:grid; grid-template-columns:18% 1fr; }
+.indexed-grid { position:relative; display:grid; grid-template-columns:var(--editorial-rail) minmax(0,1fr); column-gap:24px; }
 .experience { background:var(--surface-quiet); }
 .experience .indexed-grid { min-height:530px; padding:65px 0 58px; }
 .experience-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
@@ -202,12 +203,12 @@ footer { height:78px; border-top:1px solid #3b3a37; background:#0d0e0f; color:wh
   .about-copy { grid-column:2; border-right:0; border-bottom:1px solid var(--rule); padding:0 0 34px; }
   .capabilities { grid-column:2; padding:0; }
 
-  .journey-grid { min-height:0; grid-template-columns:minmax(210px,24%) 1fr; align-items:start; padding:52px 0; }
+  .journey-grid { min-height:0; grid-template-columns:minmax(210px,24%) minmax(0,1fr); align-items:start; padding:52px 0; }
   .journey .section-index { padding:0 30px 0 0; }
   .timeline { grid-column:2; margin-top:4px; }
   .journey-next { grid-column:2; justify-self:start; margin-top:30px; border-left:0; padding-left:0; }
 
-  .indexed-grid { grid-template-columns:minmax(210px,24%) 1fr; }
+  .indexed-grid { grid-template-columns:minmax(210px,24%) minmax(0,1fr); }
   .experience .indexed-grid,.work .indexed-grid,.certificates .indexed-grid { padding-top:58px; }
 }
 
