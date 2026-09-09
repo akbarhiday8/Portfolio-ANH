@@ -2,14 +2,15 @@ import Image from 'next/image';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, Code2, FileBadge2, Gamepad2, GraduationCap,
-  Link2, Mail, Monitor, ShieldCheck,
+  Link2, Mail, Monitor, ShieldCheck, Compass,
 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
-const projectImages = ['/work-dashboard.jpg', '/work-mobile.jpg', '/work-branding.jpg', '/og.png'];
+const projectImages = ['/work-dashboard.jpg', '/work-mobile.jpg', '/work-branding.jpg', '/work-building.jpg'];
 const capabilityIcons = [GraduationCap, BriefcaseBusiness, BarChart3, BookOpen, FileBadge2, Gamepad2];
 const certificateIcons = [Monitor, ShieldCheck, BarChart3, FileBadge2];
 
@@ -36,6 +37,7 @@ export default function Home() {
             <strong>ANH</strong><span>Portofolio Pribadi</span>
           </a>
           <SiteNavigation />
+          <ThemeToggle />
           <a className="header-cta" href="#contact">Mari Terhubung <ArrowRight size={14} /></a>
         </div>
       </header>
@@ -60,6 +62,7 @@ export default function Home() {
       </section>
 
       <section className="about compact-section" id="about" aria-labelledby="about-heading">
+        <Compass className="about-compass" size={210} strokeWidth={0.55} aria-hidden="true" />
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
@@ -100,6 +103,7 @@ export default function Home() {
       <section className="work compact-section" id="work" aria-label="Karya pilihan">
         <div className="section-wrap indexed-grid">
           <SectionIndex title="Karya Pilihan" caption="Gagasan / menjadi karya" />
+          <div className="work-stamp" aria-hidden="true"><strong>ANH</strong><span>Arsip Pilihan<br />Karya &amp; Gagasan</span></div>
           <div className="work-main">
             <div className="project-grid" id="work-heading">
               {projects.map((project, index) => <article className="project" key={project.index} data-reveal>

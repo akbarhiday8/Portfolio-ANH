@@ -5,7 +5,7 @@ import './globals.css';
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://akbar-nur-portfolio.leafy-koala-9715.chatgpt.site'),
+  metadataBase: new URL('https://akbar-nur-portfolio.akbar8nur.chatgpt.site'),
   title: 'Akbar Nur — Portofolio Pribadi',
   description: 'Portofolio profesional Akbar Nur: karya, perjalanan belajar, sertifikasi, dan proyek pilihan.',
   openGraph: {
@@ -24,7 +24,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var saved=localStorage.getItem('anh-theme');var theme=saved||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme='light';}})();`,
+          }}
+        />
+      </head>
       <body className={geist.variable}>{children}</body>
     </html>
   );

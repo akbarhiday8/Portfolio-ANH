@@ -33,7 +33,7 @@ export function SiteNavigation() {
     <>
       <nav className="desktop-nav" aria-label="Navigasi utama">
         {links.map((link) => (
-          <a className={active === link.id ? 'active' : ''} href={`#${link.id}`} key={link.id}>{link.label}</a>
+          <a className={active === link.id ? 'active' : ''} href={`#${link.id}`} key={link.id} onClick={() => setActive(link.id)}>{link.label}</a>
         ))}
       </nav>
       <div className="mobile-nav">
@@ -43,7 +43,7 @@ export function SiteNavigation() {
             <SheetTitle className="sheet-title">Navigasi / 2026</SheetTitle>
             <nav aria-label="Navigasi seluler">
               {links.map((link) => (
-                <SheetClose key={link.id} render={<a href={`#${link.id}`} />}>
+                <SheetClose key={link.id} render={<a href={`#${link.id}`} onClick={() => setActive(link.id)} />}>
                   {link.label}
                 </SheetClose>
               ))}
