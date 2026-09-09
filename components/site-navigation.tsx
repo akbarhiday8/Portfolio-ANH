@@ -5,12 +5,12 @@ import { Menu } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const links = [
-  { id: 'top', label: 'Home' },
-  { id: 'about', label: 'About' },
-  { id: 'experience', label: 'Experience' },
-  { id: 'work', label: 'Portfolio' },
-  { id: 'certificates', label: 'Certificates' },
-  { id: 'contact', label: 'Contact' },
+  { id: 'top', label: 'Beranda' },
+  { id: 'about', label: 'Tentang' },
+  { id: 'experience', label: 'Pengalaman' },
+  { id: 'work', label: 'Portofolio' },
+  { id: 'certificates', label: 'Sertifikat' },
+  { id: 'contact', label: 'Kontak' },
 ];
 
 export function SiteNavigation() {
@@ -31,17 +31,17 @@ export function SiteNavigation() {
 
   return (
     <>
-      <nav className="desktop-nav" aria-label="Primary navigation">
+      <nav className="desktop-nav" aria-label="Navigasi utama">
         {links.map((link) => (
           <a className={active === link.id ? 'active' : ''} href={`#${link.id}`} key={link.id}>{link.label}</a>
         ))}
       </nav>
       <div className="mobile-nav">
         <Sheet>
-          <SheetTrigger className="menu-trigger" aria-label="Open navigation"><Menu size={19} /></SheetTrigger>
+          <SheetTrigger className="menu-trigger" aria-label="Buka navigasi"><Menu size={19} /></SheetTrigger>
           <SheetContent className="mobile-sheet" showCloseButton side="right">
-            <SheetTitle className="sheet-title">Navigation / 2026</SheetTitle>
-            <nav aria-label="Mobile navigation">
+            <SheetTitle className="sheet-title">Navigasi / 2026</SheetTitle>
+            <nav aria-label="Navigasi seluler">
               {links.map((link) => (
                 <SheetClose key={link.id} render={<a href={`#${link.id}`} />}>
                   {link.label}

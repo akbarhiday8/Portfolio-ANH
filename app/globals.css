@@ -109,8 +109,8 @@ h1 span:last-child { color:var(--red); animation-delay:.48s; }
 .outline-button:hover { background:var(--ink); color:white; }
 
 .certificates .indexed-grid { min-height:310px; padding:55px 0 48px; }
-.certificate-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-self:center; }
-.certificate-grid article { min-height:150px; display:flex; gap:20px; align-items:flex-start; border:1px solid #d2cfc8; padding:24px 20px; background:rgba(255,255,255,.25); transition:border-color .2s,transform .2s; }
+.certificate-grid { min-width:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; align-self:center; }
+.certificate-grid article { min-width:0; min-height:150px; display:flex; gap:20px; align-items:flex-start; border:1px solid #d2cfc8; padding:24px 20px; background:rgba(255,255,255,.25); transition:border-color .2s,transform .2s; }
 .certificate-grid article:hover { border-color:var(--ink); }
 .certificate-grid article:hover { transform:translateY(-3px); }
 .certificate-grid h3 { font-size:14px; line-height:1.35; }
@@ -152,6 +152,11 @@ footer { height:78px; border-top:1px solid #3b3a37; background:#0d0e0f; color:wh
   .section-index h2 { font-size:28px; }
   .capabilities { gap:20px 24px; padding-left:27px; }
   .capabilities article { gap:10px; }
+}
+
+@media (max-width:1180px) and (min-width:851px) {
+  .certificates .indexed-grid { padding-bottom:55px; }
+  .certificate-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width:850px) {
