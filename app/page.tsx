@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
@@ -36,6 +37,7 @@ export default function Home() {
             <strong>ANH</strong><span>Portofolio Pribadi</span>
           </a>
           <SiteNavigation />
+          <ThemeToggle />
           <a className="header-cta" href="#contact">Mari Terhubung <ArrowRight size={14} /></a>
         </div>
       </header>
@@ -53,8 +55,7 @@ export default function Home() {
         </div>
 
         <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur">
-          <div className="hero-moon" aria-hidden="true" />
-          <Image className="hero-portrait" src="/profile-artwork.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
+          <Image className="hero-portrait" src="/profile-artwork-transparent.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
           <p className="edge-copy">A<br />brighter<br />more<br />meaningful<br />tomorrow</p>
         </div>
       </section>
