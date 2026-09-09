@@ -30,12 +30,14 @@ export default function Home() {
     <main id="top">
       <MotionController />
 
-      <header className="masthead page-wrap">
-        <a className="brand" href="#top" aria-label="ANH — back to top">
-          <strong>ANH</strong><span>Personal Portfolio</span>
-        </a>
-        <SiteNavigation />
-        <a className="header-cta" href="#contact">Let&apos;s Connect <ArrowRight size={14} /></a>
+      <header className="masthead-shell">
+        <div className="masthead page-wrap">
+          <a className="brand" href="#top" aria-label="ANH — back to top">
+            <strong>ANH</strong><span>Personal Portfolio</span>
+          </a>
+          <SiteNavigation />
+          <a className="header-cta" href="#contact">Let&apos;s Connect <ArrowRight size={14} /></a>
+        </div>
       </header>
 
       <section className="hero page-wrap" aria-labelledby="hero-title">
@@ -123,7 +125,7 @@ export default function Home() {
       </section>
 
       <section className="contact" id="contact" aria-labelledby="contact-heading">
-        <Image className="contact-art" src="/og.png" fill sizes="70vw" alt="" />
+        <Image className="contact-art" src="/footer-castle-art.png" fill sizes="100vw" alt="" />
         <div className="section-wrap contact-grid">
           <SectionIndex title="Let's Connect" caption="Open to opportunities / and collaborations" />
           <div className="contact-copy" data-reveal>
