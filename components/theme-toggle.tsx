@@ -1,7 +1,5 @@
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
-
 export function ThemeToggle() {
   const toggleTheme = () => {
     const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
@@ -19,8 +17,8 @@ export function ThemeToggle() {
       aria-label="Ganti tema warna"
       title="Ganti tema warna"
     >
-      <Moon className="theme-icon theme-icon-light" size={16} aria-hidden="true" />
-      <Sun className="theme-icon theme-icon-dark" size={16} aria-hidden="true" />
+      <span className="theme-option theme-option-light">Terang</span>
+      <span className="theme-option theme-option-dark">Gelap</span>
     </button>
   );
 }

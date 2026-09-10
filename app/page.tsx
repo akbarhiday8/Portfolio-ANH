@@ -119,7 +119,10 @@ export default function Home() {
           <div className="certificate-grid" id="certificates-heading">
             {certifications.map((item, index) => {
               const Icon = certificateIcons[index];
-              return <article key={item.name} data-reveal><Icon size={29} strokeWidth={1.5} /><div><h3>{item.name}</h3><p>{item.year}</p></div></article>;
+              return <article key={item.name} data-reveal>
+                <div className="certificate-preview" aria-hidden="true"><Icon size={38} strokeWidth={1.35} /></div>
+                <div className="certificate-details"><h3>{item.name}</h3><p>{item.year}</p></div>
+              </article>;
             })}
           </div>
         </div>
