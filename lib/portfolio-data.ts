@@ -17,12 +17,12 @@ export const portfolioData = {
     { value: '∞', label: 'Terus Belajar' },
   ],
   capabilities: [
-    { title: 'Pendidikan', description: 'Fondasi yang kokoh', icon: 'book' },
-    { title: 'Pengalaman', description: 'Mengubah pengetahuan menjadi praktik', icon: 'briefcase' },
-    { title: 'Pelatihan', description: 'Peningkatan berkelanjutan', icon: 'pencil' },
-    { title: 'Proyek', description: 'Gagasan menjadi solusi nyata', icon: 'grid' },
-    { title: 'Sertifikasi', description: 'Keahlian dan kompetensi tervalidasi', icon: 'award' },
-    { title: 'Minat', description: 'Menjelajah melampaui batas', icon: 'compass' },
+    { title: 'Pendidikan', description: 'Fondasi yang kokoh untuk terus berkembang.', icon: 'book' },
+    { title: 'Pengalaman', description: 'Mengubah pengetahuan menjadi praktik nyata.', icon: 'briefcase' },
+    { title: 'Pelatihan', description: 'Peningkatan berkelanjutan untuk menjadi lebih baik.', icon: 'pencil' },
+    { title: 'Proyek', description: 'Gagasan yang menjadi solusi nyata.', icon: 'grid' },
+    { title: 'Sertifikasi', description: 'Keahlian dan kompetensi yang tervalidasi.', icon: 'award' },
+    { title: 'Minat', description: 'Menjelajah melampaui batas, selalu ingin tahu.', icon: 'compass' },
   ],
   journey: [
     { period: '2018 — 2022', title: 'Pendidikan', description: 'Membangun fondasi' },

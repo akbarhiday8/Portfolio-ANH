@@ -61,7 +61,7 @@ export default function Home() {
             <span className="hero-name-accent">Nur</span>
             <span className="hero-surname">Hidayanto</span>
           </h1>
-          <p className="hero-tagline">A Journey of Work,<br />Learning &amp; Creation.</p>
+          <p className="hero-tagline">A Journey of Work, Learning &amp; Creation.</p>
           <p className="hero-intro">{profile.introduction}</p>
           <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
@@ -90,6 +90,7 @@ export default function Home() {
           <div className="about-copy" data-reveal>
             <h3 id="about-heading">Pikiran yang ingin tahu.<br />Pencipta solusi nyata.</h3>
             <p>Saya adalah pemecah masalah yang senang mengubah gagasan kompleks menjadi solusi sederhana dan bermakna. Dengan latar belakang teknologi, desain, dan semangat belajar berkelanjutan, saya selalu antusias menghadapi tantangan baru dan menciptakan dampak positif.</p>
+            <a className="about-link" href="#experience">Kenali Lebih Dekat <ArrowRight size={18} /></a>
           </div>
           <div className="capabilities" data-reveal>
             {capabilities.map((item, index) => {
