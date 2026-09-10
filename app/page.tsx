@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
-  BriefcaseBusiness, Code2, FileBadge2, Gamepad2, GraduationCap,
-  Camera, Link2, Mail, Monitor, ShieldCheck,
+  BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap,
+  Mail, Monitor, ShieldCheck,
 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
@@ -22,6 +22,18 @@ function SectionIndex({ title, caption }: { title: string; caption: string }) {
       <p>{caption}</p>
     </header>
   );
+}
+
+function LinkedInLogo() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" /></svg>;
+}
+
+function GitHubLogo() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7C5.73.7.65 5.78.65 12.05c0 5.02 3.25 9.28 7.76 10.78.57.1.78-.25.78-.55v-2.17c-3.16.69-3.83-1.34-3.83-1.34-.52-1.31-1.26-1.66-1.26-1.66-1.03-.71.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.01 1.74 2.66 1.24 3.31.95.1-.73.4-1.24.72-1.52-2.52-.29-5.17-1.26-5.17-5.61 0-1.24.44-2.25 1.17-3.05-.12-.29-.51-1.44.11-3 0 0 .95-.3 3.12 1.16a10.8 10.8 0 0 1 5.68 0c2.17-1.47 3.12-1.16 3.12-1.16.62 1.56.23 2.71.11 3 .73.8 1.17 1.81 1.17 3.05 0 4.36-2.66 5.32-5.19 5.6.41.36.77 1.06.77 2.13v3.16c0 .31.2.66.78.55A11.36 11.36 0 0 0 23.35 12.05C23.35 5.78 18.27.7 12 .7z" /></svg>;
+}
+
+function InstagramLogo() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.02 4.85.07 1.37.06 2.63.35 3.61 1.33.97.97 1.26 2.24 1.32 3.6.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.06 1.37-.35 2.63-1.32 3.61-.98.97-2.24 1.26-3.61 1.32-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.37-.06-2.63-.35-3.61-1.32-.97-.98-1.26-2.24-1.32-3.61-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.06-1.36.35-2.63 1.32-3.6.98-.98 2.24-1.27 3.61-1.33C8.42 2.18 8.8 2.16 12 2.16zm0 1.95c-3.15 0-3.52.01-4.76.07-1.15.05-1.77.24-2.18.4-.55.22-.94.47-1.35.88-.41.42-.67.81-.88 1.36-.16.41-.35 1.03-.4 2.18-.06 1.24-.07 1.61-.07 4.76s.01 3.52.07 4.76c.05 1.15.24 1.77.4 2.18.21.55.47.94.88 1.35.41.42.8.67 1.35.89.41.16 1.03.35 2.18.4 1.24.06 1.61.07 4.76.07s3.52-.01 4.76-.07c1.15-.05 1.77-.24 2.18-.4.55-.22.94-.47 1.35-.89.41-.41.67-.8.88-1.35.16-.41.35-1.03.4-2.18.06-1.24.07-1.61.07-4.76s-.01-3.52-.07-4.76c-.05-1.15-.24-1.77-.4-2.18-.21-.55-.47-.94-.88-1.36-.41-.41-.8-.66-1.35-.88-.41-.16-1.03-.35-2.18-.4-1.24-.06-1.61-.07-4.76-.07zm0 3.73a4.16 4.16 0 1 1 0 8.32 4.16 4.16 0 0 1 0-8.32zm0 6.86a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4zm5.37-7.88a.97.97 0 1 1-1.94 0 .97.97 0 0 1 1.94 0z" /></svg>;
 }
 
 export default function Home() {
@@ -50,10 +62,7 @@ export default function Home() {
           </h1>
           <p className="hero-tagline">Perjalanan Berkarya,<br />Belajar &amp; Mencipta.</p>
           <p className="hero-intro">{profile.introduction}</p>
-          <div className="hero-actions">
-            <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
-            <p className="availability"><i aria-hidden="true" />Terbuka untuk peluang baru</p>
-          </div>
+          <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
             {statistics.map((stat) => <div key={stat.label}><dt>{stat.value}</dt><dd>{stat.label}</dd></div>)}
           </dl>
@@ -142,10 +151,10 @@ export default function Home() {
             <p>Saya selalu terbuka untuk peluang baru, kolaborasi,<br />dan percakapan yang bermakna.</p>
             <a className="light-button" href={socials[1].href}>Hubungi Saya <ArrowRight size={14} /></a>
             <div className="socials">
-              <a href={socials[0].href} aria-label="LinkedIn"><Link2 size={18} /></a>
-              <a href={socials[1].href} aria-label="Surel"><Mail size={18} /></a>
-              <a href={socials[2].href} aria-label="GitHub"><Code2 size={18} /></a>
-              <a href={socials[3].href} aria-label="Instagram"><Camera size={18} /></a>
+              <a href={socials[0].href} aria-label="LinkedIn" data-tooltip="LinkedIn"><LinkedInLogo /></a>
+              <a href={socials[1].href} aria-label="Surel" data-tooltip="Surel"><Mail size={19} /></a>
+              <a href={socials[2].href} aria-label="GitHub" data-tooltip="GitHub"><GitHubLogo /></a>
+              <a href={socials[3].href} aria-label="Instagram" data-tooltip="Instagram"><InstagramLogo /></a>
             </div>
           </div>
           <p className="contact-note">Same<br />curiosity<br />a brighter<br />horizon</p>
