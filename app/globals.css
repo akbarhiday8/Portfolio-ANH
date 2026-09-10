@@ -85,7 +85,8 @@ h1 .hero-name-accent { position:relative; width:max-content; color:var(--red); a
 h1 .hero-name-accent:after { content:''; position:absolute; z-index:2; left:23%; bottom:-8px; width:115%; height:14px; background:linear-gradient(177deg,transparent 0 28%,var(--red-bright) 29% 48%,transparent 49% 55%,var(--red) 56% 72%,transparent 73%); clip-path:polygon(0 35%,89% 0,100% 28%,83% 44%,99% 62%,11% 100%,0 78%,16% 58%); transform:rotate(-2deg); opacity:.95; }
 h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); font-size:clamp(58px,6.35vw,89px); font-weight:400; line-height:.78; letter-spacing:-.055em; white-space:nowrap; animation-delay:.32s; }
 .hero-tagline { position:relative; width:max-content; max-width:none; margin-top:34px; font:400 clamp(22px,2.05vw,30px)/1.05 var(--serif); letter-spacing:-.035em; white-space:nowrap; }
-.hero-tagline:after { content:''; position:absolute; right:0; bottom:-11px; width:92px; height:8px; background:linear-gradient(176deg,transparent 0 26%,var(--red-bright) 27% 43%,transparent 44% 52%,var(--red) 53% 69%,transparent 70%); clip-path:polygon(0 38%,92% 0,100% 27%,84% 46%,98% 68%,8% 100%,0 74%); transform:rotate(-3deg); opacity:.9; }
+.brush-accent-word { position:relative; display:inline-block; }
+.brush-accent-word:after { content:''; position:absolute; z-index:2; left:-6%; bottom:-11px; width:112%; height:8px; background:linear-gradient(176deg,transparent 0 26%,var(--red-bright) 27% 43%,transparent 44% 52%,var(--red) 53% 69%,transparent 70%); clip-path:polygon(0 38%,92% 0,100% 27%,84% 46%,98% 68%,8% 100%,0 74%); transform:rotate(-3deg); opacity:.9; pointer-events:none; }
 .hero-intro { width:min(455px,94%); margin-top:19px; color:var(--gray); font-size:16px; line-height:1.62; }
 .dark-button,.light-button,.outline-button { display:inline-flex; align-items:center; justify-content:space-between; gap:28px; border:1px solid var(--ink); border-radius:3px; padding:14px 18px; font-size:12px; transition:color .2s,background .2s,border-color .2s; }
 .dark-button svg,.light-button svg,.outline-button svg { transition:transform .2s ease; }
@@ -117,7 +118,6 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
 .about .section-index h2 { font-size:clamp(38px,3vw,48px); line-height:.96; }
 .about-copy { padding:4px 40px 0 0; border-right:1px solid var(--rule); }
 .about-copy h3 { position:relative; font:400 clamp(42px,4.25vw,64px)/.93 var(--serif); letter-spacing:-.045em; }
-.about-copy h3:after { content:''; position:absolute; right:5%; bottom:-14px; width:72px; height:7px; background:linear-gradient(176deg,transparent 0 25%,var(--red-bright) 26% 43%,transparent 44% 53%,var(--red) 54% 69%,transparent 70%); clip-path:polygon(0 41%,91% 0,100% 30%,84% 48%,98% 67%,7% 100%,0 74%); transform:rotate(-4deg); opacity:.82; }
 .about-copy p { margin-top:34px; color:var(--gray); font-size:16px; line-height:1.65; }
 .about-link { width:max-content; display:flex; align-items:center; justify-content:space-between; gap:48px; margin-top:28px; border-bottom:2px solid var(--red-bright); padding:0 0 9px; color:var(--ink); font-size:12px; font-weight:650; letter-spacing:.18em; text-transform:uppercase; }
 .about-link svg { transition:transform .2s ease,color .2s ease; }
@@ -330,7 +330,7 @@ footer { height:78px; border-top:1px solid #3b3a37; background:#0d0e0f; color:wh
   h1 .hero-name-accent:after { bottom:-5px; height:10px; }
   h1 .hero-surname { margin-top:14px; font-size:clamp(43px,14.8vw,67px); }
   .hero-tagline { margin-top:27px; }
-  .hero-tagline:after { right:0; bottom:-12px; }
+  .brush-accent-word:after { bottom:-10px; }
   .hero-intro { font-size:15px; }
   .stats { grid-template-columns:1fr 1fr; gap:18px 0; margin-top:30px; }
   .hero-art { height:465px; margin-inline:-16px; }

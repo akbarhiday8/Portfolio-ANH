@@ -24,6 +24,18 @@ function SectionIndex({ title, caption }: { title: string; caption: string }) {
   );
 }
 
+function LastWordAccent({ children }: { children: string }) {
+  const words = children.trim().split(/\s+/);
+  const lastWord = words.pop();
+
+  return (
+    <>
+      {words.length > 0 ? `${words.join(' ')} ` : ''}
+      <span className="brush-accent-word">{lastWord}</span>
+    </>
+  );
+}
+
 function LinkedInLogo() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" /></svg>;
 }
@@ -61,7 +73,7 @@ export default function Home() {
             <span className="hero-name-accent">Nur</span>
             <span className="hero-surname">Hidayanto</span>
           </h1>
-          <p className="hero-tagline">A Journey of Work, Learning &amp; Creation.</p>
+          <p className="hero-tagline"><LastWordAccent>A Journey of Work, Learning &amp; Creation.</LastWordAccent></p>
           <p className="hero-intro">{profile.introduction}</p>
           <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
@@ -88,7 +100,7 @@ export default function Home() {
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
-            <h3 id="about-heading">Pikiran yang ingin tahu.<br />Pencipta solusi nyata.</h3>
+            <h3 id="about-heading">Pikiran yang ingin tahu.<br /><LastWordAccent>Pencipta solusi nyata.</LastWordAccent></h3>
             <p>Saya adalah pemecah masalah yang senang mengubah gagasan kompleks menjadi solusi sederhana dan bermakna. Dengan latar belakang teknologi, desain, dan semangat belajar berkelanjutan, saya selalu antusias menghadapi tantangan baru dan menciptakan dampak positif.</p>
             <a className="about-link" href="#experience">Kenali Lebih Dekat <ArrowRight size={18} /></a>
           </div>
