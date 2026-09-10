@@ -24,14 +24,15 @@ function SectionIndex({ title, caption }: { title: string; caption: string }) {
   );
 }
 
-function LastWordAccent({ children }: { children: string }) {
+function LastWordAccent({ children, edge = false, className = '' }: { children: string; edge?: boolean; className?: string }) {
   const words = children.trim().split(/\s+/);
   const lastWord = words.pop();
+  const accentClassName = ['brush-accent-word', edge ? 'brush-accent-word--edge' : '', className].filter(Boolean).join(' ');
 
   return (
     <>
       {words.length > 0 ? `${words.join(' ')} ` : ''}
-      <span className="brush-accent-word">{lastWord}</span>
+      <span className={accentClassName}>{lastWord}</span>
     </>
   );
 }
@@ -70,7 +71,7 @@ export default function Home() {
           <p className="eyebrow">Discipline turns plans<br />into progress</p>
           <h1 id="hero-title" aria-label="Akbar Nur Hidayanto">
             <span>Akbar</span>
-            <span className="hero-name-accent">Nur</span>
+            <LastWordAccent className="hero-name-accent">Nur</LastWordAccent>
             <span className="hero-surname">Hidayanto</span>
           </h1>
           <p className="hero-tagline"><LastWordAccent>A Journey of Work, Learning &amp; Creation.</LastWordAccent></p>
@@ -100,7 +101,7 @@ export default function Home() {
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
-            <h3 id="about-heading">Pikiran yang ingin tahu.<br /><LastWordAccent>Pencipta solusi nyata.</LastWordAccent></h3>
+            <h3 id="about-heading">Pikiran yang ingin tahu.<br /><LastWordAccent edge>Pencipta solusi nyata.</LastWordAccent></h3>
             <p>Saya adalah pemecah masalah yang senang mengubah gagasan kompleks menjadi solusi sederhana dan bermakna. Dengan latar belakang teknologi, desain, dan semangat belajar berkelanjutan, saya selalu antusias menghadapi tantangan baru dan menciptakan dampak positif.</p>
             <a className="about-link" href="#experience">Kenali Lebih Dekat <ArrowRight size={18} /></a>
           </div>
