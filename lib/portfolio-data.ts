@@ -1,6 +1,6 @@
 export const portfolioData = {
   profile: {
-    name: 'Akbar Nur',
+    name: 'Akbar Nur Hidayanto',
     monogram: 'ANH',
     eyebrow: 'Discipline turns plans into progress',
     tagline: 'Perjalanan Berkarya, Belajar & Mencipta.',
@@ -72,5 +72,6 @@ export const portfolioData = {
     { label: 'LinkedIn', href: '#' },
     { label: 'Surel', href: '#' },
     { label: 'GitHub', href: '#' },
+    { label: 'Instagram', href: '#' },
   ],
 } as const;

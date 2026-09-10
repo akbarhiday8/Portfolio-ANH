@@ -2,7 +2,7 @@ import Image from 'next/image';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, Code2, FileBadge2, Gamepad2, GraduationCap,
-  Link2, Mail, Monitor, ShieldCheck,
+  Camera, Link2, Mail, Monitor, ShieldCheck,
 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
@@ -45,17 +45,22 @@ export default function Home() {
       <section className="hero page-wrap" id="top" aria-labelledby="hero-title">
         <div className="hero-copy">
           <p className="eyebrow">Discipline turns plans<br />into progress</p>
-          <h1 id="hero-title"><span>Akbar</span><span>Nur</span></h1>
+          <h1 id="hero-title" aria-label="Akbar Nur Hidayanto">
+            <span>Akbar</span><span>Nur</span><span className="hero-surname">Hidayanto</span>
+          </h1>
           <p className="hero-tagline">Perjalanan Berkarya,<br />Belajar &amp; Mencipta.</p>
           <p className="hero-intro">{profile.introduction}</p>
-          <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
+          <div className="hero-actions">
+            <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
+            <p className="availability"><i aria-hidden="true" />Terbuka untuk peluang baru</p>
+          </div>
           <dl className="stats" aria-label="Statistik karier">
             {statistics.map((stat) => <div key={stat.label}><dt>{stat.value}</dt><dd>{stat.label}</dd></div>)}
           </dl>
         </div>
 
-        <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur">
-          <Image className="hero-portrait" src="/profile-artwork-transparent.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
+        <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur Hidayanto">
+          <Image className="hero-portrait" src="/profile-artwork-transparent.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur Hidayanto bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
           <p className="edge-copy">A<br />brighter<br />more<br />meaningful<br />tomorrow</p>
         </div>
       </section>
@@ -140,13 +145,14 @@ export default function Home() {
               <a href={socials[0].href} aria-label="LinkedIn"><Link2 size={18} /></a>
               <a href={socials[1].href} aria-label="Surel"><Mail size={18} /></a>
               <a href={socials[2].href} aria-label="GitHub"><Code2 size={18} /></a>
+              <a href={socials[3].href} aria-label="Instagram"><Camera size={18} /></a>
             </div>
           </div>
           <p className="contact-note">Same<br />curiosity<br />a brighter<br />horizon</p>
         </div>
       </section>
 
-      <footer><div className="section-wrap footer-grid"><a href="#top">ANH</a><p>© {new Date().getFullYear()} Akbar Nur. Seluruh hak cipta dilindungi.</p><p>Dibangun dengan tujuan.</p><a href="#top" aria-label="Kembali ke atas"><ArrowUp size={17} /></a></div></footer>
+      <footer><div className="section-wrap footer-grid"><a href="#top">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto. Seluruh hak cipta dilindungi.</p><p>Dibangun dengan tujuan.</p><a href="#top" aria-label="Kembali ke atas"><ArrowUp size={17} /></a></div></footer>
     </main>
   );
 }

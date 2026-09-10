@@ -6,18 +6,18 @@ const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://akbar-nur-portfolio.akbar8nur.chatgpt.site'),
-  title: 'Akbar Nur — Portofolio Pribadi',
-  description: 'Portofolio profesional Akbar Nur: karya, perjalanan belajar, sertifikasi, dan proyek pilihan.',
+  title: 'Akbar Nur Hidayanto — Portofolio Pribadi',
+  description: 'Portofolio profesional Akbar Nur Hidayanto: karya, perjalanan belajar, sertifikasi, dan proyek pilihan.',
   openGraph: {
-    title: 'Akbar Nur — Portofolio Pribadi',
-    description: 'Karya · Pembelajaran · Kreasi — arsip profesional pribadi Akbar Nur.',
+    title: 'Akbar Nur Hidayanto — Portofolio Pribadi',
+    description: 'Karya · Pembelajaran · Kreasi — arsip profesional pribadi Akbar Nur Hidayanto.',
     type: 'website',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Akbar Nur — Portofolio Pribadi' }],
+    images: [{ url: '/og.png', width: 1732, height: 910, alt: 'Akbar Nur Hidayanto — Portofolio Pribadi' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Akbar Nur — Portofolio Pribadi',
-    description: 'Karya · Pembelajaran · Kreasi — arsip profesional pribadi Akbar Nur.',
+    title: 'Akbar Nur Hidayanto — Portofolio Pribadi',
+    description: 'Karya · Pembelajaran · Kreasi — arsip profesional pribadi Akbar Nur Hidayanto.',
     images: ['/og.png'],
   },
 };
