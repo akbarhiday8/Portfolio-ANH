@@ -143,9 +143,23 @@ export default function Home() {
           <SectionIndex title="Karya Pilihan" caption="Gagasan / menjadi karya" />
           <div className="work-main">
             <div className="project-grid" id="work-heading">
-              {projects.map((project, index) => <article className="project" key={project.index} data-reveal>
-                <div className="project-image"><Image src={projectImages[index]} fill sizes="(max-width: 820px) 90vw, 20vw" alt="" /></div>
-                <div><h3>{project.title}</h3><ArrowUpRight size={16} /><p>{project.category}<br />{project.year}</p></div>
+              {projects.map((project, index) => <article className={`project${index === 0 ? ' project--featured' : ''}`} key={project.index} data-reveal>
+                <div className="project-image">
+                  <Image
+                    src={projectImages[index]}
+                    fill
+                    sizes={index === 0 ? '(max-width: 650px) 100vw, (max-width: 850px) 62vw, 48vw' : '(max-width: 650px) 100vw, (max-width: 850px) 32vw, 18vw'}
+                    alt=""
+                  />
+                </div>
+                <div className="project-copy">
+                  <p className="project-label">{index === 0 ? 'Karya unggulan' : 'Proyek pilihan'}</p>
+                  <div className="project-heading">
+                    <h3>{project.title}</h3>
+                    <span className="project-arrow" aria-hidden="true"><ArrowUpRight size={17} /></span>
+                  </div>
+                  <p className="project-meta"><span>{project.category}</span><span>{project.year}</span></p>
+                </div>
               </article>)}
             </div>
           </div>
