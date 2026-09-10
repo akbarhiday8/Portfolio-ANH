@@ -63,10 +63,10 @@ export const portfolioData = {
     { index: '04', title: 'Catatan Lapangan', category: 'Riset · Pekerjaan Profesional', year: '2024', layout: 'wide' },
   ],
   certifications: [
-    { name: 'Sertifikasi Dukungan TI', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Teknologi' },
-    { name: 'Sertifikasi Peretasan Etis', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Keamanan' },
-    { name: 'Sertifikasi Ahli Microsoft Excel', issuer: 'Sertifikasi Profesional', year: '2024', category: 'Produktivitas' },
-    { name: 'Sertifikat Lainnya', issuer: 'Arsip Pembelajaran', year: 'Berkelanjutan', category: 'Pengembangan' },
+    { name: 'Sertifikasi Dukungan TI', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Teknologi', image: null },
+    { name: 'Sertifikasi Peretasan Etis', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Keamanan', image: null },
+    { name: 'Sertifikasi Ahli Microsoft Excel', issuer: 'Sertifikasi Profesional', year: '2024', category: 'Produktivitas', image: null },
+    { name: 'Sertifikat Lainnya', issuer: 'Arsip Pembelajaran', year: 'Berkelanjutan', category: 'Pengembangan', image: null },
   ],
   socials: [
     { label: 'LinkedIn', href: '#' },

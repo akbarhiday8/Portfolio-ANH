@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
-  BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap,
-  Mail, Monitor, ShieldCheck,
+  BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
 } from 'lucide-react';
+import { CertificateGallery } from '@/components/certificate-gallery';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -12,7 +12,6 @@ import { portfolioData } from '@/lib/portfolio-data';
 const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
 const projectImages = ['/work-dashboard.jpg', '/work-mobile.jpg', '/work-branding.jpg', '/work-building.jpg'];
 const capabilityIcons = [GraduationCap, BriefcaseBusiness, BarChart3, BookOpen, FileBadge2, Gamepad2];
-const certificateIcons = [Monitor, ShieldCheck, BarChart3, FileBadge2];
 
 function SectionIndex({ title, caption }: { title: string; caption: string }) {
   return (
@@ -170,15 +169,7 @@ export default function Home() {
       <section className="certificates compact-section" id="certificates" aria-label="Sertifikasi">
         <div className="section-wrap indexed-grid">
           <SectionIndex title="Sertifikasi" caption="Validasi / untuk kemajuan" />
-          <div className="certificate-grid" id="certificates-heading">
-            {certifications.map((item, index) => {
-              const Icon = certificateIcons[index];
-              return <article key={item.name} data-reveal>
-                <div className="certificate-preview" aria-hidden="true"><Icon size={38} strokeWidth={1.35} /></div>
-                <div className="certificate-details"><h3>{item.name}</h3><p>{item.year}</p></div>
-              </article>;
-            })}
-          </div>
+          <CertificateGallery items={certifications} />
         </div>
       </section>
 
