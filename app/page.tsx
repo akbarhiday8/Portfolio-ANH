@@ -114,6 +114,15 @@ export default function Home() {
       </section>
 
       <section className="journey compact-section" id="journey" aria-label="Perjalanan">
+        <Image
+          className="journey-architecture"
+          src="/journey-architecture-sketch.webp"
+          width={1600}
+          height={600}
+          sizes="(max-width: 850px) 120vw, 62vw"
+          alt=""
+          aria-hidden="true"
+        />
         <div className="section-wrap journey-grid">
           <SectionIndex title="Perjalanan" caption="Lini masa / pertumbuhan" />
           <div className="timeline" data-reveal id="journey-heading">
