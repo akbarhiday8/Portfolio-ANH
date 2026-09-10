@@ -111,7 +111,7 @@ export default function Home() {
           src="/about-architecture-sketch.webp"
           width={1100}
           height={733}
-          sizes="(max-width: 520px) 150vw, (max-width: 850px) 96vw, 48vw"
+          sizes="(max-width: 520px) 112vw, (max-width: 850px) 88vw, 46vw"
           alt=""
         />
       </div>
