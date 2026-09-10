@@ -58,7 +58,12 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow">Discipline turns plans<br />into progress</p>
           <h1 id="hero-title" aria-label="Akbar Nur Hidayanto">
-            <span>Akbar</span><span>Nur</span><span className="hero-surname">Hidayanto</span>
+            <span>Akbar</span>
+            <span className="hero-name-row">
+              <span className="hero-name-accent">Nur</span>
+              <i className="hero-name-rule" aria-hidden="true" />
+              <span className="hero-surname">Hidayanto</span>
+            </span>
           </h1>
           <p className="hero-tagline">Perjalanan Berkarya,<br />Belajar &amp; Mencipta.</p>
           <p className="hero-intro">{profile.introduction}</p>
