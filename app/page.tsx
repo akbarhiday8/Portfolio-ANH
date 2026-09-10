@@ -89,15 +89,6 @@ export default function Home() {
       </section>
 
       <section className="about compact-section" id="about" aria-labelledby="about-heading">
-        <Image
-          className="about-architecture"
-          src="/about-architecture-sketch.webp"
-          width={1100}
-          height={733}
-          sizes="(max-width: 850px) 78vw, 44vw"
-          alt=""
-          aria-hidden="true"
-        />
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
@@ -114,16 +105,18 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="journey compact-section" id="journey" aria-label="Perjalanan">
+      <div className="architecture-seam" aria-hidden="true">
         <Image
-          className="journey-architecture"
-          src="/journey-architecture-sketch.webp"
-          width={1600}
-          height={600}
-          sizes="(max-width: 850px) 120vw, 62vw"
+          className="story-architecture"
+          src="/about-architecture-sketch.webp"
+          width={1100}
+          height={733}
+          sizes="(max-width: 520px) 150vw, (max-width: 850px) 96vw, 48vw"
           alt=""
-          aria-hidden="true"
         />
+      </div>
+
+      <section className="journey compact-section" id="journey" aria-label="Perjalanan">
         <div className="section-wrap journey-grid">
           <SectionIndex title="Perjalanan" caption="Lini masa / pertumbuhan" />
           <div className="timeline" data-reveal id="journey-heading">
