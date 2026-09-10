@@ -50,7 +50,6 @@ export default function Home() {
           </a>
           <SiteNavigation />
           <ThemeToggle />
-          <a className="header-cta" href="#contact">Mari Terhubung <ArrowRight size={14} /></a>
         </div>
       </header>
 
@@ -59,11 +58,8 @@ export default function Home() {
           <p className="eyebrow">Discipline turns plans<br />into progress</p>
           <h1 id="hero-title" aria-label="Akbar Nur Hidayanto">
             <span>Akbar</span>
-            <span className="hero-name-row">
-              <span className="hero-name-accent">Nur</span>
-              <i className="hero-name-rule" aria-hidden="true" />
-              <span className="hero-surname">Hidayanto</span>
-            </span>
+            <span className="hero-name-accent">Nur</span>
+            <span className="hero-surname">Hidayanto</span>
           </h1>
           <p className="hero-tagline">Perjalanan Berkarya,<br />Belajar &amp; Mencipta.</p>
           <p className="hero-intro">{profile.introduction}</p>
@@ -75,7 +71,7 @@ export default function Home() {
 
         <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur Hidayanto">
           <Image className="hero-portrait" src="/profile-artwork-transparent.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur Hidayanto bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
-          <p className="edge-copy">A<br />brighter<br />more<br />meaningful<br />tomorrow</p>
+          <p className="portrait-kanji" lang="ja" aria-label="Keberlanjutan adalah kekuatan">継続は力なり</p>
         </div>
       </section>
 
