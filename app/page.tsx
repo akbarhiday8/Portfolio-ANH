@@ -48,6 +48,13 @@ function InstagramLogo() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.02 4.85.07 1.37.06 2.63.35 3.61 1.33.97.97 1.26 2.24 1.32 3.6.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.06 1.37-.35 2.63-1.32 3.61-.98.97-2.24 1.26-3.61 1.32-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.37-.06-2.63-.35-3.61-1.32-.97-.98-1.26-2.24-1.32-3.61-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.06-1.36.35-2.63 1.32-3.6.98-.98 2.24-1.27 3.61-1.33C8.42 2.18 8.8 2.16 12 2.16zm0 1.95c-3.15 0-3.52.01-4.76.07-1.15.05-1.77.24-2.18.4-.55.22-.94.47-1.35.88-.41.42-.67.81-.88 1.36-.16.41-.35 1.03-.4 2.18-.06 1.24-.07 1.61-.07 4.76s.01 3.52.07 4.76c.05 1.15.24 1.77.4 2.18.21.55.47.94.88 1.35.41.42.8.67 1.35.89.41.16 1.03.35 2.18.4 1.24.06 1.61.07 4.76.07s3.52-.01 4.76-.07c1.15-.05 1.77-.24 2.18-.4.55-.22.94-.47 1.35-.89.41-.41.67-.8.88-1.35.16-.41.35-1.03.4-2.18.06-1.24.07-1.61.07-4.76s-.01-3.52-.07-4.76c-.05-1.15-.24-1.77-.4-2.18-.21-.55-.47-.94-.88-1.36-.41-.41-.8-.66-1.35-.88-.41-.16-1.03-.35-2.18-.4-1.24-.06-1.61-.07-4.76-.07zm0 3.73a4.16 4.16 0 1 1 0 8.32 4.16 4.16 0 0 1 0-8.32zm0 6.86a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4zm5.37-7.88a.97.97 0 1 1-1.94 0 .97.97 0 0 1 1.94 0z" /></svg>;
 }
 
+function SocialIcon({ label }: { label: string }) {
+  if (label === 'LinkedIn') return <LinkedInLogo />;
+  if (label === 'GitHub') return <GitHubLogo />;
+  if (label === 'Instagram') return <InstagramLogo />;
+  return <Mail size={19} />;
+}
+
 export default function Home() {
   const { profile, statistics, capabilities, journey, experience, projects, certifications, socials } = portfolioData;
 
@@ -128,10 +135,18 @@ export default function Home() {
       <section className="experience compact-section" id="experience" aria-label="Pengalaman">
         <div className="section-wrap indexed-grid">
           <SectionIndex title="Pengalaman" caption="Kerja nyata / dampak nyata" />
-          <div className="experience-cards" id="experience-heading">
+          <div className="experience-list" id="experience-heading">
             {experience.map((item, index) => <article className="experience-card" key={item.index} data-reveal>
-              <div className="card-image"><Image src={experienceImages[index]} fill sizes="(max-width: 820px) 90vw, 27vw" alt="" /></div>
-              <div className="card-copy"><h3>{item.role}</h3><b>{item.period}</b><p>{item.description}</p><ArrowRight size={17} /></div>
+              <div className="experience-media">
+                <Image src={experienceImages[index]} fill sizes="(max-width: 520px) 100vw, (max-width: 850px) 180px, 220px" alt="" />
+              </div>
+              <div className="experience-role">
+                <b>{item.period}</b>
+                <h3>{item.role}</h3>
+                <span>{item.organization}</span>
+              </div>
+              <p className="experience-summary">{item.description}</p>
+              <i className="experience-marker" aria-hidden="true" />
             </article>)}
           </div>
         </div>
@@ -162,7 +177,6 @@ export default function Home() {
               </article>)}
             </div>
           </div>
-          <a className="outline-button projects-link" href="#work-heading">Lihat Semua Proyek <ArrowRight size={14} /></a>
         </div>
       </section>
 
@@ -176,16 +190,21 @@ export default function Home() {
       <section className="contact" id="contact" aria-labelledby="contact-heading">
         <Image className="contact-art" src="/footer-castle-art.webp" fill sizes="100vw" alt="" />
         <div className="section-wrap contact-grid">
-          <SectionIndex title="Mari Terhubung" caption="Terbuka untuk peluang / dan kolaborasi" />
+          <SectionIndex title="Mari Terhubung" caption="Ruang untuk dialog / dan kolaborasi" />
           <div className="contact-copy" data-reveal>
             <h3 id="contact-heading">Mari Ciptakan Sesuatu yang Bermakna.</h3>
-            <p>Saya selalu terbuka untuk peluang baru, kolaborasi,<br />dan percakapan yang bermakna.</p>
-            <a className="light-button" href={socials[1].href}>Hubungi Saya <ArrowRight size={14} /></a>
-            <div className="socials">
-              <a href={socials[0].href} aria-label="LinkedIn" data-tooltip="LinkedIn"><LinkedInLogo /></a>
-              <a href={socials[1].href} aria-label="Surel" data-tooltip="Surel"><Mail size={19} /></a>
-              <a href={socials[2].href} aria-label="GitHub" data-tooltip="GitHub"><GitHubLogo /></a>
-              <a href={socials[3].href} aria-label="Instagram" data-tooltip="Instagram"><InstagramLogo /></a>
+            <p>Untuk diskusi proyek, pertukaran gagasan,<br />dan kolaborasi yang bermakna.</p>
+            <span className="contact-availability">Tautan kontak sedang disiapkan</span>
+            <div className="socials" aria-label="Media sosial">
+              {socials.map((social) => social.href ? (
+                <a href={social.href} aria-label={social.label} data-tooltip={social.label} key={social.label} target={social.href.startsWith('http') ? '_blank' : undefined} rel={social.href.startsWith('http') ? 'noreferrer' : undefined}>
+                  <SocialIcon label={social.label} />
+                </a>
+              ) : (
+                <span className="social-link is-disabled" aria-label={`${social.label} — tautan belum tersedia`} data-tooltip={`${social.label} segera tersedia`} key={social.label} role="img">
+                  <SocialIcon label={social.label} />
+                </span>
+              ))}
             </div>
           </div>
           <p className="contact-note">Same<br />curiosity<br />a brighter<br />horizon</p>

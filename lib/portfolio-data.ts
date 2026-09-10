@@ -69,9 +69,9 @@ export const portfolioData = {
     { name: 'Sertifikat Lainnya', issuer: 'Arsip Pembelajaran', year: 'Berkelanjutan', category: 'Pengembangan', image: null },
   ],
   socials: [
-    { label: 'LinkedIn', href: '#' },
-    { label: 'Surel', href: '#' },
-    { label: 'GitHub', href: '#' },
-    { label: 'Instagram', href: '#' },
+    { label: 'LinkedIn', href: null as string | null },
+    { label: 'Surel', href: null as string | null },
+    { label: 'GitHub', href: null as string | null },
+    { label: 'Instagram', href: null as string | null },
   ],
 } as const;
