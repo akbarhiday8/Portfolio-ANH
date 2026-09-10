@@ -178,9 +178,9 @@ h1 span:last-child { color:var(--red); animation-delay:.26s; }
 .contact { position:relative; min-height:360px; overflow:hidden; background:#0d0e0f; color:#f7f6f2; }
 .contact:after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#0d0e0f 0%,rgba(13,14,15,.98) 25%,rgba(13,14,15,.8) 50%,rgba(13,14,15,.12) 100%); }
 .contact-art { object-fit:cover; object-position:center; opacity:.9; filter:grayscale(1) contrast(1.06); }
-.contact-grid { position:relative; z-index:2; min-height:360px; display:grid; grid-template-columns:24% 1fr 13%; align-items:center; }
+.contact-grid { position:relative; z-index:2; min-height:380px; display:grid; grid-template-columns:minmax(250px,.9fr) minmax(340px,1.75fr) minmax(100px,.4fr); column-gap:clamp(28px,3vw,52px); align-items:center; }
 .contact .section-index i { background:#d24650; }
-.contact .section-index h2 { color:white; }
+.contact .section-index h2 { max-width:210px; color:white; font-size:clamp(28px,2vw,34px); line-height:1.02; letter-spacing:-.02em; }
 .contact .section-index p { color:#aaa; }
 .contact-copy h3 { font:400 32px var(--serif); }
 .contact-copy p { margin-top:12px; color:#ccc; font-size:14px; line-height:1.55; }
