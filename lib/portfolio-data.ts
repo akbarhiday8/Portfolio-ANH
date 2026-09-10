@@ -24,11 +24,17 @@ export const portfolioData = {
     { title: 'Sertifikasi', description: 'Keahlian dan kompetensi yang tervalidasi.', icon: 'award' },
     { title: 'Minat', description: 'Menjelajah melampaui batas, selalu ingin tahu.', icon: 'compass' },
   ],
-  journey: [
-    { period: '2018 — 2022', title: 'Pendidikan', description: 'Membangun fondasi' },
-    { period: '2022 — 2023', title: 'Langkah Awal', description: 'Memasuki dunia profesional' },
-    { period: '2023 — 2024', title: 'Pertumbuhan', description: 'Memperluas keterampilan dan pengalaman' },
-    { period: '2024 — Sekarang', title: 'Cakrawala Baru', description: 'Menciptakan dampak yang lebih besar' },
+  education: [
+    {
+      period: 'Pendidikan Menengah',
+      title: 'Sekolah Menengah Kejuruan (SMK)',
+      description: 'Fondasi pembelajaran berbasis praktik, kedisiplinan, dan kesiapan kerja.',
+    },
+    {
+      period: 'Pendidikan Tinggi',
+      title: 'Sarjana (S1)',
+      description: 'Pengembangan cara berpikir analitis, riset, dan pemecahan masalah.',
+    },
   ],
   experience: [
     {
@@ -37,6 +43,12 @@ export const portfolioData = {
       organization: 'Operasional Profesional',
       period: '2020 — 2022',
       description: 'Mendukung operasional harian dan meningkatkan efisiensi alur kerja melalui pelaksanaan yang jelas dan dapat diandalkan.',
+      responsibilities: [
+        'Menjalankan dan memantau aktivitas operasional harian.',
+        'Mencatat perkembangan pekerjaan serta memastikan alur berjalan sesuai kebutuhan.',
+        'Mengoordinasikan tindak lanjut pekerjaan dengan pihak terkait.',
+        'Membantu mengidentifikasi hambatan dan peluang perbaikan proses.',
+      ],
       tone: 'charcoal',
     },
     {
@@ -45,6 +57,12 @@ export const portfolioData = {
       organization: 'Administrasi Bisnis',
       period: '2022 — 2024',
       description: 'Menata arsip, mengoordinasikan proses, dan memastikan pekerjaan penting berjalan dengan akurat.',
+      responsibilities: [
+        'Mengelola dokumen dan arsip agar tersusun serta mudah ditelusuri.',
+        'Melakukan pencatatan, pemeriksaan, dan pembaruan data administratif.',
+        'Mendukung koordinasi jadwal, kebutuhan dokumen, dan pelaporan rutin.',
+        'Menjaga ketelitian serta konsistensi informasi dalam proses kerja.',
+      ],
       tone: 'paper',
     },
     {
@@ -53,20 +71,70 @@ export const portfolioData = {
       organization: 'Praktik Mandiri',
       period: '2024 — Sekarang',
       description: 'Menghubungkan riset, teknologi, dan dokumentasi untuk menciptakan hasil digital yang bermanfaat.',
+      responsibilities: [
+        'Mengumpulkan kebutuhan dan menyusun konteks awal proyek digital.',
+        'Mendokumentasikan struktur, proses, serta keputusan selama pengerjaan.',
+        'Mendukung implementasi, pengujian, dan penyempurnaan hasil.',
+        'Menjaga agar solusi tetap jelas, relevan, dan mudah dikembangkan.',
+      ],
       tone: 'crimson',
     },
   ],
   projects: [
-    { index: '01', title: 'BYD Harmony Auto', category: 'Aplikasi Web', year: '2026', layout: 'wide' },
-    { index: '02', title: 'Arsip Operasional', category: 'Operasional · Dokumentasi', year: '2025', layout: 'tall' },
-    { index: '03', title: 'Sistem Pelaporan', category: 'Data · Administrasi', year: '2025', layout: 'square' },
-    { index: '04', title: 'Catatan Lapangan', category: 'Riset · Pekerjaan Profesional', year: '2024', layout: 'wide' },
+    {
+      index: '01', slug: 'byd-harmony-auto', title: 'BYD Harmony Auto', category: 'Aplikasi Web', year: '2026', layout: 'wide',
+      image: '/work-dashboard.jpg', role: 'Kontributor Pengembangan',
+      summary: 'Dokumentasi proyek aplikasi web dengan fokus pada struktur informasi, kemudahan penggunaan, dan konsistensi antarmuka.',
+      scope: ['Pemetaan kebutuhan dan struktur informasi', 'Perancangan alur serta komponen antarmuka', 'Pengujian tampilan dan penyempurnaan hasil'],
+      process: [
+        { title: 'Memahami konteks', description: 'Mengurai kebutuhan utama dan menyusun prioritas informasi yang perlu ditampilkan.' },
+        { title: 'Menyusun solusi', description: 'Menerjemahkan kebutuhan menjadi struktur halaman dan pola interaksi yang konsisten.' },
+        { title: 'Meninjau hasil', description: 'Memeriksa keterbacaan, responsivitas, dan detail visual sebelum penyempurnaan.' },
+      ],
+      outcome: 'Hasil proyek disusun sebagai fondasi solusi digital yang jelas, mudah dipahami, dan siap dikembangkan lebih lanjut.',
+    },
+    {
+      index: '02', slug: 'arsip-operasional', title: 'Arsip Operasional', category: 'Operasional · Dokumentasi', year: '2025', layout: 'tall',
+      image: '/work-mobile.jpg', role: 'Penyusun Sistem Dokumentasi',
+      summary: 'Penyusunan alur dokumentasi untuk membantu informasi operasional tetap rapi, konsisten, dan mudah ditelusuri.',
+      scope: ['Inventarisasi kebutuhan dokumen', 'Pengelompokan dan penamaan arsip', 'Penyusunan alur pembaruan informasi'],
+      process: [
+        { title: 'Inventarisasi', description: 'Mengidentifikasi jenis dokumen, pengguna, dan kebutuhan pencarian informasi.' },
+        { title: 'Standardisasi', description: 'Menyusun struktur kategori serta aturan penamaan yang lebih konsisten.' },
+        { title: 'Pemeliharaan', description: 'Menyiapkan alur pembaruan agar arsip tetap relevan dan dapat digunakan.' },
+      ],
+      outcome: 'Struktur arsip menjadi lebih mudah dipahami dan siap dilengkapi dengan dokumentasi implementasi sebenarnya.',
+    },
+    {
+      index: '03', slug: 'sistem-pelaporan', title: 'Sistem Pelaporan', category: 'Data · Administrasi', year: '2025', layout: 'square',
+      image: '/work-branding.jpg', role: 'Kontributor Data dan Administrasi',
+      summary: 'Konsep sistem pelaporan yang mengutamakan ketepatan pencatatan, keterbacaan informasi, dan alur pemeriksaan yang jelas.',
+      scope: ['Pemetaan data yang perlu dicatat', 'Penyusunan format dan hierarki laporan', 'Pemeriksaan konsistensi hasil'],
+      process: [
+        { title: 'Pemetaan data', description: 'Menentukan informasi penting serta hubungan antarbagian dalam laporan.' },
+        { title: 'Penyusunan format', description: 'Membentuk struktur yang memudahkan pengisian, pembacaan, dan pemeriksaan.' },
+        { title: 'Validasi', description: 'Meninjau konsistensi data dan memperbaiki bagian yang berpotensi menimbulkan ambiguitas.' },
+      ],
+      outcome: 'Format pelaporan menjadi lebih terstruktur dan dapat dikembangkan sesuai kebutuhan operasional nyata.',
+    },
+    {
+      index: '04', slug: 'catatan-lapangan', title: 'Catatan Lapangan', category: 'Riset · Pekerjaan Profesional', year: '2024', layout: 'wide',
+      image: '/work-building.jpg', role: 'Kontributor Riset dan Dokumentasi',
+      summary: 'Dokumentasi pekerjaan lapangan yang menyatukan observasi, catatan proses, dan temuan menjadi informasi yang lebih terstruktur.',
+      scope: ['Pencatatan konteks dan observasi', 'Pengelompokan temuan utama', 'Penyusunan dokumentasi untuk tindak lanjut'],
+      process: [
+        { title: 'Observasi', description: 'Merekam konteks, aktivitas, dan informasi penting secara sistematis.' },
+        { title: 'Sintesis', description: 'Mengelompokkan catatan menjadi tema dan temuan yang lebih mudah dipahami.' },
+        { title: 'Dokumentasi', description: 'Menyusun hasil menjadi referensi kerja yang jelas untuk proses berikutnya.' },
+      ],
+      outcome: 'Catatan lapangan berubah menjadi dokumentasi yang lebih terarah dan mudah digunakan untuk tindak lanjut.',
+    },
   ],
   certifications: [
-    { name: 'Sertifikasi Dukungan TI', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Teknologi', image: null },
-    { name: 'Sertifikasi Peretasan Etis', issuer: 'Sertifikasi Profesional', year: '2025', category: 'Keamanan', image: null },
-    { name: 'Sertifikasi Ahli Microsoft Excel', issuer: 'Sertifikasi Profesional', year: '2024', category: 'Produktivitas', image: null },
-    { name: 'Sertifikat Lainnya', issuer: 'Arsip Pembelajaran', year: 'Berkelanjutan', category: 'Pengembangan', image: null },
+    { name: 'Sertifikasi Dukungan TI', issuer: 'Instansi penerbit akan ditambahkan', year: '2025', category: 'Teknologi', image: null, description: 'Validasi pembelajaran dan kompetensi pada bidang dukungan teknologi informasi.' },
+    { name: 'Sertifikasi Peretasan Etis', issuer: 'Instansi penerbit akan ditambahkan', year: '2025', category: 'Keamanan', image: null, description: 'Dokumentasi pembelajaran mengenai prinsip keamanan sistem dan pengujian yang bertanggung jawab.' },
+    { name: 'Sertifikasi Ahli Microsoft Excel', issuer: 'Instansi penerbit akan ditambahkan', year: '2024', category: 'Produktivitas', image: null, description: 'Validasi keterampilan pengolahan data dan penggunaan perangkat produktivitas.' },
+    { name: 'Sertifikat Lainnya', issuer: 'Arsip Pembelajaran', year: 'Berkelanjutan', category: 'Pengembangan', image: null, description: 'Kumpulan sertifikat pelatihan dan pembelajaran tambahan yang akan dilengkapi secara bertahap.' },
   ],
   socials: [
     { label: 'LinkedIn', href: null as string | null },

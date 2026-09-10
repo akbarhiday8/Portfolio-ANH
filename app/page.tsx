@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
@@ -10,7 +11,6 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
-const projectImages = ['/work-dashboard.jpg', '/work-mobile.jpg', '/work-branding.jpg', '/work-building.jpg'];
 const capabilityIcons = [GraduationCap, BriefcaseBusiness, BarChart3, BookOpen, FileBadge2, Gamepad2];
 
 function SectionIndex({ title, caption }: { title: string; caption: string }) {
@@ -56,7 +56,7 @@ function SocialIcon({ label }: { label: string }) {
 }
 
 export default function Home() {
-  const { profile, statistics, capabilities, journey, experience, projects, certifications, socials } = portfolioData;
+  const { profile, statistics, capabilities, education, experience, projects, certifications, socials } = portfolioData;
 
   return (
     <main>
@@ -82,7 +82,7 @@ export default function Home() {
           </h1>
           <p className="hero-tagline"><LastWordAccent>A Journey of Work, Learning &amp; Creation.</LastWordAccent></p>
           <p className="hero-intro">{profile.introduction}</p>
-          <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
+          <a className="dark-button" href="#education">Lihat Pendidikan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
             {statistics.map((stat) => <div key={stat.label}><dt>{stat.value}</dt><dd>{stat.label}</dd></div>)}
           </dl>
@@ -122,13 +122,13 @@ export default function Home() {
         />
       </div>
 
-      <section className="journey compact-section" id="journey" aria-label="Perjalanan">
+      <section className="journey compact-section" id="education" aria-label="Pendidikan">
         <div className="section-wrap journey-grid">
-          <SectionIndex title="Perjalanan" caption="Lini masa / pertumbuhan" />
-          <div className="timeline" data-reveal id="journey-heading">
-            {journey.map((item) => <article key={item.period}><i /><b>{item.period}</b><h3>{item.title}</h3><p>{item.description}</p></article>)}
+          <SectionIndex title="Pendidikan" caption="Fondasi / pembelajaran" />
+          <div className="timeline education-timeline" data-reveal id="education-heading">
+            {education.map((item) => <article key={item.period}><i /><b>{item.period}</b><h3>{item.title}</h3><p>{item.description}</p></article>)}
           </div>
-          <div className="journey-next" data-reveal><ArrowRight size={20} /><p>Versi yang<br />lebih baik<br />di depan</p></div>
+          <div className="journey-next" data-reveal><ArrowRight size={20} /><p>Belajar<br />bertumbuh<br />berkarya</p></div>
         </div>
       </section>
 
@@ -145,22 +145,28 @@ export default function Home() {
                 <h3>{item.role}</h3>
                 <span>{item.organization}</span>
               </div>
-              <p className="experience-summary">{item.description}</p>
+              <div className="experience-content">
+                <p className="experience-summary">{item.description}</p>
+                <details className="experience-details">
+                  <summary>Lihat tugas dan tanggung jawab</summary>
+                  <ul>{item.responsibilities.map((responsibility) => <li key={responsibility}>{responsibility}</li>)}</ul>
+                </details>
+              </div>
               <i className="experience-marker" aria-hidden="true" />
             </article>)}
           </div>
         </div>
       </section>
 
-      <section className="work compact-section" id="work" aria-label="Karya pilihan">
+      <section className="work compact-section" id="work" aria-label="Portfolio pilihan">
         <div className="section-wrap indexed-grid">
-          <SectionIndex title="Karya Pilihan" caption="Gagasan / menjadi karya" />
+          <SectionIndex title="Portfolio Pilihan" caption="Gagasan / menjadi karya" />
           <div className="work-main">
             <div className="project-grid" id="work-heading">
-              {projects.map((project, index) => <article className={`project${index === 0 ? ' project--featured' : ''}`} key={project.index} data-reveal>
+              {projects.map((project, index) => <Link className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.index} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
                 <div className="project-image">
                   <Image
-                    src={projectImages[index]}
+                    src={project.image}
                     fill
                     sizes={index === 0 ? '(max-width: 650px) 100vw, (max-width: 850px) 62vw, 48vw' : '(max-width: 650px) 100vw, (max-width: 850px) 32vw, 18vw'}
                     alt=""
@@ -174,7 +180,7 @@ export default function Home() {
                   </div>
                   <p className="project-meta"><span>{project.category}</span><span>{project.year}</span></p>
                 </div>
-              </article>)}
+              </Link>)}
             </div>
           </div>
         </div>

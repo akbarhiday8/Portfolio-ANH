@@ -17,6 +17,7 @@ type CertificateItem = {
   year: string;
   category: string;
   image: string | null;
+  description: string;
 };
 
 const certificateIcons = [Monitor, ShieldCheck, BarChart3, FileBadge2];
@@ -63,8 +64,11 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
               <DialogHeader className="certificate-dialog-copy">
                 <span className="certificate-category">{item.category}</span>
                 <DialogTitle>{item.name}</DialogTitle>
-                <DialogDescription>{item.issuer}</DialogDescription>
-                <p>{item.year}</p>
+                <DialogDescription>{item.description}</DialogDescription>
+                <dl className="certificate-facts">
+                  <div><dt>Diterbitkan oleh</dt><dd>{item.issuer}</dd></div>
+                  <div><dt>Tahun</dt><dd>{item.year}</dd></div>
+                </dl>
               </DialogHeader>
             </DialogContent>
           </Dialog>

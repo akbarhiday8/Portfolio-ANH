@@ -7,9 +7,9 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/com
 const primaryLinks = [
   { id: 'top', label: 'Beranda' },
   { id: 'about', label: 'Tentang' },
-  { id: 'journey', label: 'Perjalanan' },
+  { id: 'education', label: 'Pendidikan' },
   { id: 'experience', label: 'Pengalaman' },
-  { id: 'work', label: 'Karya' },
+  { id: 'work', label: 'Portfolio' },
   { id: 'certificates', label: 'Sertifikasi' },
 ];
 
@@ -23,32 +23,33 @@ export function SiteNavigation() {
 
   useEffect(() => {
     const sections = mobileLinks.map(({ id }) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (window.scrollY <= 96) {
-          setActive('top');
-          return;
-        }
-        const current = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (current) setActive(current.target.id);
-      },
-      { rootMargin: '-25% 0px -60% 0px', threshold: [0, 0.15, 0.4] },
-    );
+    let frame = 0;
 
-    const syncTopNavigation = (event?: MouseEvent) => {
-      const target = event?.target;
-      const topLink = target instanceof Element ? target.closest('a[href="#top"]') : null;
-      if (topLink || window.scrollY <= 96) setActive('top');
+    const syncNavigation = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const marker = window.scrollY + 118;
+        let current = 'top';
+
+        for (const section of sections) {
+          if (section.offsetTop <= marker) current = section.id;
+          else break;
+        }
+
+        setActive(current);
+      });
     };
 
-    sections.forEach((section) => observer.observe(section));
-    window.addEventListener('scroll', syncTopNavigation, { passive: true });
-    document.addEventListener('click', syncTopNavigation);
+    syncNavigation();
+    window.addEventListener('scroll', syncNavigation, { passive: true });
+    window.addEventListener('resize', syncNavigation);
+    window.addEventListener('hashchange', syncNavigation);
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', syncTopNavigation);
-      document.removeEventListener('click', syncTopNavigation);
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', syncNavigation);
+      window.removeEventListener('resize', syncNavigation);
+      window.removeEventListener('hashchange', syncNavigation);
     };
   }, []);
 
