@@ -61,7 +61,7 @@ export default function Home() {
             <span className="hero-name-accent">Nur</span>
             <span className="hero-surname">Hidayanto</span>
           </h1>
-          <p className="hero-tagline">Perjalanan Berkarya,<br />Belajar &amp; Mencipta.</p>
+          <p className="hero-tagline">A Journey of Work,<br />Learning &amp; Creation.</p>
           <p className="hero-intro">{profile.introduction}</p>
           <a className="dark-button" href="#journey">Lihat Perjalanan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
@@ -76,6 +76,15 @@ export default function Home() {
       </section>
 
       <section className="about compact-section" id="about" aria-labelledby="about-heading">
+        <Image
+          className="about-architecture"
+          src="/about-architecture-sketch.webp"
+          width={1100}
+          height={733}
+          sizes="(max-width: 850px) 78vw, 44vw"
+          alt=""
+          aria-hidden="true"
+        />
         <div className="section-wrap about-grid">
           <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
           <div className="about-copy" data-reveal>
