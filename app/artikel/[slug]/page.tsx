@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { ArrowLeft, ArrowRight, Clock3 } from 'lucide-react';
+import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
+import { SiteNavigation } from '@/components/site-navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
@@ -35,9 +36,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <>
       <MotionController />
       <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap detail-masthead">
+        <div className="masthead page-wrap">
           <a className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></a>
-          <a className="detail-back" href="/artikel"><ArrowLeft size={16} /> Semua Artikel</a>
+          <SiteNavigation homePrefix="/" activePage="article" />
           <ThemeToggle />
         </div>
       </header>

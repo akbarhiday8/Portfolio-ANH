@@ -84,6 +84,15 @@ export const portfolioData = {
     {
       index: '01', slug: 'byd-harmony-auto', title: 'BYD Harmony Auto', category: 'Aplikasi Web', year: '2026', layout: 'wide',
       image: '/work-dashboard.jpg', role: 'Kontributor Pengembangan',
+      discipline: 'Teknologi Informasi', artifactType: 'Website / aplikasi web', status: 'Studi kasus',
+      challenge: 'Menyusun pengalaman digital yang tetap jelas ketika informasi, fitur, dan kebutuhan pengguna berkembang bersamaan.',
+      approach: 'Mengutamakan arsitektur informasi, alur inti, dan komponen yang konsisten sebelum memperluas fungsi.',
+      tools: ['Next.js', 'TypeScript', 'Design system', 'Pengujian responsif'],
+      deliverables: ['Arsitektur informasi', 'Antarmuka responsif', 'Dokumentasi komponen'],
+      artifacts: [
+        { title: 'Preview aplikasi web', format: 'Website', kind: 'website', description: 'Tampilan dan alur utama produk digital.', href: null as string | null },
+        { title: 'Dokumentasi teknis', format: 'PDF / dokumen', kind: 'document', description: 'Catatan struktur, keputusan, dan pengembangan.', href: null as string | null },
+      ],
       summary: 'Dokumentasi proyek aplikasi web dengan fokus pada struktur informasi, kemudahan penggunaan, dan konsistensi antarmuka.',
       scope: ['Pemetaan kebutuhan dan struktur informasi', 'Perancangan alur serta komponen antarmuka', 'Pengujian tampilan dan penyempurnaan hasil'],
       process: [
@@ -96,6 +105,15 @@ export const portfolioData = {
     {
       index: '02', slug: 'arsip-operasional', title: 'Arsip Operasional', category: 'Operasional · Dokumentasi', year: '2025', layout: 'tall',
       image: '/work-mobile.jpg', role: 'Penyusun Sistem Dokumentasi',
+      discipline: 'Operasional', artifactType: 'Dokumen & sistem arsip', status: 'Dokumentasi proyek',
+      challenge: 'Informasi operasional tersebar dan belum memiliki pola penyimpanan yang mudah dipahami oleh pengguna berikutnya.',
+      approach: 'Membentuk klasifikasi, aturan penamaan, dan alur pemeliharaan yang sederhana serta dapat diterapkan bertahap.',
+      tools: ['Microsoft Excel', 'Dokumen prosedur', 'Pemetaan proses'],
+      deliverables: ['Indeks arsip', 'Template dokumen', 'Panduan pemeliharaan'],
+      artifacts: [
+        { title: 'Indeks arsip kerja', format: 'XLSX', kind: 'spreadsheet', description: 'Struktur pencarian dan pencatatan dokumen.', href: null as string | null },
+        { title: 'Panduan pengarsipan', format: 'PDF', kind: 'document', description: 'Standar penamaan dan pembaruan arsip.', href: null as string | null },
+      ],
       summary: 'Penyusunan alur dokumentasi untuk membantu informasi operasional tetap rapi, konsisten, dan mudah ditelusuri.',
       scope: ['Inventarisasi kebutuhan dokumen', 'Pengelompokan dan penamaan arsip', 'Penyusunan alur pembaruan informasi'],
       process: [
@@ -108,6 +126,15 @@ export const portfolioData = {
     {
       index: '03', slug: 'sistem-pelaporan', title: 'Sistem Pelaporan', category: 'Data · Administrasi', year: '2025', layout: 'square',
       image: '/work-branding.jpg', role: 'Kontributor Data dan Administrasi',
+      discipline: 'Analisis Data', artifactType: 'Spreadsheet & laporan', status: 'Konsep terapan',
+      challenge: 'Data perlu dicatat dengan konsisten sekaligus disajikan dalam bentuk yang cepat dipahami untuk pemeriksaan.',
+      approach: 'Menetapkan struktur data, aturan validasi, dan hierarki laporan sebelum menyusun visualisasi.',
+      tools: ['Microsoft Excel', 'Validasi data', 'Visualisasi laporan'],
+      deliverables: ['Template pencatatan', 'Ringkasan indikator', 'Panduan validasi'],
+      artifacts: [
+        { title: 'Model data dan pelaporan', format: 'XLSX', kind: 'spreadsheet', description: 'Workbook terstruktur untuk input dan pemeriksaan.', href: null as string | null },
+        { title: 'Ringkasan hasil', format: 'PDF / PPTX', kind: 'presentation', description: 'Temuan utama untuk kebutuhan komunikasi.', href: null as string | null },
+      ],
       summary: 'Konsep sistem pelaporan yang mengutamakan ketepatan pencatatan, keterbacaan informasi, dan alur pemeriksaan yang jelas.',
       scope: ['Pemetaan data yang perlu dicatat', 'Penyusunan format dan hierarki laporan', 'Pemeriksaan konsistensi hasil'],
       process: [
@@ -120,6 +147,15 @@ export const portfolioData = {
     {
       index: '04', slug: 'catatan-lapangan', title: 'Catatan Lapangan', category: 'Riset · Pekerjaan Profesional', year: '2024', layout: 'wide',
       image: '/work-building.jpg', role: 'Kontributor Riset dan Dokumentasi',
+      discipline: 'Riset & Manajemen', artifactType: 'Laporan dan dokumentasi', status: 'Dokumentasi profesional',
+      challenge: 'Observasi lapangan yang beragam perlu diterjemahkan menjadi temuan yang dapat ditindaklanjuti.',
+      approach: 'Menggabungkan catatan, bukti, dan konteks ke dalam struktur laporan yang memisahkan fakta, analisis, dan tindak lanjut.',
+      tools: ['Riset lapangan', 'Dokumentasi', 'Analisis tematik'],
+      deliverables: ['Catatan observasi', 'Laporan temuan', 'Rekomendasi tindak lanjut'],
+      artifacts: [
+        { title: 'Laporan lapangan', format: 'PDF / DOCX', kind: 'document', description: 'Temuan, konteks, dan dokumentasi pendukung.', href: null as string | null },
+        { title: 'Presentasi rekomendasi', format: 'PPTX', kind: 'presentation', description: 'Ringkasan keputusan dan langkah berikutnya.', href: null as string | null },
+      ],
       summary: 'Dokumentasi pekerjaan lapangan yang menyatukan observasi, catatan proses, dan temuan menjadi informasi yang lebih terstruktur.',
       scope: ['Pencatatan konteks dan observasi', 'Pengelompokan temuan utama', 'Penyusunan dokumentasi untuk tindak lanjut'],
       process: [

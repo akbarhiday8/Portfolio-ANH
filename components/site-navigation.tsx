@@ -3,27 +3,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
-const primaryLinks = [
+type NavigationLink = { id: string; href: string; label: string; external?: boolean };
+
+const primaryLinks: NavigationLink[] = [
   { id: 'top', href: '#top', label: 'Beranda' },
   { id: 'about', href: '#about', label: 'Tentang' },
   { id: 'education', href: '#education', label: 'Pendidikan' },
   { id: 'experience', href: '#experience', label: 'Pengalaman' },
   { id: 'work', href: '#work', label: 'Portfolio' },
   { id: 'certificates', href: '#certificates', label: 'Sertifikasi' },
-  { id: null, href: '/artikel', label: 'Artikel' },
+  { id: 'article', href: '/artikel', label: 'Artikel', external: true },
 ];
 
-const mobileLinks = [
+const mobileLinks: NavigationLink[] = [
   ...primaryLinks,
   { id: 'contact', href: '#contact', label: 'Kontak' },
 ];
 
-export function SiteNavigation() {
+type SiteNavigationProps = {
+  homePrefix?: '' | '/';
+  activePage?: 'article' | 'work';
+};
+
+export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationProps = {}) {
   const [active, setActive] = useState('top');
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    if (activePage) {
+      setActive(activePage);
+      return;
+    }
+
     const sections = mobileLinks.map(({ id }) => id ? document.getElementById(id) : null).filter(Boolean) as HTMLElement[];
     let frame = 0;
 
@@ -50,7 +62,7 @@ export function SiteNavigation() {
       window.removeEventListener('resize', syncNavigation);
       window.removeEventListener('hashchange', syncNavigation);
     };
-  }, []);
+  }, [activePage]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -72,9 +84,10 @@ export function SiteNavigation() {
   return (
     <>
       <nav className="desktop-nav" aria-label="Navigasi utama">
-        {primaryLinks.map((link) => (
-          <a className={link.id && active === link.id ? 'active' : ''} href={link.href} key={link.href} onClick={() => link.id && setActive(link.id)}>{link.label}</a>
-        ))}
+        {primaryLinks.map((link) => {
+          const href = link.external ? link.href : `${homePrefix}${link.href}`;
+          return <a className={active === link.id ? 'active' : ''} href={href} key={link.href} onClick={() => setActive(link.id)}>{link.label}</a>;
+        })}
       </nav>
 
       <div className="mobile-nav">
@@ -84,9 +97,10 @@ export function SiteNavigation() {
             <p className="sheet-title">Navigasi / 2026</p>
             <button ref={closeButtonRef} className="mobile-nav-close" type="button" onClick={closeMobileNavigation} aria-label="Tutup navigasi"><X size={19} /></button>
             <nav>
-              {mobileLinks.map((link) => (
-                <a href={link.href} key={link.href} onClick={() => { if (link.id) setActive(link.id); closeMobileNavigation(); }}>{link.label}</a>
-              ))}
+              {mobileLinks.map((link) => {
+                const href = link.external ? link.href : `${homePrefix}${link.href}`;
+                return <a href={href} key={link.href} onClick={() => { setActive(link.id); closeMobileNavigation(); }}>{link.label}</a>;
+              })}
             </nav>
           </aside>
         </div>

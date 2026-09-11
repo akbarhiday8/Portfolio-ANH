@@ -20,6 +20,28 @@ type ZoomMode = 'in' | 'out' | null;
 const certificateIcons = [Monitor, ShieldCheck, BarChart3, FileBadge2];
 const clampScale = (value: number) => Math.min(4, Math.max(1, Number(value.toFixed(2))));
 
+function CertificateTopics({ topics }: { topics: readonly string[] }) {
+  const limit = 6;
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = topics.length > limit;
+  const visibleTopics = expanded ? topics : topics.slice(0, limit);
+
+  return (
+    <div className="certificate-topics">
+      <div className="certificate-topics-heading">
+        <h4>Materi yang dipelajari / diujikan</h4>
+        <span>{topics.length} materi</span>
+      </div>
+      <ul>{visibleTopics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
+      {hasMore ? (
+        <button className="certificate-topics-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+          {expanded ? 'Tampilkan lebih sedikit' : `Lihat ${topics.length - limit} materi lainnya`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function CertificateViewer({ src, alt }: { src: string; alt: string }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
@@ -54,7 +76,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (scale === 1 || zoomMode) return;
+    if (event.button !== 0 || scale === 1 || zoomMode || event.shiftKey || event.ctrlKey) return;
     suppressClick.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, origin: position, moved: false };
@@ -80,13 +102,16 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     setDragging(false);
   };
 
-  const handleClick = () => {
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (suppressClick.current) {
       suppressClick.current = false;
       return;
     }
-    if (zoomMode === 'in') setZoom(scale + 0.5);
-    if (zoomMode === 'out') setZoom(scale - 0.5);
+    if (event.ctrlKey || zoomMode === 'out') {
+      setZoom(scale - 0.5);
+      return;
+    }
+    if (event.shiftKey || zoomMode === 'in' || scale < 4) setZoom(scale + 0.5);
   };
 
   const viewerClassName = [
@@ -94,6 +119,8 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     `is-${orientation}`,
     zoomMode === 'in' ? 'is-zoom-in' : '',
     zoomMode === 'out' ? 'is-zoom-out' : '',
+    !zoomMode && scale === 1 ? 'can-zoom' : '',
+    !zoomMode && scale > 1 ? 'can-pan' : '',
     dragging ? 'is-dragging' : '',
   ].filter(Boolean).join(' ');
 
@@ -106,6 +133,8 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        tabIndex={0}
+        aria-label="Preview sertifikat. Klik untuk memperbesar, Ctrl dan klik untuk memperkecil, lalu seret untuk menggeser."
       >
         <Image className="certificate-viewer-backdrop" src={src} fill sizes="90vw" alt="" aria-hidden="true" />
         <Image
@@ -125,7 +154,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
         <button type="button" onClick={() => setZoom(scale + 0.25)} disabled={scale === 4} aria-label="Perbesar gambar"><Plus size={17} /></button>
         <button type="button" onClick={reset} disabled={scale === 1 && position.x === 0 && position.y === 0} aria-label="Atur ulang gambar"><RotateCcw size={16} /></button>
       </div>
-      <p className="certificate-viewer-hint"><Move size={14} /> Shift + klik: perbesar · Ctrl + klik: perkecil · seret gambar saat diperbesar</p>
+      <p className="certificate-viewer-hint"><Move size={14} /> Klik: perbesar · Ctrl + klik: perkecil · setelah diperbesar, tahan klik kiri lalu seret</p>
     </div>
   );
 }
@@ -196,6 +225,7 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
                       return <ActiveIcon size={58} strokeWidth={1.1} />;
                     })()}
                     <span>Bukti sertifikat belum ditambahkan</span>
+                    <small>Kontrol zoom dan geser akan aktif otomatis setelah gambar tersedia.</small>
                   </div>
                 )}
               </div>
@@ -207,10 +237,7 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
                   <div><dt>Diterbitkan oleh</dt><dd>{activeItem.issuer}</dd></div>
                   <div><dt>Tahun</dt><dd>{activeItem.year}</dd></div>
                 </dl>
-                <div className="certificate-topics">
-                  <h4>Materi yang dipelajari / diujikan</h4>
-                  <ul>{activeItem.topics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
-                </div>
+                <CertificateTopics key={activeItem.name} topics={activeItem.topics} />
               </div>
           </section>
         </div>
