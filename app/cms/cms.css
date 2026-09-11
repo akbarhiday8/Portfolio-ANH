@@ -340,6 +340,7 @@
 .cms-content.is-overview { width:100%; max-width:none; padding:0 0 66px; }
 .cms-overview { background:var(--paper); }
 .cms-overview-hero { position:relative; min-height:258px; display:flex!important; align-items:center!important; overflow:hidden; border-bottom:1px solid var(--cms-line); padding:34px 48px!important; background:linear-gradient(90deg,var(--paper) 0%,var(--paper) 44%,color-mix(in srgb,var(--paper) 58%,transparent) 72%,var(--paper) 100%),url('/about-architecture-sketch.webp') 82% 45% / min(760px,58vw) auto no-repeat!important; }
+.cms-overview-hero:before { content:''; position:absolute; z-index:0; top:-18%; right:-2%; width:min(760px,58vw); height:138%; pointer-events:none; background:url('/about-architecture-sketch.webp') right center / contain no-repeat; opacity:.26; filter:grayscale(1) contrast(.76); -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.78) 28%,#000 100%); mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.78) 28%,#000 100%); }
 .cms-overview-hero:after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,transparent 0 50%,color-mix(in srgb,var(--ink) 3%,transparent) 50% 50.08%,transparent 50.08%); }
 .cms-overview-hero > div { position:relative; z-index:1; max-width:none!important; }
 .cms-overview-hero i { display:block; width:63px; height:4px; margin-bottom:20px; background:var(--red); }
@@ -347,6 +348,7 @@
 .cms-overview-hero h1 { margin:12px 0 0!important; font:400 clamp(46px,4.2vw,68px)/.98 var(--serif)!important; letter-spacing:-.045em!important; }
 .cms-overview-hero p { margin-top:16px!important; color:var(--gray)!important; font-size:15px!important; line-height:1.65!important; }
 [data-theme='dark'] .cms-overview-hero { background:linear-gradient(90deg,var(--paper) 0%,var(--paper) 44%,color-mix(in srgb,var(--paper) 60%,transparent) 76%,var(--paper) 100%),url('/about-architecture-sketch.webp') 82% 45% / min(760px,58vw) auto no-repeat!important; background-blend-mode:normal,screen!important; }
+[data-theme='dark'] .cms-overview-hero:before { opacity:.18; filter:grayscale(1) invert(1) contrast(.82); }
 
 .cms-overview-stats { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); margin:0 48px; border-bottom:1px solid var(--cms-line); padding:37px 0; }
 .cms-overview-stats article { min-height:82px; display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--cms-line); padding:0 22px; }
