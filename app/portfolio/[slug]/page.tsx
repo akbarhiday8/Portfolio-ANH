@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye, FileSpreadsheet, FileText, Globe2, Presentation } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
@@ -12,13 +11,6 @@ const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
 type ProjectPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-function ArtifactIcon({ kind }: { kind: string }) {
-  if (kind === 'website') return <Globe2 size={24} strokeWidth={1.6} />;
-  if (kind === 'spreadsheet') return <FileSpreadsheet size={24} strokeWidth={1.6} />;
-  if (kind === 'presentation') return <Presentation size={24} strokeWidth={1.6} />;
-  return <FileText size={24} strokeWidth={1.6} />;
-}
 
 export function generateStaticParams() {
   return portfolioData.projects.map((project) => ({ slug: project.slug }));
@@ -69,15 +61,14 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <p className="case-kicker">{project.category} · {project.year}</p>
               <h1>{project.title}</h1>
               <p className="case-summary">{project.summary}</p>
-              <div className="case-tags" aria-label="Klasifikasi proyek">
-                <span>{project.discipline}</span><span>{project.artifactType}</span><span>{project.status}</span>
-              </div>
-              <dl className="case-meta">
+              <dl className="case-meta case-meta--compact">
                 <div><dt>Peran</dt><dd>{project.role}</dd></div>
-                <div><dt>Tahun</dt><dd>{project.year}</dd></div>
                 <div><dt>Bidang</dt><dd>{project.discipline}</dd></div>
                 <div><dt>Jenis hasil</dt><dd>{project.artifactType}</dd></div>
               </dl>
+              <div className="case-proof">
+                {project.evidence.href ? <a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label}<ArrowUpRight size={16} /></a> : <span><Eye size={17} />Tautan bukti proyek akan ditambahkan</span>}
+              </div>
             </div>
             <div className="case-cover">
               <Image src={project.image} fill priority sizes="(max-width: 850px) 100vw, 52vw" alt={`Dokumentasi visual ${project.title}`} />
@@ -86,111 +77,54 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           </div>
         </section>
 
-        <section className="case-section">
+        <section className="case-section case-study">
           <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Ringkasan Proyek</p></header>
-            <div className="case-body case-overview">
-              <h2>Konteks, keputusan, dan hasil dalam satu studi kasus.</h2>
-              <div className="case-narrative">
-                <article><small>Tantangan</small><p>{project.challenge}</p></article>
-                <article><small>Pendekatan</small><p>{project.approach}</p></article>
+            <header><i /><p>Detail Proyek</p></header>
+            <div className="case-body case-study-body">
+              <div className="case-overview">
+                <p className="case-label">Tantangan &amp; pendekatan</p>
+                <h2>{project.challenge}</h2>
+                <p>{project.approach}</p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="case-section case-section-muted">
-          <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Lingkup Pekerjaan</p></header>
-            <ul className="case-scope">
-              {project.scope.map((item) => <li key={item}><Check size={18} /><span>{item}</span></li>)}
-            </ul>
-          </div>
-        </section>
-
-        <section className="case-section">
-          <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Proses</p></header>
-            <div className="case-process">
-              {project.process.map((step) => (
-                <article key={step.title}>
-                  <h3>{step.title}</h3>
-                  <p>{step.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="case-section">
-          <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Hasil Kerja</p></header>
-            <div className="case-resources">
-              <article>
-                <h3>Deliverables</h3>
-                <ul>{project.deliverables.map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul>
-              </article>
-              <article>
-                <h3>Perangkat & metode</h3>
-                <ul>{project.tools.map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="case-result">
-          <div className="section-wrap case-result-grid">
-            <p>Hasil</p>
-            <h2>{project.outcome}</h2>
-          </div>
-        </section>
-
-        <section className="case-section case-artifacts-section">
-          <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Artefak & Preview</p></header>
-            <div className="case-artifacts">
-              <div className="case-artifact-intro">
-                <h2>Dokumentasi yang menyesuaikan bentuk setiap karya.</h2>
-                <p>Bagian ini dapat menampilkan tautan website, workbook Excel, laporan PDF, presentasi, gambar, maupun dokumen proyek lainnya.</p>
+              <div className="case-study-columns">
+                <section>
+                  <h3>Kontribusi</h3>
+                  <ul className="case-scope">
+                    {project.scope.map((item) => <li key={item}><Check size={17} /><span>{item}</span></li>)}
+                  </ul>
+                </section>
+                <section>
+                  <h3>Alur kerja</h3>
+                  <ol className="case-process">
+                    {project.process.map((step, index) => (
+                      <li key={step.title}>
+                        <span>{String(index + 1).padStart(2, '0')}</span>
+                        <div><strong>{step.title}</strong><p>{step.description}</p></div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
               </div>
-              <div>
-                <div className="case-evidence">
-                  <div className="case-evidence-heading"><span><Eye size={18} /> Tautan bukti proyek</span><small>Dibuka sebagai preview</small></div>
-                  <div className="case-evidence-links">
-                    {project.evidence.href ? (
-                      <a href={project.evidence.href} target="_blank" rel="noreferrer">
-                        <span><small>{project.evidence.type}</small><strong>{project.evidence.label}</strong></span><ArrowUpRight size={17} />
-                      </a>
-                    ) : (
-                      <div className="is-pending">
-                        <span><small>{project.evidence.type}</small><strong>{project.evidence.label}</strong></span><em>Tautan disiapkan</em>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="case-artifact-list">
-                {project.artifacts.map((artifact) => {
-                  const content = <><ArtifactIcon kind={artifact.kind} /><span><small>{artifact.format}</small><strong>{artifact.title}</strong><p>{artifact.description}</p></span><ArrowUpRight size={17} /></>;
-                  return artifact.href
-                    ? <a className="case-artifact-card" href={artifact.href} target="_blank" rel="noreferrer" key={artifact.title}>{content}</a>
-                    : <article className="case-artifact-card is-pending" key={artifact.title}>{content}</article>;
-                })}
-                </div>
+
+              <div className="case-outcome">
+                <p className="case-label">Hasil</p>
+                <p>{project.outcome}</p>
               </div>
             </div>
           </div>
         </section>
 
         <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
-          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></Link>
-          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></Link>
+          <a href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></a>
+          <a href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></a>
         </nav>
 
         <footer className="detail-footer">
           <div className="section-wrap">
-            <Link href="/">ANH</Link>
+            <a href="/">ANH</a>
             <p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p>
-            <nav className="detail-footer-links"><Link href="/artikel">Artikel</Link><Link href="/#contact">Kontak</Link></nav>
+            <nav className="detail-footer-links"><a href="/artikel">Artikel</a><a href="/#contact">Kontak</a></nav>
           </div>
         </footer>
       </main>
