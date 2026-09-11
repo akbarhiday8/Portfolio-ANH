@@ -4,17 +4,14 @@ import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
-import { portfolioData } from '@/lib/portfolio-data';
+import { getPortfolioContent } from '@/lib/cms-server';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return portfolioData.articles.map((article) => ({ slug: article.slug }));
-}
-
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = portfolioData.articles.find((item) => item.slug === slug);
+  const { articles } = await getPortfolioContent();
+  const article = articles.find((item) => item.slug === slug);
   if (!article) return {};
   return {
     title: `${article.title} — Akbar Nur Hidayanto`,
@@ -26,11 +23,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const articleIndex = portfolioData.articles.findIndex((item) => item.slug === slug);
+  const { articles } = await getPortfolioContent();
+  const articleIndex = articles.findIndex((item) => item.slug === slug);
   if (articleIndex < 0) notFound();
 
-  const article = portfolioData.articles[articleIndex];
-  const next = portfolioData.articles[(articleIndex + 1) % portfolioData.articles.length];
+  const article = articles[articleIndex];
+  const next = articles[(articleIndex + 1) % articles.length];
 
   return (
     <>
@@ -69,9 +67,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   {section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
                 </section>
               ))}
-              <blockquote>Catatan yang baik tidak berhenti pada informasi; ia membantu orang memahami dan mengambil langkah berikutnya.</blockquote>
+              {article.quote ? <blockquote>{article.quote}</blockquote> : null}
               <section className="article-closing" id="penutup">
-                <small>Penutup</small><h2>Merangkum gagasan menjadi tindakan.</h2><p>{article.closing}</p>
+                <small>Penutup</small><h2>{article.closingHeading || 'Merangkum gagasan menjadi tindakan.'}</h2><p>{article.closing}</p>
               </section>
             </div>
           </div>

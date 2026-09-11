@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
-import { portfolioData } from '@/lib/portfolio-data';
+import { getPortfolioContent } from '@/lib/cms-server';
 
 const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
 
@@ -13,13 +13,10 @@ type ProjectPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return portfolioData.projects.map((project) => ({ slug: project.slug }));
-}
-
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = portfolioData.projects.find((item) => item.slug === slug);
+  const { projects } = await getPortfolioContent();
+  const project = projects.find((item) => item.slug === slug);
   if (!project) return {};
 
   const image = new URL(project.image, SITE_URL).toString();
@@ -43,12 +40,13 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
-  const projectIndex = portfolioData.projects.findIndex((item) => item.slug === slug);
+  const { projects } = await getPortfolioContent();
+  const projectIndex = projects.findIndex((item) => item.slug === slug);
   if (projectIndex < 0) notFound();
 
-  const project = portfolioData.projects[projectIndex];
-  const previous = portfolioData.projects[(projectIndex - 1 + portfolioData.projects.length) % portfolioData.projects.length];
-  const next = portfolioData.projects[(projectIndex + 1) % portfolioData.projects.length];
+  const project = projects[projectIndex];
+  const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
+  const next = projects[(projectIndex + 1) % projects.length];
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { ArrowUp } from 'lucide-react';
+import { getPortfolioContent } from '@/lib/cms-server';
 
 const footerLinks = [
   { href: '/#about', label: 'Tentang' },
@@ -9,15 +10,16 @@ const footerLinks = [
   { href: '/#contact', label: 'Kontak' },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const { profile, siteContent } = await getPortfolioContent();
   return (
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
-        <div className="site-footer-identity">
-          <a href="/#top" aria-label="ANH — kembali ke beranda">ANH</a>
-          <div>
-            <strong>Akbar Nur Hidayanto</strong>
-            <span>Portofolio Profesional</span>
+          <div className="site-footer-identity">
+            <a href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>{profile.monogram}</a>
+            <div>
+              <strong>{siteContent.footerName}</strong>
+              <span>{siteContent.footerSubtitle}</span>
           </div>
         </div>
         <div className="site-footer-navigation">
@@ -28,7 +30,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="section-wrap site-footer-bottom">
-        <p>© {new Date().getFullYear()} Akbar Nur Hidayanto. Seluruh hak cipta dilindungi.</p>
+          <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
         <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
           <span>Kembali ke atas</span>
           <ArrowUp size={16} />

@@ -8,10 +8,18 @@ import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
 import { SiteFooter } from '@/components/site-footer';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { portfolioData } from '@/lib/portfolio-data';
+import { getPortfolioContent } from '@/lib/cms-server';
 
-const experienceImages = ['/work-building.jpg', '/work-code.jpg', '/work-laptop.jpg'];
-const capabilityIcons = [GraduationCap, BriefcaseBusiness, BarChart3, BookOpen, FileBadge2, Gamepad2];
+const capabilityIcons = {
+  book: GraduationCap,
+  briefcase: BriefcaseBusiness,
+  pencil: BarChart3,
+  chart: BarChart3,
+  grid: BookOpen,
+  award: FileBadge2,
+  compass: Gamepad2,
+  game: Gamepad2,
+} as const;
 
 function SectionIndex({ title, caption }: { title: string; caption: string }) {
   return (
@@ -34,6 +42,11 @@ function LastWordAccent({ children, edge = false, className = '' }: { children: 
       <span className={accentClassName}>{lastWord}</span>
     </>
   );
+}
+
+function MultilineAccent({ children }: { children: string }) {
+  const lines = children.split('\n').filter(Boolean);
+  return <>{lines.map((line, index) => <span key={`${line}-${index}`}>{index === lines.length - 1 ? <LastWordAccent edge>{line}</LastWordAccent> : line}{index < lines.length - 1 ? <br /> : null}</span>)}</>;
 }
 
 function LinkedInLogo() {
@@ -60,8 +73,8 @@ function SocialIcon({ label }: { label: string }) {
   return <Mail size={19} />;
 }
 
-export default function Home() {
-  const { profile, statistics, capabilities, education, experience, projects, certifications, socials } = portfolioData;
+export default async function Home() {
+  const { siteContent, profile, statistics, capabilities, education, experience, projects, certifications, socials } = await getPortfolioContent();
 
   return (
     <main>
@@ -70,7 +83,7 @@ export default function Home() {
       <header className="masthead-shell">
         <div className="masthead page-wrap">
           <a className="brand" href="#top" aria-label="ANH — kembali ke atas">
-            <strong>ANH</strong><span>Portofolio Pribadi</span>
+            <strong>{profile.monogram}</strong><span>{siteContent.brandSubtitle}</span>
           </a>
           <SiteNavigation />
           <ThemeToggle />
@@ -79,13 +92,13 @@ export default function Home() {
 
       <section className="hero page-wrap" id="top" aria-labelledby="hero-title">
         <div className="hero-copy">
-          <p className="eyebrow">Discipline turns plans<br />into progress</p>
+          <p className="eyebrow">{profile.eyebrow}</p>
           <h1 id="hero-title" aria-label="Akbar Nur Hidayanto">
             <span>Akbar</span>
             <LastWordAccent className="hero-name-accent">Nur</LastWordAccent>
             <span className="hero-surname">Hidayanto</span>
           </h1>
-          <p className="hero-tagline"><LastWordAccent>A Journey of Work, Learning &amp; Creation.</LastWordAccent></p>
+          <p className="hero-tagline"><LastWordAccent>{profile.tagline}</LastWordAccent></p>
           <p className="hero-intro">{profile.introduction}</p>
           <a className="dark-button" href="#education">Lihat Pendidikan Saya <ArrowRight size={14} /></a>
           <dl className="stats" aria-label="Statistik karier">
@@ -94,27 +107,22 @@ export default function Home() {
         </div>
 
         <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur Hidayanto">
-          <picture>
-            <source media="(max-width: 420px)" srcSet="/profile-hero-480.webp" />
-            <source media="(max-width: 650px)" srcSet="/profile-hero-640.webp" />
-            <source media="(max-width: 850px)" srcSet="/profile-hero-768.webp" />
-            <img className="hero-portrait" src="/profile-hero-941.webp" width={941} height={1671} loading="eager" decoding="async" fetchPriority="high" alt="Potret Akbar Nur Hidayanto bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
-          </picture>
+          <img className="hero-portrait" src={profile.artwork} width={941} height={1671} loading="eager" decoding="async" fetchPriority="high" alt={`Potret ${profile.name} bergaya tinta`} />
           <p className="portrait-kanji" lang="ja" aria-label="Keberlanjutan adalah kekuatan">継続は力なり</p>
         </div>
       </section>
 
       <section className="about compact-section" id="about" aria-labelledby="about-heading">
         <div className="section-wrap about-grid">
-          <SectionIndex title="Tentang Saya" caption="Manusia / Gagasan / Kemajuan" />
+          <SectionIndex title={siteContent.aboutTitle} caption={siteContent.aboutCaption} />
           <div className="about-copy" data-reveal>
-            <h3 id="about-heading">Pikiran yang ingin tahu.<br /><LastWordAccent edge>Pencipta solusi nyata.</LastWordAccent></h3>
-            <p>Saya adalah pemecah masalah yang senang mengubah gagasan kompleks menjadi solusi sederhana dan bermakna. Dengan latar belakang teknologi, desain, dan semangat belajar berkelanjutan, saya selalu antusias menghadapi tantangan baru dan menciptakan dampak positif.</p>
-            <a className="about-link" href="#experience">Kenali Lebih Dekat <ArrowRight size={18} /></a>
+            <h3 id="about-heading"><MultilineAccent>{siteContent.aboutHeading}</MultilineAccent></h3>
+            <p>{siteContent.aboutBody}</p>
+            <a className="about-link" href="#experience">{siteContent.aboutCta} <ArrowRight size={18} /></a>
           </div>
           <div className="capabilities" data-reveal>
             {capabilities.map((item, index) => {
-              const Icon = capabilityIcons[index];
+              const Icon = capabilityIcons[item.icon as keyof typeof capabilityIcons] ?? capabilityIcons.grid;
               return <article key={item.title}><Icon size={25} strokeWidth={1.6} /><div><h4>{item.title}</h4><p>{item.description}</p></div></article>;
             })}
           </div>
@@ -134,11 +142,11 @@ export default function Home() {
 
       <section className="journey compact-section" id="education" aria-label="Pendidikan">
         <div className="section-wrap journey-grid">
-          <SectionIndex title="Pendidikan" caption="Fondasi / pembelajaran" />
+          <SectionIndex title={siteContent.educationTitle} caption={siteContent.educationCaption} />
           <div className="timeline education-timeline" data-reveal id="education-heading">
             {education.map((item) => <article key={item.period}><i /><b>{item.period}</b><h3>{item.title}</h3><p>{item.description}</p></article>)}
           </div>
-          <div className="journey-next" data-reveal><ArrowRight size={20} /><p>Belajar<br />bertumbuh<br />berkarya</p></div>
+          <div className="journey-next" data-reveal><ArrowRight size={20} /><p>{siteContent.educationNote}</p></div>
         </div>
       </section>
 
@@ -146,11 +154,11 @@ export default function Home() {
         <Image className="professional-ornament" src="/professional-work-ornament.webp" width={768} height={1152} sizes="(max-width: 650px) 78vw, 42vw" alt="" aria-hidden="true" />
       <section className="experience compact-section" id="experience" aria-label="Pengalaman">
         <div className="section-wrap indexed-grid">
-          <SectionIndex title="Pengalaman" caption="Kerja nyata / dampak nyata" />
+          <SectionIndex title={siteContent.experienceTitle} caption={siteContent.experienceCaption} />
           <div className="experience-list" id="experience-heading">
             {experience.map((item, index) => <article className="experience-card" key={item.index} data-reveal>
               <div className="experience-media">
-                <Image src={experienceImages[index]} fill sizes="(max-width: 520px) 100vw, (max-width: 850px) 180px, 220px" alt="" />
+                <Image src={item.image} fill sizes="(max-width: 520px) 100vw, (max-width: 850px) 180px, 220px" alt="" />
               </div>
               <div className="experience-role">
                 <b>{item.period}</b>
@@ -172,7 +180,7 @@ export default function Home() {
 
       <section className="work compact-section" id="work" aria-label="Portfolio pilihan">
         <div className="section-wrap indexed-grid">
-          <SectionIndex title="Portfolio Pilihan" caption="Gagasan / menjadi karya" />
+          <SectionIndex title={siteContent.portfolioTitle} caption={siteContent.portfolioCaption} />
           <div className="work-main">
             <div className="project-grid" id="work-heading">
               {projects.map((project, index) => <a className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.index} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
@@ -202,7 +210,7 @@ export default function Home() {
 
       <section className="certificates compact-section" id="certificates" aria-label="Sertifikasi">
         <div className="section-wrap indexed-grid">
-          <SectionIndex title="Sertifikasi" caption="Validasi / untuk kemajuan" />
+          <SectionIndex title={siteContent.certificatesTitle} caption={siteContent.certificatesCaption} />
           <CertificateGallery items={certifications} />
         </div>
       </section>
@@ -210,11 +218,11 @@ export default function Home() {
       <section className="contact" id="contact" aria-labelledby="contact-heading">
         <Image className="contact-art" src="/footer-castle-art.webp" fill sizes="100vw" alt="" />
         <div className="section-wrap contact-grid">
-          <SectionIndex title="Mari Terhubung" caption="Ruang untuk dialog / dan kolaborasi" />
+          <SectionIndex title={siteContent.contactTitle} caption={siteContent.contactCaption} />
           <div className="contact-copy" data-reveal>
-            <h3 id="contact-heading">Mari Ciptakan Sesuatu yang Bermakna.</h3>
-            <p>Untuk diskusi proyek, pertukaran gagasan,<br />dan kolaborasi yang bermakna.</p>
-            <span className="contact-availability">Tautan kontak sedang disiapkan</span>
+            <h3 id="contact-heading">{siteContent.contactHeading}</h3>
+            <p>{siteContent.contactDescription}</p>
+            <span className="contact-availability">{siteContent.contactAvailability}</span>
             <div className="socials" aria-label="Media sosial">
               {socials.map((social) => social.href ? (
                 <a href={social.href} aria-label={social.label} data-tooltip={social.label} key={social.label} target={social.href.startsWith('http') ? '_blank' : undefined} rel={social.href.startsWith('http') ? 'noreferrer' : undefined}>
@@ -227,7 +235,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <p className="contact-note">Same<br />curiosity<br />a brighter<br />horizon</p>
+          <p className="contact-note">{siteContent.contactNote}</p>
         </div>
       </section>
 
