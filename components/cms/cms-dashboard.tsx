@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowDown, ArrowUp, BarChart3, BookOpen, BriefcaseBusiness,
-  Check, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
-  ImageIcon, LayoutDashboard, Link2, LogOut, Menu, Plus, Save, Search,
+  Check, ChevronDown, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
+  ImageIcon, Link2, LogOut, Menu, MoreHorizontal, Plus, Save, Search,
   Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -136,6 +136,20 @@ function recordTitle(record: CmsRecord, module: CmsModuleDefinition) {
 function recordSummary(record: CmsRecord, fallback: string) {
   const candidate = record.data.description ?? record.data.summary ?? record.data.excerpt ?? record.data.introduction;
   return typeof candidate === 'string' || typeof candidate === 'number' ? String(candidate) : fallback;
+}
+
+function recordImage(record: CmsRecord) {
+  const candidate = record.data.image ?? record.data.artwork;
+  return typeof candidate === 'string' && candidate ? candidate : null;
+}
+
+function formatUpdatedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { date: 'Belum tersimpan', time: '' };
+  return {
+    date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 function newRecord(module: CmsModuleDefinition): CmsRecord {
@@ -349,15 +363,72 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   const [activeView, setActiveView] = useState<ActiveView>('overview');
   const [editor, setEditor] = useState<{ module: CmsModuleDefinition; record: CmsRecord } | null>(null);
   const [query, setQuery] = useState('');
+  const [globalQuery, setGlobalQuery] = useState('');
+  const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mediaCount, setMediaCount] = useState<number | null>(null);
+  const globalSearchRef = useRef<HTMLInputElement>(null);
 
   const activeModule = cmsModules.find((module) => module.collection === activeView);
   const records = activeModule ? collections[activeModule.collection] ?? [] : [];
   const filteredRecords = records.filter((record) => JSON.stringify(record.data).toLowerCase().includes(query.toLowerCase()));
   const totalContent = Object.values(collections).reduce((sum, values) => sum + values.length, 0);
   const published = Object.values(collections).flat().filter((record) => record.status === 'published').length;
+  const allRecords = useMemo(() => Object.values(collections).flat(), [collections]);
+  const recentRecords = useMemo(() => [...allRecords].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5), [allRecords]);
+  const globalResults = useMemo(() => {
+    const term = globalQuery.trim().toLowerCase();
+    if (!term) return [];
+    return allRecords.filter((record) => JSON.stringify(record.data).toLowerCase().includes(term)).slice(0, 7);
+  }, [allRecords, globalQuery]);
+  const stats = [
+    { label: 'Profil Selesai', value: collections.profile?.length ? '100%' : '0%', note: collections.profile?.length ? 'Lengkap' : 'Belum diisi' },
+    { label: 'Pendidikan', value: collections.education?.length ?? 0, note: 'entri' },
+    { label: 'Pengalaman', value: collections.experience?.length ?? 0, note: 'entri' },
+    { label: 'Portfolio', value: collections.projects?.length ?? 0, note: 'entri' },
+    { label: 'Sertifikasi', value: collections.certifications?.length ?? 0, note: 'entri' },
+    { label: 'Artikel', value: collections.articles?.length ?? 0, note: 'entri' },
+    { label: 'Media', value: mediaCount ?? '—', note: 'file' },
+  ];
+
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/cms/media').then((response) => response.json() as Promise<{ media?: MediaItem[] }>).then((result) => {
+      if (active) setMediaCount(result.media?.length ?? 0);
+    }).catch(() => { if (active) setMediaCount(0); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    function keyboard(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        globalSearchRef.current?.focus();
+      }
+      if (event.key === 'Escape') {
+        setGlobalQuery('');
+        setProfileOpen(false);
+        globalSearchRef.current?.blur();
+      }
+    }
+    window.addEventListener('keydown', keyboard);
+    return () => window.removeEventListener('keydown', keyboard);
+  }, []);
 
   function navigate(view: ActiveView) { setActiveView(view); setSidebarOpen(false); setQuery(''); }
+  function editRecord(record: CmsRecord) {
+    const moduleDefinition = cmsModules.find((item) => item.collection === record.collection);
+    if (!moduleDefinition) return;
+    setActiveView(moduleDefinition.collection);
+    setEditor({ module: moduleDefinition, record });
+    setGlobalQuery('');
+  }
+  function createIn(collection: CmsCollection) {
+    const moduleDefinition = cmsModules.find((item) => item.collection === collection);
+    if (!moduleDefinition) return;
+    setActiveView(collection);
+    setEditor({ module: moduleDefinition, record: newRecord(moduleDefinition) });
+  }
   function saveRecord(record: CmsRecord) {
     setCollections((current) => {
       const list = current[record.collection] ?? [];
@@ -387,33 +458,36 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   return (
     <main className="cms-shell">
       <aside className={`cms-sidebar${sidebarOpen ? ' is-open' : ''}`}>
-        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><strong>ANH</strong><span>Content<br />Management</span></Link><button type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
+        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><strong>ANH</strong><span>Portofolio Pribadi</span></Link><button type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
         <nav aria-label="Navigasi CMS">
-          <button className={activeView === 'overview' ? 'active' : ''} type="button" onClick={() => navigate('overview')}><LayoutDashboard size={17} /><span>Ringkasan</span></button>
-          <p>Konten website</p>
-          {cmsModules.map((module) => { const Icon = moduleIcons[module.collection]; return <button className={activeView === module.collection ? 'active' : ''} type="button" onClick={() => navigate(module.collection)} key={module.collection}><Icon size={17} /><span>{module.label}</span><b>{collections[module.collection]?.length ?? 0}</b></button>; })}
-          <p>Aset</p>
-          <button className={activeView === 'media' ? 'active' : ''} type="button" onClick={() => navigate('media')}><ImageIcon size={17} /><span>Media</span></button>
+          <button className={activeView === 'overview' ? 'active' : ''} type="button" onClick={() => navigate('overview')}><b>00</b><span>Ikhtisar</span></button>
+          {cmsModules.map((module, index) => <button className={activeView === module.collection ? 'active' : ''} type="button" onClick={() => navigate(module.collection)} key={module.collection}><b>{String(index + 1).padStart(2, '0')}</b><span>{module.label}</span></button>)}
+          <button className={activeView === 'media' ? 'active' : ''} type="button" onClick={() => navigate('media')}><b>{String(cmsModules.length + 1).padStart(2, '0')}</b><span>Media</span></button>
         </nav>
-        <div className="cms-sidebar-user"><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><div><strong>{admin.displayName}</strong><small>{admin.email}</small></div><button type="button" onClick={logout} aria-label="Keluar"><LogOut size={16} /></button></div>
+        <div className="cms-sidebar-signature"><i /><span>CONTENT<br />MANAGEMENT<br />SYSTEM</span></div>
       </aside>
       {sidebarOpen ? <button className="cms-sidebar-backdrop" type="button" aria-label="Tutup menu" onClick={() => setSidebarOpen(false)} /> : null}
 
       <div className="cms-workspace">
         <header className="cms-topbar">
           <button className="cms-menu-button" type="button" onClick={() => setSidebarOpen(true)} aria-label="Buka menu"><Menu size={19} /></button>
-          <div><span>CMS Portfolio</span><strong>{activeView === 'overview' ? 'Ringkasan' : activeView === 'media' ? 'Media' : activeModule?.label}</strong></div>
-          <div><Link href="/" target="_blank" rel="noreferrer"><Eye size={15} />Lihat website</Link><ThemeToggle /></div>
+          <div className="cms-global-search">
+            <Search size={17} />
+            <input ref={globalSearchRef} value={globalQuery} onChange={(event) => setGlobalQuery(event.target.value)} placeholder="Cari konten, proyek, atau media..." aria-label="Cari seluruh konten" />
+            <kbd>⌘ K</kbd>
+            {globalQuery ? <div className="cms-search-results">{globalResults.map((record) => { const moduleDefinition = cmsModules.find((item) => item.collection === record.collection)!; return <button type="button" onClick={() => editRecord(record)} key={record.id}><span><strong>{recordTitle(record, moduleDefinition)}</strong><small>{moduleDefinition.label}</small></span><ChevronRight size={15} /></button>; })}{!globalResults.length ? <p>Tidak ada konten yang cocok.</p> : null}</div> : null}
+          </div>
+          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><button type="button" onClick={logout}><LogOut size={14} />Keluar</button></div> : null}</div></div>
         </header>
 
-        <div className="cms-content">
+        <div className={`cms-content${activeView === 'overview' ? ' is-overview' : ''}`}>
           {activeView === 'overview' ? (
             <section className="cms-overview">
-              <header><div><span>Selamat datang, {admin.displayName.split(' ')[0]}</span><h1>Kelola konten website</h1><p>Pilih bagian yang ingin diperbarui. Setiap perubahan disimpan ke basis data dan langsung digunakan oleh website.</p></div><Link href="/" target="_blank" rel="noreferrer"><Eye size={16} />Buka website</Link></header>
-              <div className="cms-metrics"><article><span>Total konten</span><strong>{totalContent}</strong><small>Semua modul</small></article><article><span>Sudah terbit</span><strong>{published}</strong><small>Tampil di website</small></article><article><span>Draft</span><strong>{totalContent - published}</strong><small>Belum dipublikasikan</small></article></div>
+              <header className="cms-overview-hero"><div><i /><span>CMS PORTOFOLIO</span><h1>Ikhtisar Konten</h1><p>Kelola seluruh konten portofolio Anda di satu tempat.<br />Perbarui, tambah, dan kembangkan cerita profesional Anda.</p></div></header>
+              <div className="cms-overview-stats">{stats.map((stat) => <article key={stat.label}><span>{stat.label}</span><strong>{stat.value}</strong><small>{stat.note}</small></article>)}</div>
               <div className="cms-overview-grid">
-                <section><div className="cms-block-heading"><div><span>Modul utama</span><h2>Pilih konten untuk dikelola</h2><p>Masuk ke modul untuk menambah, menyunting, mengurutkan, atau mengatur status publikasi.</p></div></div><div className="cms-quick-grid">{cmsModules.filter((module) => ['profile','experience','projects','certifications','articles','socials'].includes(module.collection)).map((module) => { const Icon = moduleIcons[module.collection]; return <button type="button" onClick={() => navigate(module.collection)} key={module.collection}><Icon size={19} /><span><strong>{module.label}</strong><small>{collections[module.collection]?.length ?? 0} konten · {module.description}</small></span><ChevronRight size={17} /></button>; })}</div></section>
-                <aside><span>Status CMS</span><h2>Semua sistem aktif</h2><p>Konten tersimpan terpusat. Item berstatus draft tetap aman di CMS dan tidak tampil kepada pengunjung.</p><ul><li><Check size={15} /><span><strong>Basis data</strong><small>Terhubung dan siap menyimpan</small></span></li><li><Check size={15} /><span><strong>Pustaka media</strong><small>Gambar dan dokumen tersedia</small></span></li><li><Check size={15} /><span><strong>Akses admin</strong><small>Hanya satu akun pengelola</small></span></li></ul></aside>
+                <section className="cms-recent"><header><div><i /><h2>Terakhir Diperbarui</h2></div><button type="button" onClick={() => navigate('projects')}>Lihat Semua <ChevronRight size={17} /></button></header><div className="cms-recent-head"><span>Judul</span><span>Tipe</span><span>Status</span><span>Tanggal</span><span /></div><div className="cms-recent-list">{recentRecords.map((record) => { const moduleDefinition = cmsModules.find((item) => item.collection === record.collection)!; const Icon = moduleIcons[record.collection]; const updated = formatUpdatedAt(record.updatedAt); const image = recordImage(record); return <button type="button" onClick={() => editRecord(record)} key={record.id}><span className="cms-recent-title">{image ? <Image src={image} width={62} height={44} unoptimized alt="" /> : <i><Icon size={18} /></i>}<span><strong>{recordTitle(record, moduleDefinition)}</strong><small>{recordSummary(record, moduleDefinition.description)}</small></span></span><span className="cms-recent-type"><Icon size={16} />{moduleDefinition.label}</span><span className={`cms-recent-status ${record.status}`}><i />{record.status === 'published' ? 'Dipublikasikan' : 'Draft'}</span><span className="cms-recent-date">{updated.date}<small>{updated.time}</small></span><MoreHorizontal size={18} /></button>; })}</div></section>
+                <aside className="cms-quick-actions"><header><i /><h2>Aksi Cepat</h2><p>Tambah konten baru ke portofolio Anda.</p></header><div>{([['projects','Tambah Proyek'],['experience','Tambah Pengalaman'],['certifications','Tambah Sertifikasi'],['articles','Tambah Artikel']] as [CmsCollection,string][]).map(([collection,label]) => { const Icon = moduleIcons[collection]; return <button type="button" onClick={() => createIn(collection)} key={collection}><Icon size={18} /><span>{label}</span><ChevronRight size={17} /></button>; })}<button type="button" onClick={() => navigate('media')}><ImageIcon size={18} /><span>Unggah Media</span><ChevronRight size={17} /></button></div><footer><i /><p><span>{published}</span> dari <span>{totalContent}</span> konten telah dipublikasikan.</p></footer></aside>
               </div>
             </section>
           ) : activeView === 'media' ? <MediaLibrary /> : activeModule ? (
