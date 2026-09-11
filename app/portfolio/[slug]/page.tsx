@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
@@ -78,40 +78,47 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </section>
 
         <section className="case-section case-study">
-          <div className="section-wrap case-editorial-grid">
-            <header><i /><p>Detail Proyek</p></header>
-            <div className="case-body case-study-body">
-              <div className="case-overview">
-                <p className="case-label">Tantangan &amp; pendekatan</p>
-                <h2>{project.challenge}</h2>
+          <div className="section-wrap case-study-shell">
+            <header className="case-study-heading">
+              <div><i /><p className="case-label">Studi kasus</p></div>
+              <h2>Ringkasan proyek</h2>
+            </header>
+
+            <div className="case-story-grid">
+              <article>
+                <h3>Konteks</h3>
+                <p>{project.challenge}</p>
+              </article>
+              <article>
+                <h3>Solusi</h3>
                 <p>{project.approach}</p>
-              </div>
-
-              <div className="case-study-columns">
-                <section>
-                  <h3>Kontribusi</h3>
-                  <ul className="case-scope">
-                    {project.scope.map((item) => <li key={item}><Check size={17} /><span>{item}</span></li>)}
-                  </ul>
-                </section>
-                <section>
-                  <h3>Alur kerja</h3>
-                  <ol className="case-process">
-                    {project.process.map((step, index) => (
-                      <li key={step.title}>
-                        <span>{String(index + 1).padStart(2, '0')}</span>
-                        <div><strong>{step.title}</strong><p>{step.description}</p></div>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
-              </div>
-
-              <div className="case-outcome">
-                <p className="case-label">Hasil</p>
-                <p>{project.outcome}</p>
-              </div>
+              </article>
             </div>
+
+            <div className="case-details-grid">
+              <section>
+                <h3>Kontribusi utama</h3>
+                <ul className="case-scope">
+                  {project.scope.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </section>
+              <section>
+                <h3>Proses singkat</h3>
+                <ol className="case-process">
+                  {project.process.map((step) => (
+                    <li key={step.title}>
+                      <strong>{step.title}</strong>
+                      <p>{step.description}</p>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            </div>
+
+            <aside className="case-outcome">
+              <p className="case-label">Hasil</p>
+              <p>{project.outcome}</p>
+            </aside>
           </div>
         </section>
 
