@@ -89,10 +89,7 @@ export const portfolioData = {
       approach: 'Mengutamakan arsitektur informasi, alur inti, dan komponen yang konsisten sebelum memperluas fungsi.',
       tools: ['Next.js', 'TypeScript', 'Design system', 'Pengujian responsif'],
       deliverables: ['Arsitektur informasi', 'Antarmuka responsif', 'Dokumentasi komponen'],
-      evidenceLinks: [
-        { label: 'Lihat website / demo proyek', type: 'Website', href: null as string | null },
-        { label: 'Lihat dokumentasi proyek', type: 'Dokumen daring', href: null as string | null },
-      ],
+      evidence: { label: 'Lihat website / bukti proyek', type: 'Website atau dokumen daring', href: null as string | null },
       artifacts: [
         { title: 'Preview aplikasi web', format: 'Website', kind: 'website', description: 'Tampilan dan alur utama produk digital.', href: null as string | null },
         { title: 'Dokumentasi teknis', format: 'PDF / dokumen', kind: 'document', description: 'Catatan struktur, keputusan, dan pengembangan.', href: null as string | null },
@@ -114,9 +111,7 @@ export const portfolioData = {
       approach: 'Membentuk klasifikasi, aturan penamaan, dan alur pemeliharaan yang sederhana serta dapat diterapkan bertahap.',
       tools: ['Microsoft Excel', 'Dokumen prosedur', 'Pemetaan proses'],
       deliverables: ['Indeks arsip', 'Template dokumen', 'Panduan pemeliharaan'],
-      evidenceLinks: [
-        { label: 'Lihat bukti sistem arsip', type: 'Dokumen daring', href: null as string | null },
-      ],
+      evidence: { label: 'Lihat bukti sistem arsip', type: 'Dokumen daring', href: null as string | null },
       artifacts: [
         { title: 'Indeks arsip kerja', format: 'XLSX', kind: 'spreadsheet', description: 'Struktur pencarian dan pencatatan dokumen.', href: null as string | null },
         { title: 'Panduan pengarsipan', format: 'PDF', kind: 'document', description: 'Standar penamaan dan pembaruan arsip.', href: null as string | null },
@@ -138,9 +133,7 @@ export const portfolioData = {
       approach: 'Menetapkan struktur data, aturan validasi, dan hierarki laporan sebelum menyusun visualisasi.',
       tools: ['Microsoft Excel', 'Validasi data', 'Visualisasi laporan'],
       deliverables: ['Template pencatatan', 'Ringkasan indikator', 'Panduan validasi'],
-      evidenceLinks: [
-        { label: 'Lihat workbook dan laporan', type: 'Spreadsheet daring', href: null as string | null },
-      ],
+      evidence: { label: 'Lihat workbook dan laporan', type: 'Spreadsheet daring', href: null as string | null },
       artifacts: [
         { title: 'Model data dan pelaporan', format: 'XLSX', kind: 'spreadsheet', description: 'Workbook terstruktur untuk input dan pemeriksaan.', href: null as string | null },
         { title: 'Ringkasan hasil', format: 'PDF / PPTX', kind: 'presentation', description: 'Temuan utama untuk kebutuhan komunikasi.', href: null as string | null },
@@ -162,9 +155,7 @@ export const portfolioData = {
       approach: 'Menggabungkan catatan, bukti, dan konteks ke dalam struktur laporan yang memisahkan fakta, analisis, dan tindak lanjut.',
       tools: ['Riset lapangan', 'Dokumentasi', 'Analisis tematik'],
       deliverables: ['Catatan observasi', 'Laporan temuan', 'Rekomendasi tindak lanjut'],
-      evidenceLinks: [
-        { label: 'Lihat laporan dan dokumentasi', type: 'PDF / dokumen daring', href: null as string | null },
-      ],
+      evidence: { label: 'Lihat laporan dan dokumentasi', type: 'PDF / dokumen daring', href: null as string | null },
       artifacts: [
         { title: 'Laporan lapangan', format: 'PDF / DOCX', kind: 'document', description: 'Temuan, konteks, dan dokumentasi pendukung.', href: null as string | null },
         { title: 'Presentasi rekomendasi', format: 'PPTX', kind: 'presentation', description: 'Ringkasan keputusan dan langkah berikutnya.', href: null as string | null },
@@ -210,6 +201,8 @@ export const portfolioData = {
       readTime: '5 menit baca',
       excerpt: 'Dokumentasi yang baik bukan sekadar arsip. Ia membantu orang memahami konteks, mengambil keputusan, dan melanjutkan pekerjaan dengan lebih percaya diri.',
       lead: 'Dokumentasi menjadi bernilai ketika seseorang yang tidak mengikuti proses sejak awal tetap dapat memahami apa yang terjadi, mengapa keputusan dibuat, dan apa yang perlu dilakukan berikutnya.',
+      takeaways: ['Tentukan pembaca dan keputusan yang perlu mereka ambil.', 'Gunakan struktur yang konsisten dan mudah diperbarui.', 'Jadikan dokumentasi bagian dari proses kerja sehari-hari.'],
+      closing: 'Dokumentasi yang matang tidak diukur dari panjangnya, tetapi dari seberapa mudah informasi itu ditemukan, dipahami, dan digunakan kembali oleh orang berikutnya.',
       sections: [
         { heading: 'Mulai dari kebutuhan pembaca', paragraphs: ['Sebelum menulis, tentukan siapa yang akan menggunakan dokumen dan keputusan apa yang perlu mereka ambil. Informasi untuk pelaksana operasional tentu berbeda dengan ringkasan yang dibutuhkan pengambil keputusan.', 'Dengan tujuan yang jelas, dokumentasi dapat tetap ringkas tanpa kehilangan konteks penting.'] },
         { heading: 'Susun struktur yang konsisten', paragraphs: ['Gunakan pola yang dapat diulang: konteks, tujuan, langkah kerja, hasil, hambatan, dan tindak lanjut. Struktur yang konsisten mengurangi waktu pencarian serta memudahkan pembaruan.', 'Nama file, status versi, dan pemilik informasi juga perlu ditulis secara eksplisit agar dokumen tidak berubah menjadi arsip tanpa arah.'] },
@@ -224,6 +217,8 @@ export const portfolioData = {
       readTime: '6 menit baca',
       excerpt: 'Solusi digital yang baik dimulai dari pemahaman proses kerja—bukan dari memilih teknologi yang paling baru.',
       lead: 'Digitalisasi paling berguna ketika ia menyederhanakan pekerjaan nyata. Karena itu, langkah pertama selalu memahami proses, hambatan, dan orang yang menjalankannya.',
+      takeaways: ['Pahami proses sebelum menentukan teknologi.', 'Prioritaskan alur inti dan kemudahan adopsi.', 'Ukur perubahan yang benar-benar dirasakan pengguna.'],
+      closing: 'Solusi digital yang profesional bukan yang memiliki fitur paling banyak, melainkan yang mengurangi hambatan dan membuat pekerjaan penting menjadi lebih jelas.',
       sections: [
         { heading: 'Petakan proses sebelum membuat fitur', paragraphs: ['Amati bagaimana pekerjaan dilakukan saat ini, informasi apa yang berpindah, serta bagian mana yang sering menimbulkan keterlambatan atau kesalahan. Peta proses memberi gambaran yang lebih jujur daripada daftar fitur.', 'Dari sana, kebutuhan dapat dipisahkan menjadi kebutuhan utama, pendukung, dan hal yang sebenarnya belum perlu dibangun.'] },
         { heading: 'Prioritaskan kejelasan dan adopsi', paragraphs: ['Sistem tidak akan membantu jika pengguna kesulitan memahami alurnya. Bahasa yang familiar, hierarki informasi yang jelas, dan umpan balik yang tepat sering lebih penting daripada banyaknya fungsi.', 'Mulailah dari alur inti yang kecil, uji bersama pengguna, lalu perbaiki berdasarkan hambatan yang benar-benar muncul.'] },
@@ -238,6 +233,8 @@ export const portfolioData = {
       readTime: '4 menit baca',
       excerpt: 'Antarmuka profesional tidak harus ramai. Kejelasan lahir dari prioritas visual, ritme, dan keputusan yang konsisten.',
       lead: 'Desain antarmuka yang matang membantu pengguna melihat hal terpenting terlebih dahulu, memahami hubungan antarbagian, dan bergerak tanpa banyak menebak.',
+      takeaways: ['Bangun hierarki yang mudah dipindai.', 'Gunakan ruang untuk memisahkan konteks.', 'Berikan fungsi yang konsisten pada warna aksen.'],
+      closing: 'Kejelasan visual adalah hasil dari keputusan kecil yang konsisten. Ketika hierarki, ruang, dan warna bekerja sebagai satu sistem, antarmuka terasa lebih tenang dan dapat dipercaya.',
       sections: [
         { heading: 'Bentuk hierarki yang dapat dipindai', paragraphs: ['Perbedaan ukuran, bobot, warna, dan jarak perlu menunjukkan tingkatan informasi. Jika semua elemen sama kuatnya, pengguna harus bekerja lebih keras untuk menemukan titik masuk.', 'Gunakan penekanan hanya pada informasi dan tindakan yang benar-benar membutuhkan perhatian.'] },
         { heading: 'Biarkan ruang bekerja', paragraphs: ['Ruang kosong bukan area yang gagal diisi. Ia memisahkan kelompok informasi, menciptakan ritme, dan membantu elemen penting memperoleh fokus.', 'Konsistensi jarak juga membuat halaman terasa tenang dan profesional, terutama ketika kontennya padat.'] },

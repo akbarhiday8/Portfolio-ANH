@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
-import { DetailNavigation } from '@/components/detail-navigation';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ReadingHeader } from '@/components/reading-header';
 import { portfolioData } from '@/lib/portfolio-data';
 
 export const metadata: Metadata = {
@@ -14,13 +13,7 @@ export default function ArticleIndexPage() {
   return (
     <>
       <MotionController />
-      <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap detail-masthead">
-          <a className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></a>
-          <DetailNavigation activePage="article" />
-          <ThemeToggle />
-        </div>
-      </header>
+      <ReadingHeader activePage="article" />
 
       <main className="article-index-page">
         <section className="article-index-hero">
@@ -29,7 +22,14 @@ export default function ArticleIndexPage() {
               <p className="article-kicker">Artikel / Catatan</p>
               <h1>Pengetahuan yang<br />dirapikan menjadi<br /><span>gagasan.</span></h1>
             </div>
-            <p>Catatan tentang teknologi, dokumentasi, produktivitas, desain sistem, dan cara kerja yang lebih terstruktur.</p>
+            <div className="article-index-context">
+              <p>Catatan tentang teknologi, dokumentasi, produktivitas, desain sistem, dan cara kerja yang lebih terstruktur.</p>
+              <dl>
+                <div><dt>{portfolioData.articles.length}</dt><dd>Artikel terbit</dd></div>
+                <div><dt>3</dt><dd>Bidang utama</dd></div>
+              </dl>
+              <div className="article-index-topics"><span>Teknologi</span><span>Produktivitas</span><span>Desain Sistem</span></div>
+            </div>
           </div>
         </section>
 

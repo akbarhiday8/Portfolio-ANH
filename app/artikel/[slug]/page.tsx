@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
-import { DetailNavigation } from '@/components/detail-navigation';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ReadingHeader } from '@/components/reading-header';
 import { portfolioData } from '@/lib/portfolio-data';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
@@ -35,19 +34,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <>
       <MotionController />
-      <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap detail-masthead">
-          <a className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></a>
-          <DetailNavigation activePage="article" />
-          <ThemeToggle />
-        </div>
-      </header>
+      <ReadingHeader activePage="article" />
 
       <main className="article-page">
         <article>
           <header className="article-hero">
             <div className="section-wrap article-hero-inner">
-              <p className="article-kicker">{article.category}</p>
+              <p className="article-kicker"><a href="/artikel">Artikel</a> / {article.category}</p>
               <h1>{article.title}</h1>
               <p className="article-lead">{article.lead}</p>
               <div className="article-byline"><span>Akbar Nur Hidayanto</span><span>{article.publishedAt}</span><span><Clock3 size={14} /> {article.readTime}</span></div>
@@ -57,9 +50,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <div className="section-wrap article-reading-grid">
             <aside>
               <p>Dalam artikel ini</p>
-              <nav aria-label="Daftar isi">{article.sections.map((section) => <a href={`#${section.heading.toLowerCase().replaceAll(' ', '-')}`} key={section.heading}>{section.heading}</a>)}</nav>
+              <nav aria-label="Daftar isi">
+                <a href="#ringkasan">Ringkasan utama</a>
+                {article.sections.map((section) => <a href={`#${section.heading.toLowerCase().replaceAll(' ', '-')}`} key={section.heading}>{section.heading}</a>)}
+                <a href="#penutup">Penutup</a>
+              </nav>
             </aside>
             <div className="article-body">
+              <section className="article-summary-box" id="ringkasan">
+                <small>Ringkasan utama</small>
+                <h2>Hal yang perlu dibawa dari artikel ini.</h2>
+                <ul>{article.takeaways.map((item) => <li key={item}>{item}</li>)}</ul>
+              </section>
               {article.sections.map((section) => (
                 <section id={section.heading.toLowerCase().replaceAll(' ', '-')} key={section.heading}>
                   <h2>{section.heading}</h2>
@@ -67,6 +69,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 </section>
               ))}
               <blockquote>Catatan yang baik tidak berhenti pada informasi; ia membantu orang memahami dan mengambil langkah berikutnya.</blockquote>
+              <section className="article-closing" id="penutup">
+                <small>Penutup</small><h2>Merangkum gagasan menjadi tindakan.</h2><p>{article.closing}</p>
+              </section>
             </div>
           </div>
         </article>

@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye, FileSpreadsheet, FileText, Globe2, Presentation } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
-import { DetailNavigation } from '@/components/detail-navigation';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ReadingHeader } from '@/components/reading-header';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
@@ -61,15 +60,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   return (
     <>
       <MotionController />
-      <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap detail-masthead">
-          <Link className="brand" href="/" aria-label="ANH — kembali ke beranda">
-            <strong>ANH</strong><span>Portofolio Pribadi</span>
-          </Link>
-          <DetailNavigation activePage="work" />
-          <ThemeToggle />
-        </div>
-      </header>
+      <ReadingHeader activePage="work" />
 
       <main className="project-detail-page">
         <section className="case-hero">
@@ -166,15 +157,15 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <div className="case-evidence">
                   <div className="case-evidence-heading"><span><Eye size={18} /> Tautan bukti proyek</span><small>Dibuka sebagai preview</small></div>
                   <div className="case-evidence-links">
-                    {project.evidenceLinks.map((evidence) => evidence.href ? (
-                      <a href={evidence.href} target="_blank" rel="noreferrer" key={evidence.label}>
-                        <span><small>{evidence.type}</small><strong>{evidence.label}</strong></span><ArrowUpRight size={17} />
+                    {project.evidence.href ? (
+                      <a href={project.evidence.href} target="_blank" rel="noreferrer">
+                        <span><small>{project.evidence.type}</small><strong>{project.evidence.label}</strong></span><ArrowUpRight size={17} />
                       </a>
                     ) : (
-                      <div className="is-pending" key={evidence.label}>
-                        <span><small>{evidence.type}</small><strong>{evidence.label}</strong></span><em>Tautan disiapkan</em>
+                      <div className="is-pending">
+                        <span><small>{project.evidence.type}</small><strong>{project.evidence.label}</strong></span><em>Tautan disiapkan</em>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
                 <div className="case-artifact-list">
