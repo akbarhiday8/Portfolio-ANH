@@ -6,8 +6,9 @@ import { getCurrentCmsAdmin, hasCmsAdmin } from '@/lib/cms-auth';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRegisterPage() {
+  const currentAdmin = await getCurrentCmsAdmin();
+  if (currentAdmin) redirect('/admin');
   if (await hasCmsAdmin()) redirect('/admin/login');
-  if (await getCurrentCmsAdmin()) redirect('/admin');
   return (
     <main className="cms-auth-page">
       <header className="cms-auth-header"><a href="/" className="cms-auth-brand" aria-label="Kembali ke portfolio"><strong>ANH</strong><span>Content Management</span></a><ThemeToggle /></header>
