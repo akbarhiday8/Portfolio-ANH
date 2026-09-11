@@ -296,14 +296,14 @@
 .cms-shell { grid-template-columns:248px minmax(0,1fr); background:var(--paper); }
 .cms-workspace { grid-column:2; }
 .cms-sidebar { position:fixed; inset:0 auto 0 0; width:248px; height:100dvh; overflow:hidden; background:linear-gradient(145deg,#202120 0%,#111210 100%); }
-.cms-sidebar-brand { min-height:112px; align-items:flex-start; padding:27px 22px 22px 41px; }
+.cms-sidebar-brand { min-height:104px; align-items:flex-start; padding:24px 22px 19px 41px; }
 .cms-sidebar-brand > a { display:block; }
 .cms-sidebar-brand strong { display:block; font:400 38px/.95 var(--serif); letter-spacing:-.04em; }
 .cms-sidebar-brand span { display:block; margin:10px 0 0; border:0; padding:0; color:#a3a39f; font-size:10px; letter-spacing:.24em; line-height:1.2; }
-.cms-sidebar nav { min-height:0; padding:11px 18px 18px; }
-.cms-sidebar nav > p { margin:12px 0 6px; padding-inline:14px; color:#73756f; font:700 9px var(--sans); letter-spacing:.18em; }
+.cms-sidebar nav { min-height:0; padding:8px 18px 14px; }
+.cms-sidebar nav > p { margin:10px 0 5px; padding-inline:14px; color:#73756f; font:700 9px var(--sans); letter-spacing:.18em; }
 .cms-sidebar nav > p:first-child { margin-top:4px; }
-.cms-sidebar nav button { min-height:38px; grid-template-columns:24px 1fr; gap:11px; border-radius:0; padding:0 14px; color:#b7b7b2; font:400 14px var(--serif); }
+.cms-sidebar nav button { min-height:35px; grid-template-columns:24px 1fr; gap:11px; border-radius:0; padding:0 14px; color:#b7b7b2; font:400 14px var(--serif); }
 .cms-sidebar nav button > svg { color:#8d8f8a; }
 .cms-sidebar nav button.active > svg,.cms-sidebar nav button:hover > svg { color:#d85a6c; }
 .cms-sidebar nav button:before { left:0; width:3px; height:100%; border-radius:0; }
