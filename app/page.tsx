@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
@@ -163,7 +162,7 @@ export default function Home() {
           <SectionIndex title="Portfolio Pilihan" caption="Gagasan / menjadi karya" />
           <div className="work-main">
             <div className="project-grid" id="work-heading">
-              {projects.map((project, index) => <Link className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.index} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
+              {projects.map((project, index) => <a className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.index} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
                 <div className="project-image">
                   <Image
                     src={project.image}
@@ -179,8 +178,9 @@ export default function Home() {
                     <span className="project-arrow" aria-hidden="true"><ArrowUpRight size={17} /></span>
                   </div>
                   <p className="project-meta"><span>{project.category}</span><span>{project.year}</span></p>
+                  <p className="project-open">Buka studi kasus <ArrowRight size={14} /></p>
                 </div>
-              </Link>)}
+              </a>)}
             </div>
           </div>
         </div>

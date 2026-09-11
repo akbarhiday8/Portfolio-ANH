@@ -5,24 +5,25 @@ import { Menu } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const primaryLinks = [
-  { id: 'top', label: 'Beranda' },
-  { id: 'about', label: 'Tentang' },
-  { id: 'education', label: 'Pendidikan' },
-  { id: 'experience', label: 'Pengalaman' },
-  { id: 'work', label: 'Portfolio' },
-  { id: 'certificates', label: 'Sertifikasi' },
+  { id: 'top', href: '#top', label: 'Beranda' },
+  { id: 'about', href: '#about', label: 'Tentang' },
+  { id: 'education', href: '#education', label: 'Pendidikan' },
+  { id: 'experience', href: '#experience', label: 'Pengalaman' },
+  { id: 'work', href: '#work', label: 'Portfolio' },
+  { id: 'certificates', href: '#certificates', label: 'Sertifikasi' },
+  { id: null, href: '/artikel', label: 'Artikel' },
 ];
 
 const mobileLinks = [
   ...primaryLinks,
-  { id: 'contact', label: 'Kontak' },
+  { id: 'contact', href: '#contact', label: 'Kontak' },
 ];
 
 export function SiteNavigation() {
   const [active, setActive] = useState('top');
 
   useEffect(() => {
-    const sections = mobileLinks.map(({ id }) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    const sections = mobileLinks.map(({ id }) => id ? document.getElementById(id) : null).filter(Boolean) as HTMLElement[];
     let frame = 0;
 
     const syncNavigation = () => {
@@ -57,7 +58,7 @@ export function SiteNavigation() {
     <>
       <nav className="desktop-nav" aria-label="Navigasi utama">
         {primaryLinks.map((link) => (
-          <a className={active === link.id ? 'active' : ''} href={`#${link.id}`} key={link.id} onClick={() => setActive(link.id)}>{link.label}</a>
+          <a className={link.id && active === link.id ? 'active' : ''} href={link.href} key={link.href} onClick={() => link.id && setActive(link.id)}>{link.label}</a>
         ))}
       </nav>
       <div className="mobile-nav">
@@ -67,7 +68,7 @@ export function SiteNavigation() {
             <SheetTitle className="sheet-title">Navigasi / 2026</SheetTitle>
             <nav aria-label="Navigasi seluler">
               {mobileLinks.map((link) => (
-                <SheetClose key={link.id} render={<a href={`#${link.id}`} onClick={() => setActive(link.id)} />}>
+                <SheetClose key={link.href} render={<a href={link.href} aria-label={link.label} onClick={() => link.id && setActive(link.id)} />}>
                   {link.label}
                 </SheetClose>
               ))}
