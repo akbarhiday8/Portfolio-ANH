@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
+import { SiteFooter } from '@/components/site-footer';
 import { portfolioData } from '@/lib/portfolio-data';
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default function ArticleIndexPage() {
       <MotionController />
       <ReadingHeader activePage="article" />
 
-      <main className="article-index-page">
+      <main className="article-index-page" id="top">
         <section className="article-index-hero">
           <div className="section-wrap article-index-hero-grid">
             <div>
@@ -49,9 +50,7 @@ export default function ArticleIndexPage() {
           </div>
         </section>
 
-        <footer className="detail-footer">
-          <div className="section-wrap"><a href="/">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p><nav className="detail-footer-links"><a href="/#work">Portfolio</a><a href="/#contact">Kontak</a></nav></div>
-        </footer>
+        <SiteFooter />
       </main>
     </>
   );

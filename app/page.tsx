@@ -1,11 +1,12 @@
 import Image from 'next/image';
 import {
-  ArrowRight, ArrowUp, ArrowUpRight, BarChart3, BookOpen,
+  ArrowRight, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
 } from 'lucide-react';
 import { CertificateGallery } from '@/components/certificate-gallery';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
+import { SiteFooter } from '@/components/site-footer';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
@@ -47,10 +48,15 @@ function InstagramLogo() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.02 4.85.07 1.37.06 2.63.35 3.61 1.33.97.97 1.26 2.24 1.32 3.6.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.06 1.37-.35 2.63-1.32 3.61-.98.97-2.24 1.26-3.61 1.32-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.37-.06-2.63-.35-3.61-1.32-.97-.98-1.26-2.24-1.32-3.61-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.06-1.36.35-2.63 1.32-3.6.98-.98 2.24-1.27 3.61-1.33C8.42 2.18 8.8 2.16 12 2.16zm0 1.95c-3.15 0-3.52.01-4.76.07-1.15.05-1.77.24-2.18.4-.55.22-.94.47-1.35.88-.41.42-.67.81-.88 1.36-.16.41-.35 1.03-.4 2.18-.06 1.24-.07 1.61-.07 4.76s.01 3.52.07 4.76c.05 1.15.24 1.77.4 2.18.21.55.47.94.88 1.35.41.42.8.67 1.35.89.41.16 1.03.35 2.18.4 1.24.06 1.61.07 4.76.07s3.52-.01 4.76-.07c1.15-.05 1.77-.24 2.18-.4.55-.22.94-.47 1.35-.89.41-.41.67-.8.88-1.35.16-.41.35-1.03.4-2.18.06-1.24.07-1.61.07-4.76s-.01-3.52-.07-4.76c-.05-1.15-.24-1.77-.4-2.18-.21-.55-.47-.94-.88-1.36-.41-.41-.8-.66-1.35-.88-.41-.16-1.03-.35-2.18-.4-1.24-.06-1.61-.07-4.76-.07zm0 3.73a4.16 4.16 0 1 1 0 8.32 4.16 4.16 0 0 1 0-8.32zm0 6.86a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4zm5.37-7.88a.97.97 0 1 1-1.94 0 .97.97 0 0 1 1.94 0z" /></svg>;
 }
 
+function WhatsAppLogo() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47a8.88 8.88 0 0 1-1.65-2.05c-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.91-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35zM12.04 2a9.84 9.84 0 0 0-8.4 14.96L2.05 22l5.18-1.55A9.95 9.95 0 0 0 12.04 21 9.86 9.86 0 0 0 22 11.15 9.86 9.86 0 0 0 12.04 2zm0 17.34a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-3.07.92.92-2.99-.2-.31a8.18 8.18 0 1 1 6.83 3.7z" /></svg>;
+}
+
 function SocialIcon({ label }: { label: string }) {
   if (label === 'LinkedIn') return <LinkedInLogo />;
   if (label === 'GitHub') return <GitHubLogo />;
   if (label === 'Instagram') return <InstagramLogo />;
+  if (label === 'WhatsApp') return <WhatsAppLogo />;
   return <Mail size={19} />;
 }
 
@@ -136,6 +142,8 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="professional-story">
+        <Image className="professional-ornament" src="/professional-work-ornament.webp" width={768} height={1152} sizes="(max-width: 650px) 78vw, 42vw" alt="" aria-hidden="true" />
       <section className="experience compact-section" id="experience" aria-label="Pengalaman">
         <div className="section-wrap indexed-grid">
           <SectionIndex title="Pengalaman" caption="Kerja nyata / dampak nyata" />
@@ -190,6 +198,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </div>
 
       <section className="certificates compact-section" id="certificates" aria-label="Sertifikasi">
         <div className="section-wrap indexed-grid">
@@ -222,7 +231,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><div className="section-wrap footer-grid"><a href="#top">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto. Seluruh hak cipta dilindungi.</p><nav className="footer-quick-links" aria-label="Tautan footer"><a href="#work">Portfolio</a><a href="/artikel">Artikel</a><a href="#contact">Kontak</a></nav><a href="#top" aria-label="Kembali ke atas"><ArrowUp size={17} /></a></div></footer>
+      <SiteFooter />
     </main>
   );
 }

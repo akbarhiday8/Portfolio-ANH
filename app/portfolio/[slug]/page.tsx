@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
+import { SiteFooter } from '@/components/site-footer';
 import { portfolioData } from '@/lib/portfolio-data';
 
 const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
@@ -54,7 +55,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <MotionController />
       <ReadingHeader activePage="work" />
 
-      <main className="project-detail-page">
+      <main className="project-detail-page" id="top">
         <section className="case-hero">
           <div className="section-wrap case-hero-grid">
             <div className="case-intro">
@@ -127,13 +128,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           <a href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></a>
         </nav>
 
-        <footer className="detail-footer">
-          <div className="section-wrap">
-            <a href="/">ANH</a>
-            <p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p>
-            <nav className="detail-footer-links"><a href="/artikel">Artikel</a><a href="/#contact">Kontak</a></nav>
-          </div>
-        </footer>
+        <SiteFooter />
       </main>
     </>
   );

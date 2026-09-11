@@ -3,6 +3,7 @@ import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
+import { SiteFooter } from '@/components/site-footer';
 import { portfolioData } from '@/lib/portfolio-data';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
@@ -36,7 +37,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <MotionController />
       <ReadingHeader activePage="article" />
 
-      <main className="article-page">
+      <main className="article-page" id="top">
         <article>
           <header className="article-hero">
             <div className="section-wrap article-hero-inner">
@@ -80,9 +81,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <span className="section-wrap"><small>Baca selanjutnya</small><strong>{next.title}</strong><ArrowRight size={24} /></span>
         </a>
 
-        <footer className="detail-footer">
-          <div className="section-wrap"><a href="/">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p><nav className="detail-footer-links"><a href="/artikel">Semua Artikel</a><a href="/#contact">Kontak</a></nav></div>
-        </footer>
+        <SiteFooter />
       </main>
     </>
   );

@@ -223,5 +223,6 @@ export const portfolioData = {
     { label: 'Surel', href: null as string | null },
     { label: 'GitHub', href: null as string | null },
     { label: 'Instagram', href: null as string | null },
+    { label: 'WhatsApp', href: null as string | null },
   ],
 } as const;
