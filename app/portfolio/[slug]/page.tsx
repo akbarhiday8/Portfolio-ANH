@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, FileSpreadsheet, FileText, Globe2, Presentation } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Eye, FileSpreadsheet, FileText, Globe2, Presentation } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
-import { SiteNavigation } from '@/components/site-navigation';
+import { DetailNavigation } from '@/components/detail-navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
@@ -62,11 +62,11 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     <>
       <MotionController />
       <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap">
+        <div className="masthead page-wrap detail-masthead">
           <Link className="brand" href="/" aria-label="ANH — kembali ke beranda">
             <strong>ANH</strong><span>Portofolio Pribadi</span>
           </Link>
-          <SiteNavigation homePrefix="/" activePage="work" />
+          <DetailNavigation activePage="work" />
           <ThemeToggle />
         </div>
       </header>
@@ -75,7 +75,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         <section className="case-hero">
           <div className="section-wrap case-hero-grid">
             <div className="case-intro">
-              <a className="case-back" href="/#work"><ArrowLeft size={16} /> Kembali ke Portfolio</a>
               <p className="case-kicker">{project.category} · {project.year}</p>
               <h1>{project.title}</h1>
               <p className="case-summary">{project.summary}</p>
@@ -163,13 +162,29 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <h2>Dokumentasi yang menyesuaikan bentuk setiap karya.</h2>
                 <p>Bagian ini dapat menampilkan tautan website, workbook Excel, laporan PDF, presentasi, gambar, maupun dokumen proyek lainnya.</p>
               </div>
-              <div className="case-artifact-list">
+              <div>
+                <div className="case-evidence">
+                  <div className="case-evidence-heading"><span><Eye size={18} /> Tautan bukti proyek</span><small>Dibuka sebagai preview</small></div>
+                  <div className="case-evidence-links">
+                    {project.evidenceLinks.map((evidence) => evidence.href ? (
+                      <a href={evidence.href} target="_blank" rel="noreferrer" key={evidence.label}>
+                        <span><small>{evidence.type}</small><strong>{evidence.label}</strong></span><ArrowUpRight size={17} />
+                      </a>
+                    ) : (
+                      <div className="is-pending" key={evidence.label}>
+                        <span><small>{evidence.type}</small><strong>{evidence.label}</strong></span><em>Tautan disiapkan</em>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="case-artifact-list">
                 {project.artifacts.map((artifact) => {
                   const content = <><ArtifactIcon kind={artifact.kind} /><span><small>{artifact.format}</small><strong>{artifact.title}</strong><p>{artifact.description}</p></span><ArrowUpRight size={17} /></>;
                   return artifact.href
                     ? <a className="case-artifact-card" href={artifact.href} target="_blank" rel="noreferrer" key={artifact.title}>{content}</a>
                     : <article className="case-artifact-card is-pending" key={artifact.title}>{content}</article>;
                 })}
+                </div>
               </div>
             </div>
           </div>
@@ -184,7 +199,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           <div className="section-wrap">
             <Link href="/">ANH</Link>
             <p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p>
-            <Link href="/#contact">Mari berdiskusi <ArrowUpRight size={16} /></Link>
+            <nav className="detail-footer-links"><Link href="/artikel">Artikel</Link><Link href="/#contact">Kontak</Link></nav>
           </div>
         </footer>
       </main>

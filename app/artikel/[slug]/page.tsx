@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
-import { SiteNavigation } from '@/components/site-navigation';
+import { DetailNavigation } from '@/components/detail-navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { portfolioData } from '@/lib/portfolio-data';
 
@@ -36,9 +36,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <>
       <MotionController />
       <header className="masthead-shell detail-masthead-shell">
-        <div className="masthead page-wrap">
+        <div className="masthead page-wrap detail-masthead">
           <a className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></a>
-          <SiteNavigation homePrefix="/" activePage="article" />
+          <DetailNavigation activePage="article" />
           <ThemeToggle />
         </div>
       </header>
@@ -76,7 +76,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </a>
 
         <footer className="detail-footer">
-          <div className="section-wrap"><a href="/">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p><a href="/artikel">Semua Artikel <ArrowRight size={16} /></a></div>
+          <div className="section-wrap"><a href="/">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto.</p><nav className="detail-footer-links"><a href="/artikel">Semua Artikel</a><a href="/#contact">Kontak</a></nav></div>
         </footer>
       </main>
     </>

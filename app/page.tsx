@@ -222,7 +222,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><div className="section-wrap footer-grid"><a href="#top">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto. Seluruh hak cipta dilindungi.</p><p>Dibangun dengan tujuan.</p><a href="#top" aria-label="Kembali ke atas"><ArrowUp size={17} /></a></div></footer>
+      <footer><div className="section-wrap footer-grid"><a href="#top">ANH</a><p>© {new Date().getFullYear()} Akbar Nur Hidayanto. Seluruh hak cipta dilindungi.</p><nav className="footer-quick-links" aria-label="Tautan footer"><a href="#work">Portfolio</a><a href="/artikel">Artikel</a><a href="#contact">Kontak</a></nav><a href="#top" aria-label="Kembali ke atas"><ArrowUp size={17} /></a></div></footer>
     </main>
   );
 }

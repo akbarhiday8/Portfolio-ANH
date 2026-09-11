@@ -89,6 +89,10 @@ export const portfolioData = {
       approach: 'Mengutamakan arsitektur informasi, alur inti, dan komponen yang konsisten sebelum memperluas fungsi.',
       tools: ['Next.js', 'TypeScript', 'Design system', 'Pengujian responsif'],
       deliverables: ['Arsitektur informasi', 'Antarmuka responsif', 'Dokumentasi komponen'],
+      evidenceLinks: [
+        { label: 'Lihat website / demo proyek', type: 'Website', href: null as string | null },
+        { label: 'Lihat dokumentasi proyek', type: 'Dokumen daring', href: null as string | null },
+      ],
       artifacts: [
         { title: 'Preview aplikasi web', format: 'Website', kind: 'website', description: 'Tampilan dan alur utama produk digital.', href: null as string | null },
         { title: 'Dokumentasi teknis', format: 'PDF / dokumen', kind: 'document', description: 'Catatan struktur, keputusan, dan pengembangan.', href: null as string | null },
@@ -110,6 +114,9 @@ export const portfolioData = {
       approach: 'Membentuk klasifikasi, aturan penamaan, dan alur pemeliharaan yang sederhana serta dapat diterapkan bertahap.',
       tools: ['Microsoft Excel', 'Dokumen prosedur', 'Pemetaan proses'],
       deliverables: ['Indeks arsip', 'Template dokumen', 'Panduan pemeliharaan'],
+      evidenceLinks: [
+        { label: 'Lihat bukti sistem arsip', type: 'Dokumen daring', href: null as string | null },
+      ],
       artifacts: [
         { title: 'Indeks arsip kerja', format: 'XLSX', kind: 'spreadsheet', description: 'Struktur pencarian dan pencatatan dokumen.', href: null as string | null },
         { title: 'Panduan pengarsipan', format: 'PDF', kind: 'document', description: 'Standar penamaan dan pembaruan arsip.', href: null as string | null },
@@ -131,6 +138,9 @@ export const portfolioData = {
       approach: 'Menetapkan struktur data, aturan validasi, dan hierarki laporan sebelum menyusun visualisasi.',
       tools: ['Microsoft Excel', 'Validasi data', 'Visualisasi laporan'],
       deliverables: ['Template pencatatan', 'Ringkasan indikator', 'Panduan validasi'],
+      evidenceLinks: [
+        { label: 'Lihat workbook dan laporan', type: 'Spreadsheet daring', href: null as string | null },
+      ],
       artifacts: [
         { title: 'Model data dan pelaporan', format: 'XLSX', kind: 'spreadsheet', description: 'Workbook terstruktur untuk input dan pemeriksaan.', href: null as string | null },
         { title: 'Ringkasan hasil', format: 'PDF / PPTX', kind: 'presentation', description: 'Temuan utama untuk kebutuhan komunikasi.', href: null as string | null },
@@ -152,6 +162,9 @@ export const portfolioData = {
       approach: 'Menggabungkan catatan, bukti, dan konteks ke dalam struktur laporan yang memisahkan fakta, analisis, dan tindak lanjut.',
       tools: ['Riset lapangan', 'Dokumentasi', 'Analisis tematik'],
       deliverables: ['Catatan observasi', 'Laporan temuan', 'Rekomendasi tindak lanjut'],
+      evidenceLinks: [
+        { label: 'Lihat laporan dan dokumentasi', type: 'PDF / dokumen daring', href: null as string | null },
+      ],
       artifacts: [
         { title: 'Laporan lapangan', format: 'PDF / DOCX', kind: 'document', description: 'Temuan, konteks, dan dokumentasi pendukung.', href: null as string | null },
         { title: 'Presentasi rekomendasi', format: 'PPTX', kind: 'presentation', description: 'Ringkasan keputusan dan langkah berikutnya.', href: null as string | null },
