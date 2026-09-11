@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function CmsAuthForm({ mode }: { mode: 'login' | 'register' }) {
+export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' | 'register'; redirectPath?: string }) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -34,10 +34,10 @@ export function CmsAuthForm({ mode }: { mode: 'login' | 'register' }) {
     if (!response.ok) {
       setError(result.error ?? 'Permintaan tidak dapat diproses.');
       setBusy(false);
-      if (response.status === 409) window.setTimeout(() => { window.location.href = '/cms/login'; }, 900);
+      if (response.status === 409) window.setTimeout(() => { window.location.href = `${redirectPath}/login`; }, 900);
       return;
     }
-    window.location.href = '/cms';
+    window.location.href = redirectPath;
   }
 
   return (

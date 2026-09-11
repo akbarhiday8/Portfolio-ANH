@@ -279,7 +279,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
   }
 
-  async function logout() { await fetch('/api/cms/auth/logout', { method: 'POST' }); window.location.href = '/cms/login'; }
+  async function logout() { await fetch('/api/cms/auth/logout', { method: 'POST' }); window.location.href = '/admin/login'; }
 
   return (
     <main className="cms-shell">
