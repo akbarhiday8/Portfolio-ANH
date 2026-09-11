@@ -18,6 +18,12 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     const closed = error instanceof Error && error.message === 'REGISTER_CLOSED';
+    if (!closed) {
+      console.error('[cms-register] Registration failed', {
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : 'Unknown registration failure',
+      });
+    }
     return NextResponse.json(
       { error: closed ? 'Akun admin sudah tersedia. Silakan masuk.' : 'Akun admin tidak dapat dibuat.' },
       { status: closed ? 409 : 500 },

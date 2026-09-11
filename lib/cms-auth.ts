@@ -5,6 +5,10 @@ import { ensureCmsSchema, getCmsDatabase } from '@/lib/cms-server';
 
 export const CMS_SESSION_COOKIE = 'anh_cms_session';
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+// workerd rejects a single PBKDF2 operation above 100,000 iterations.
+// Keep this at the runtime maximum so registration and login behave identically
+// in local development and on the deployed Cloudflare Worker.
+const PBKDF2_ITERATIONS = 100_000;
 const encoder = new TextEncoder();
 
 export type CmsAdmin = { id: number; email: string; displayName: string };
@@ -24,7 +28,7 @@ async function sha256(value: string) {
 async function hashPassword(password: string, salt: Uint8Array) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: salt as BufferSource, iterations: 210_000 },
+    { name: 'PBKDF2', hash: 'SHA-256', salt: salt.slice().buffer, iterations: PBKDF2_ITERATIONS },
     key,
     256,
   );
