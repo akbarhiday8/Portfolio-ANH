@@ -2,15 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { BarChart3, Eye, FileBadge2, Maximize2, Minus, Monitor, Move, Plus, RotateCcw, ShieldCheck } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { BarChart3, Eye, FileBadge2, Maximize2, Minus, Monitor, Move, Plus, RotateCcw, ShieldCheck, X } from 'lucide-react';
 
 type CertificateItem = {
   name: string;
@@ -139,14 +131,35 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
 }
 
 export function CertificateGallery({ items }: { items: readonly CertificateItem[] }) {
-  return (
-    <div className="certificate-grid" id="certificates-heading">
-      {items.map((item, index) => {
-        const Icon = certificateIcons[index] ?? FileBadge2;
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const activeItem = activeIndex === null ? null : items[activeIndex];
 
-        return (
-          <Dialog key={item.name}>
-            <DialogTrigger className="certificate-card" aria-label={`Lihat detail ${item.name}`}>
+  useEffect(() => {
+    if (!activeItem) return;
+    const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveIndex(null);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    closeButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+    };
+  }, [activeItem]);
+
+  return (
+    <>
+      <div className="certificate-grid" id="certificates-heading">
+        {items.map((item, index) => {
+          const Icon = certificateIcons[index] ?? FileBadge2;
+          return (
+            <button className="certificate-card" type="button" aria-label={`Lihat detail ${item.name}`} onClick={() => setActiveIndex(index)} key={item.name}>
               <span className={`certificate-preview${item.image ? ' has-image' : ''}`} aria-hidden="true">
                 {item.image ? (
                   <Image src={item.image} fill sizes="(max-width: 520px) 100vw, (max-width: 850px) 50vw, 20vw" alt="" />
@@ -164,36 +177,44 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
                 <span className="certificate-issuer">{item.issuer}</span>
                 <span className="certificate-year">{item.year}<Maximize2 size={15} /></span>
               </span>
-            </DialogTrigger>
+            </button>
+          );
+        })}
+      </div>
 
-            <DialogContent className="certificate-dialog">
+      {activeItem && activeIndex !== null ? (
+        <div className="certificate-modal" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setActiveIndex(null)}>
+          <section className="certificate-dialog" role="dialog" aria-modal="true" aria-labelledby="certificate-dialog-title" aria-describedby="certificate-dialog-description">
+            <button ref={closeButtonRef} className="certificate-dialog-close" type="button" onClick={() => setActiveIndex(null)} aria-label="Tutup detail sertifikat"><X size={18} /></button>
               <div className="certificate-dialog-preview">
-                {item.image ? (
-                  <CertificateViewer src={item.image} alt={`Bukti ${item.name}`} />
+                {activeItem.image ? (
+                  <CertificateViewer src={activeItem.image} alt={`Bukti ${activeItem.name}`} />
                 ) : (
                   <div className="certificate-dialog-placeholder">
-                    <Icon size={58} strokeWidth={1.1} />
+                    {(() => {
+                      const ActiveIcon = certificateIcons[activeIndex] ?? FileBadge2;
+                      return <ActiveIcon size={58} strokeWidth={1.1} />;
+                    })()}
                     <span>Bukti sertifikat belum ditambahkan</span>
                   </div>
                 )}
               </div>
-              <DialogHeader className="certificate-dialog-copy">
-                <span className="certificate-category">{item.category}</span>
-                <DialogTitle>{item.name}</DialogTitle>
-                <DialogDescription>{item.description}</DialogDescription>
+              <div className="certificate-dialog-copy">
+                <span className="certificate-category">{activeItem.category}</span>
+                <h2 id="certificate-dialog-title">{activeItem.name}</h2>
+                <p id="certificate-dialog-description">{activeItem.description}</p>
                 <dl className="certificate-facts">
-                  <div><dt>Diterbitkan oleh</dt><dd>{item.issuer}</dd></div>
-                  <div><dt>Tahun</dt><dd>{item.year}</dd></div>
+                  <div><dt>Diterbitkan oleh</dt><dd>{activeItem.issuer}</dd></div>
+                  <div><dt>Tahun</dt><dd>{activeItem.year}</dd></div>
                 </dl>
                 <div className="certificate-topics">
                   <h4>Materi yang dipelajari / diujikan</h4>
-                  <ul>{item.topics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
+                  <ul>{activeItem.topics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
                 </div>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
-        );
-      })}
-    </div>
+              </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -88,7 +88,12 @@ export default function Home() {
         </div>
 
         <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur Hidayanto">
-          <Image className="hero-portrait" src="/profile-artwork-transparent.webp" width={941} height={1671} priority sizes="(max-width: 820px) 100vw, 60vw" alt="Potret Akbar Nur Hidayanto bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
+          <picture>
+            <source media="(max-width: 420px)" srcSet="/profile-hero-480.webp" />
+            <source media="(max-width: 650px)" srcSet="/profile-hero-640.webp" />
+            <source media="(max-width: 850px)" srcSet="/profile-hero-768.webp" />
+            <img className="hero-portrait" src="/profile-hero-941.webp" width={941} height={1671} loading="eager" decoding="async" fetchPriority="high" alt="Potret Akbar Nur Hidayanto bergaya tinta dengan kastel, bulan, buku, laptop, globe, dan kamera" />
+          </picture>
           <p className="portrait-kanji" lang="ja" aria-label="Keberlanjutan adalah kekuatan">継続は力なり</p>
         </div>
       </section>
