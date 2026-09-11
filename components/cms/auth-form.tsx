@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 
 export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' | 'register'; redirectPath?: string }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,7 +65,12 @@ export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' |
       {mode === 'register' ? (
         <div className="cms-field">
           <Label htmlFor="confirmPassword">Ulangi kata sandi</Label>
-          <Input id="confirmPassword" name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} placeholder="Ketik kembali kata sandi" required />
+          <div className="cms-password-field">
+            <Input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} placeholder="Ketik kembali kata sandi" required />
+            <button type="button" aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi kata sandi' : 'Tampilkan konfirmasi kata sandi'} onClick={() => setShowConfirmPassword((value) => !value)}>
+              {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
         </div>
       ) : null}
       {error ? <p className="cms-form-error" role="alert">{error}</p> : null}
