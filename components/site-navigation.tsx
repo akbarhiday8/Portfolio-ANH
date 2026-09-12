@@ -31,10 +31,7 @@ export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationPr
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (activePage) {
-      setActive(activePage);
-      return;
-    }
+    if (activePage) return;
 
     const sections = mobileLinks.map(({ id }) => id ? document.getElementById(id) : null).filter(Boolean) as HTMLElement[];
     let frame = 0;
@@ -80,20 +77,22 @@ export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationPr
   }, [mobileOpen]);
 
   const closeMobileNavigation = () => setMobileOpen(false);
+  const currentActive = activePage ?? active;
 
   return (
     <>
       <nav className="desktop-nav" aria-label="Navigasi utama">
         {primaryLinks.map((link) => {
           const href = link.external ? link.href : `${homePrefix}${link.href}`;
-          return <a className={active === link.id ? 'active' : ''} href={href} key={link.href} onClick={() => setActive(link.id)}>{link.label}</a>;
+          return <a className={currentActive === link.id ? 'active' : ''} href={href} key={link.href} onClick={() => setActive(link.id)}>{link.label}</a>;
         })}
       </nav>
 
       <div className="mobile-nav">
         <button className="menu-trigger" type="button" aria-label="Buka navigasi" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><Menu size={19} /></button>
-        <div className={`mobile-nav-overlay${mobileOpen ? ' is-open' : ''}`} aria-hidden={!mobileOpen} onMouseDown={(event) => event.target === event.currentTarget && closeMobileNavigation()}>
-          <aside className="mobile-sheet" role="dialog" aria-modal="true" aria-label="Navigasi seluler">
+        <dialog className={`mobile-nav-overlay${mobileOpen ? ' is-open' : ''}`} open={mobileOpen} aria-label="Navigasi seluler">
+          <button className="mobile-nav-dismiss" type="button" aria-label="Tutup navigasi" onClick={closeMobileNavigation} />
+          <aside className="mobile-sheet">
             <p className="sheet-title">Navigasi / 2026</p>
             <button ref={closeButtonRef} className="mobile-nav-close" type="button" onClick={closeMobileNavigation} aria-label="Tutup navigasi"><X size={19} /></button>
             <nav>
@@ -103,7 +102,7 @@ export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationPr
               })}
             </nav>
           </aside>
-        </div>
+        </dialog>
       </div>
     </>
   );

@@ -12,11 +12,14 @@ export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' |
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const password = String(form.get('password') ?? '');
-    if (mode === 'register' && password !== String(form.get('confirmPassword') ?? '')) {
+    const passwordValue = form.get('password');
+    const confirmPasswordValue = form.get('confirmPassword');
+    const password = typeof passwordValue === 'string' ? passwordValue : '';
+    const confirmPassword = typeof confirmPasswordValue === 'string' ? confirmPasswordValue : '';
+    if (mode === 'register' && password !== confirmPassword) {
       setError('Konfirmasi kata sandi belum sama.');
       return;
     }

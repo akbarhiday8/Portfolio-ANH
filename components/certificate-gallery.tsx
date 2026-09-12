@@ -75,7 +75,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     setPosition({ x: 0, y: 0 });
   };
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0 || scale === 1 || zoomMode || event.shiftKey || event.ctrlKey) return;
     suppressClick.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -83,7 +83,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     setDragging(true);
   };
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (!drag.current || drag.current.pointerId !== event.pointerId) return;
     const deltaX = event.clientX - drag.current.startX;
     const deltaY = event.clientY - drag.current.startY;
@@ -94,7 +94,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     setPosition({ x: drag.current.origin.x + deltaX, y: drag.current.origin.y + deltaY });
   };
 
-  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+  const endDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (drag.current?.pointerId === event.pointerId && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -102,7 +102,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
     setDragging(false);
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (suppressClick.current) {
       suppressClick.current = false;
       return;
@@ -126,14 +126,14 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="certificate-viewer-shell">
-      <div
+      <button
+        type="button"
         className={viewerClassName}
         onClick={handleClick}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        tabIndex={0}
         aria-label="Preview sertifikat. Klik untuk memperbesar, Ctrl dan klik untuk memperkecil, lalu seret untuk menggeser."
       >
         <Image className="certificate-viewer-backdrop" src={src} fill sizes="90vw" alt="" aria-hidden="true" />
@@ -147,7 +147,7 @@ function CertificateViewer({ src, alt }: { src: string; alt: string }) {
           onLoad={(event) => setOrientation(event.currentTarget.naturalHeight > event.currentTarget.naturalWidth ? 'portrait' : 'landscape')}
           style={{ transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})` }}
         />
-      </div>
+      </button>
       <div className="certificate-viewer-toolbar" aria-label="Kontrol gambar sertifikat">
         <button type="button" onClick={() => setZoom(scale - 0.25)} disabled={scale === 1} aria-label="Perkecil gambar"><Minus size={17} /></button>
         <output aria-label="Tingkat pembesaran">{Math.round(scale * 100)}%</output>
@@ -212,8 +212,9 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
       </div>
 
       {activeItem && activeIndex !== null ? (
-        <div className="certificate-modal" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setActiveIndex(null)}>
-          <section className="certificate-dialog" role="dialog" aria-modal="true" aria-labelledby="certificate-dialog-title" aria-describedby="certificate-dialog-description">
+        <dialog className="certificate-modal" open aria-labelledby="certificate-dialog-title" aria-describedby="certificate-dialog-description">
+          <button className="certificate-modal-dismiss" type="button" aria-label="Tutup detail sertifikat" onClick={() => setActiveIndex(null)} />
+          <section className="certificate-dialog">
             <button ref={closeButtonRef} className="certificate-dialog-close" type="button" onClick={() => setActiveIndex(null)} aria-label="Tutup detail sertifikat"><X size={18} /></button>
               <div className="certificate-dialog-preview">
                 {activeItem.image ? (
@@ -240,7 +241,7 @@ export function CertificateGallery({ items }: { items: readonly CertificateItem[
                 <CertificateTopics key={activeItem.name} topics={activeItem.topics} />
               </div>
           </section>
-        </div>
+        </dialog>
       ) : null}
     </>
   );

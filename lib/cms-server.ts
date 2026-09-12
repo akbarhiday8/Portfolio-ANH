@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { env } from 'cloudflare:workers';
+import { cmsSchemaStatements } from '@/db/schema';
 import { portfolioData } from '@/lib/portfolio-data';
 
 export const CMS_COLLECTIONS = [
@@ -33,44 +34,26 @@ export type CmsRecord = {
 type CmsBindings = { DB: D1Database; MEDIA: R2Bucket };
 const bindings = () => env as unknown as CmsBindings;
 
-const schemaStatements = [
-  `CREATE TABLE IF NOT EXISTS cms_admins (
-    id INTEGER PRIMARY KEY CHECK (id = 1), email TEXT NOT NULL UNIQUE,
-    display_name TEXT NOT NULL, password_hash TEXT NOT NULL,
-    password_salt TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS cms_sessions (
-    token_hash TEXT PRIMARY KEY, admin_id INTEGER NOT NULL,
-    expires_at TEXT NOT NULL, created_at TEXT NOT NULL,
-    FOREIGN KEY (admin_id) REFERENCES cms_admins(id) ON DELETE CASCADE
-  )`,
-  `CREATE TABLE IF NOT EXISTS cms_records (
-    id TEXT PRIMARY KEY, collection TEXT NOT NULL, slug TEXT,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('draft', 'published')),
-    data_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-  )`,
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_cms_records_collection_slug
-    ON cms_records(collection, slug) WHERE slug IS NOT NULL`,
-  `CREATE INDEX IF NOT EXISTS idx_cms_records_collection_order
-    ON cms_records(collection, sort_order)`,
-  `CREATE INDEX IF NOT EXISTS idx_cms_records_public
-    ON cms_records(collection, status, sort_order)`,
-  `CREATE TABLE IF NOT EXISTS cms_media (
-    id TEXT PRIMARY KEY, object_key TEXT NOT NULL UNIQUE,
-    original_name TEXT NOT NULL, content_type TEXT NOT NULL,
-    size_bytes INTEGER NOT NULL, created_at TEXT NOT NULL
-  )`,
-  `CREATE INDEX IF NOT EXISTS idx_cms_media_created_at ON cms_media(created_at DESC)`,
-];
-
 let schemaReady: Promise<void> | null = null;
 
 export async function ensureCmsSchema() {
   if (!schemaReady) {
     schemaReady = (async () => {
       const db = bindings().DB;
-      await db.batch(schemaStatements.map((statement) => db.prepare(statement)));
+      await db.batch(cmsSchemaStatements.map((statement) => db.prepare(statement)));
+      const mediaColumns = await db.prepare('PRAGMA table_info(cms_media)').all<{ name: string }>();
+      const existingColumns = new Set(mediaColumns.results.map((column) => column.name));
+      const migrations = [
+        ['original_size_bytes', 'ALTER TABLE cms_media ADD COLUMN original_size_bytes INTEGER'],
+        ['width', 'ALTER TABLE cms_media ADD COLUMN width INTEGER'],
+        ['height', 'ALTER TABLE cms_media ADD COLUMN height INTEGER'],
+        ['optimized', 'ALTER TABLE cms_media ADD COLUMN optimized INTEGER NOT NULL DEFAULT 0'],
+        ['temporary', 'ALTER TABLE cms_media ADD COLUMN temporary INTEGER NOT NULL DEFAULT 0'],
+      ] as const;
+      for (const [column, statement] of migrations) {
+        if (!existingColumns.has(column)) await db.prepare(statement).run();
+      }
+      await db.prepare('PRAGMA optimize').run();
       await seedCmsContent();
     })().catch((error) => {
       schemaReady = null;
@@ -89,13 +72,17 @@ function slugify(value: string) {
     .replace(/^-|-$/g, '') || crypto.randomUUID();
 }
 
+function scalarString(value: unknown, fallback: string) {
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : fallback;
+}
+
 function seedEntries() {
   return CMS_COLLECTIONS.flatMap((collection) => {
     const source = portfolioData[collection];
     const values: readonly unknown[] = Array.isArray(source) ? source as readonly unknown[] : [source];
     return values.map((value, index) => {
       const data = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
-      const naturalKey = String(data.slug ?? data.label ?? data.name ?? data.title ?? collection);
+      const naturalKey = scalarString(data.slug ?? data.label ?? data.name ?? data.title, collection);
       const suffix = Array.isArray(source) ? `-${index + 1}` : '';
       const id = Array.isArray(source) ? `${collection}-${slugify(naturalKey)}${suffix}` : collection;
       const slug = typeof data.slug === 'string' ? data.slug : id;
@@ -125,7 +112,7 @@ function mapRecord(row: Record<string, unknown>): CmsRecord {
   return {
     id: String(row.id),
     collection: String(row.collection) as CmsCollection,
-    slug: row.slug ? String(row.slug) : null,
+    slug: row.slug ? scalarString(row.slug, '') || null : null,
     sortOrder: Number(row.sort_order),
     status: String(row.status) as CmsStatus,
     data: JSON.parse(String(row.data_json)) as Record<string, unknown>,
@@ -174,6 +161,13 @@ async function cleanupReplacedMedia(previousData: Record<string, unknown>, nextD
   const nextKeys = nextData ? extractMediaObjectKeys(nextData) : new Set<string>();
   const removedKeys = [...previousKeys].filter((key) => !nextKeys.has(key));
   if (removedKeys.length) await removeUnreferencedMedia(removedKeys);
+}
+
+async function markReferencedMedia(data: Record<string, unknown>) {
+  const keys = [...extractMediaObjectKeys(data)];
+  if (!keys.length) return;
+  const db = bindings().DB;
+  await db.batch(keys.map((key) => db.prepare('UPDATE cms_media SET temporary = 0 WHERE object_key = ?').bind(key)));
 }
 
 export async function listCmsRecords(options: { includeDrafts?: boolean; collection?: CmsCollection } = {}) {
@@ -229,7 +223,7 @@ export async function createCmsRecord(collection: CmsCollection, data: Record<st
   await ensureCmsSchema();
   const db = bindings().DB;
   const id = crypto.randomUUID();
-  const naturalSlug = String(data.slug ?? data.label ?? data.name ?? data.title ?? id);
+  const naturalSlug = scalarString(data.slug ?? data.label ?? data.name ?? data.title, id);
   let slug = slugify(naturalSlug);
   const duplicate = await db.prepare('SELECT id FROM cms_records WHERE collection = ? AND slug = ?').bind(collection, slug).first();
   if (duplicate) slug = `${slug}-${id.slice(0, 6)}`;
@@ -241,6 +235,7 @@ export async function createCmsRecord(collection: CmsCollection, data: Record<st
     `INSERT INTO cms_records (id, collection, slug, sort_order, status, data_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(id, collection, slug, sortOrder, status, JSON.stringify(data), now, now).run();
+  await markReferencedMedia(data);
   return { id, collection, slug, sortOrder, status, data, createdAt: now, updatedAt: now } satisfies CmsRecord;
 }
 
@@ -250,7 +245,7 @@ export async function updateCmsRecord(id: string, data: Record<string, unknown>,
   if (!existing) return null;
   const previous = mapRecord(existing);
   const collection = String(existing.collection) as CmsCollection;
-  let slug = String(existing.slug ?? id);
+  let slug = scalarString(existing.slug, id);
   if ((collection === 'projects' || collection === 'articles') && typeof data.slug === 'string') {
     slug = slugify(data.slug);
     data.slug = slug;
@@ -259,6 +254,7 @@ export async function updateCmsRecord(id: string, data: Record<string, unknown>,
   await bindings().DB.prepare(
     'UPDATE cms_records SET slug = ?, status = ?, data_json = ?, updated_at = ? WHERE id = ?',
   ).bind(slug, status, JSON.stringify(data), now, id).run();
+  await markReferencedMedia(data);
   await cleanupReplacedMedia(previous.data, data);
   return { ...previous, slug, status, data, updatedAt: now };
 }
@@ -286,7 +282,7 @@ export async function reorderCmsRecords(collection: CmsCollection, ids: string[]
 
 export async function cleanupUnusedCmsMedia(options: { olderThanMs?: number } = {}) {
   await ensureCmsSchema();
-  const result = await bindings().DB.prepare("SELECT object_key, created_at FROM cms_media WHERE object_key LIKE 'cms/%'")
+  const result = await bindings().DB.prepare("SELECT object_key, created_at FROM cms_media WHERE object_key LIKE 'cms/%' AND temporary = 1")
     .all<{ object_key: string; created_at: string }>();
   const cutoff = options.olderThanMs ? Date.now() - options.olderThanMs : 0;
   const candidates = result.results

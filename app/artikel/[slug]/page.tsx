@@ -6,8 +6,7 @@ import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
-
-const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
+import { SITE_URL } from '@/lib/site-url';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 

@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
-
-const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
+import { SITE_URL } from '@/lib/site-url';
 
 type ProjectPageProps = {
   params: Promise<{ slug: string }>;
@@ -126,8 +126,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </section>
 
         <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
-          <a href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></a>
-          <a href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></a>
+          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></Link>
+          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></Link>
         </nav>
 
         <SiteFooter />

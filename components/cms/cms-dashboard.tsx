@@ -18,9 +18,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { cmsModules, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
 import type { CmsAdmin } from '@/lib/cms-auth';
 import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms-server';
+import { discardTemporaryMedia, prepareMediaFile, uploadPreparedMedia } from '@/lib/media-client';
+import { formatMediaSize, IMAGE_ACCEPT, MEDIA_ACCEPT, type MediaItem } from '@/lib/media-policy';
 
 type CmsCollections = Record<string, CmsRecord[]>;
-type MediaItem = { id: string; url: string; name: string; contentType: string; size: number; createdAt: string };
 type ActiveView = 'overview' | 'media' | CmsCollection;
 type EditorSection = { title: string; description: string; fields: string[] };
 type CmsIcon = React.ComponentType<{ size?: number }>;
@@ -73,12 +74,12 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Visual utama', description: 'Gambar profil pada beranda.', fields: ['artwork'] },
   ],
   experience: [
-    { title: 'Informasi pekerjaan', description: 'Posisi, organisasi, dan periode kerja.', fields: ['index', 'role', 'organization', 'period'] },
+    { title: 'Informasi pekerjaan', description: 'Posisi, organisasi, dan periode kerja.', fields: ['role', 'organization', 'period'] },
     { title: 'Deskripsi peran', description: 'Ringkasan serta tanggung jawab utama.', fields: ['description', 'responsibilities'] },
     { title: 'Visual kartu', description: 'Gambar dan aksen tampilan.', fields: ['image', 'tone'] },
   ],
   projects: [
-    { title: 'Identitas proyek', description: 'Judul, kategori, tahun, dan alamat halaman.', fields: ['index', 'slug', 'title', 'category', 'year', 'layout'] },
+    { title: 'Identitas proyek', description: 'Judul, kategori, tahun, dan alamat halaman.', fields: ['slug', 'title', 'category', 'year', 'layout'] },
     { title: 'Gambaran proyek', description: 'Peran, disiplin, hasil kerja, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'summary'] },
     { title: 'Studi kasus', description: 'Konteks, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'approach', 'scope', 'process'] },
     { title: 'Bukti dan hasil', description: 'Tautan bukti serta dampak akhir proyek.', fields: ['evidence.label', 'evidence.href', 'outcome'] },
@@ -196,7 +197,7 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
     if (field.required && empty) {
       issues.push({ level: 'error', label: `${field.label} wajib diisi`, detail: 'Konten tidak sebaiknya dipublikasikan sebelum field penting lengkap.' });
     }
-    if (field.type === 'url' && !isValidLink(fieldValue)) {
+    if ((field.type === 'url' || field.type === 'asset') && !isValidLink(fieldValue)) {
       issues.push({ level: 'error', label: `${field.label} belum valid`, detail: 'Gunakan https://, mailto:, tel:, atau path internal yang dimulai dengan /.' });
     }
   });
@@ -269,6 +270,7 @@ function ContentEditor({
   const [uploading, setUploading] = useState('');
   const [baseline, setBaseline] = useState({ data: structuredClone(record.data), status: record.status });
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const temporaryUploads = useRef<Record<string, MediaItem>>({});
   const sections = useMemo(() => sectionsForModule(module), [module]);
   const dirty = useMemo(
     () => JSON.stringify(data) !== JSON.stringify(baseline.data) || status !== baseline.status,
@@ -339,7 +341,11 @@ function ContentEditor({
   }, [autosaveKey, data, dirty, status]);
 
   function closeEditor() {
-    if (!dirty || window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) onClose();
+    if (dirty && !window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) return;
+    const abandoned = Object.values(temporaryUploads.current);
+    temporaryUploads.current = {};
+    void Promise.all(abandoned.map((item) => discardTemporaryMedia(item)));
+    onClose();
   }
 
   function saveRevision(savedRecord: CmsRecord) {
@@ -364,14 +370,30 @@ function ContentEditor({
   async function upload(field: CmsField, file?: File) {
     if (!file) return;
     setUploading(field.key);
-    setMessage('');
-    const form = new FormData();
-    form.set('file', file);
-    const response = await fetch('/api/cms/media', { method: 'POST', body: form });
-    const result = await response.json().catch(() => ({})) as { error?: string; media?: MediaItem };
-    if (!response.ok || !result.media) setMessage(result.error ?? 'Media tidak dapat diunggah.');
-    else setData((current) => setPath(current, field.key, result.media?.url ?? ''));
-    setUploading('');
+    setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar sebelum diunggah...' : 'Memeriksa dokumen sebelum diunggah...');
+    try {
+      const prepared = await prepareMediaFile(file, field.key === 'customIcon' ? 'icon' : 'content');
+      setMessage('Mengunggah media teroptimasi...');
+      const uploaded = await uploadPreparedMedia(prepared);
+      const previousTemporary = temporaryUploads.current[field.key];
+      temporaryUploads.current[field.key] = uploaded;
+      setData((current) => setPath(current, field.key, uploaded.url));
+      if (previousTemporary) void discardTemporaryMedia(previousTemporary);
+      setMessage(prepared.message);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
+    } finally {
+      setUploading('');
+    }
+  }
+
+  function updateMediaValue(field: CmsField, value: string) {
+    const temporary = temporaryUploads.current[field.key];
+    if (temporary && temporary.url !== value) {
+      delete temporaryUploads.current[field.key];
+      void discardTemporaryMedia(temporary);
+    }
+    setData((current) => setPath(current, field.key, value));
   }
 
   async function save(event: React.SubmitEvent<HTMLFormElement>) {
@@ -398,6 +420,7 @@ function ContentEditor({
       setMessage('Perubahan tersimpan.');
       saveRevision(result.record);
       window.localStorage.removeItem(autosaveKey);
+      temporaryUploads.current = {};
       setAutosaveState('');
       setBaseline({ data: structuredClone(result.record.data), status: result.record.status });
       onSaved(result.record);
@@ -418,13 +441,14 @@ function ContentEditor({
             <option value="">Pilih opsi</option>
             {field.options?.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
           </select>
-        ) : field.type === 'image' ? (
+        ) : field.type === 'image' || field.type === 'asset' ? (
           <div className="cms-media-field">
-            {value ? <Image src={value} width={190} height={126} unoptimized alt="Pratinjau media" /> : <div className="cms-media-empty"><ImageIcon size={24} /><span>Belum ada media</span></div>}
+            {field.type === 'image' && value ? <Image src={value} width={190} height={126} unoptimized alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
             <div>
-              <Input id={inputId} value={value} placeholder="/media/... atau URL gambar" onChange={(event) => setData((current) => setPath(current, field.key, event.target.value))} />
-              <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(event) => upload(field, event.target.files?.[0])} />
-              <Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? 'Mengunggah...' : 'Unggah gambar'}</Button>
+              <Input id={inputId} value={value} placeholder={field.type === 'asset' ? 'https://... atau /media/...' : '/media/... atau URL gambar'} onChange={(event) => updateMediaValue(field, event.target.value)} />
+              <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
+              <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{value ? <a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a> : null}</div>
+              <small className="cms-upload-policy">Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.</small>
             </div>
           </div>
         ) : (
@@ -541,12 +565,16 @@ function MediaLibrary() {
 
   async function upload(file?: File) {
     if (!file) return;
-    setMessage('Mengunggah media...');
-    const form = new FormData(); form.set('file', file);
-    const response = await fetch('/api/cms/media', { method: 'POST', body: form });
-    const result = await response.json().catch(() => ({})) as { error?: string; media?: MediaItem };
-    if (result.media) { setMedia((current) => [result.media!, ...(current ?? [])]); setMessage('Media berhasil diunggah.'); }
-    else setMessage(result.error ?? 'Media tidak dapat diunggah.');
+    setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar...' : 'Memeriksa dokumen...');
+    try {
+      const prepared = await prepareMediaFile(file);
+      setMessage('Mengunggah media teroptimasi...');
+      const uploaded = await uploadPreparedMedia(prepared, { temporary: false });
+      setMedia((current) => [uploaded, ...(current ?? [])]);
+      setMessage(prepared.message);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
+    }
   }
 
   async function remove(item: MediaItem) {
@@ -557,8 +585,8 @@ function MediaLibrary() {
 
   return (
     <section className="cms-module-page">
-      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Simpan dan kelola gambar, dokumen, sertifikat, serta ikon kustom yang dipakai di konten website. Aset yang diganti atau dihapus akan dibersihkan otomatis.</p></div><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></header>
-      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" hidden onChange={(event) => upload(event.target.files?.[0])} />
+      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Gambar otomatis dikonversi ke WebP dan diperkecil secara proporsional. PDF serta dokumen kerja disimpan dalam format asli yang aman agar isi tidak berubah. Aset yang tidak lagi dipakai dibersihkan otomatis.</p></div><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></header>
+      <input ref={fileRef} type="file" accept={MEDIA_ACCEPT} hidden onChange={(event) => { void upload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
       {message ? <p className="cms-inline-message">{message}</p> : null}
       <div className="cms-media-controls">
         <label><Search size={15} /><input value={mediaQuery} onChange={(event) => setMediaQuery(event.target.value)} placeholder="Cari media..." /></label>
@@ -569,7 +597,7 @@ function MediaLibrary() {
       <div className="cms-media-grid">
         {filteredMedia.map((item) => <article key={item.id}>
           <div className="cms-media-thumbnail">{item.contentType.startsWith('image/') ? <Image src={item.url} width={360} height={170} unoptimized alt="" /> : <FileText size={30} />}</div>
-          <div><strong>{item.name}</strong><span>{(item.size / 1024).toFixed(0)} KB</span></div>
+          <div><strong>{item.name}</strong><span>{formatMediaSize(item.size)}{item.width && item.height ? ` · ${item.width}×${item.height}` : ''}</span>{item.optimized && item.originalSize && item.originalSize > item.size ? <small>WebP · hemat {Math.round((1 - item.size / item.originalSize) * 100)}%</small> : <small>{item.contentType.startsWith('image/') ? 'Gambar siap web' : 'Dokumen tervalidasi'}</small>}</div>
           <button type="button" onClick={() => remove(item)} aria-label={`Hapus ${item.name}`}><Trash2 size={15} /></button>
         </article>)}
         {media?.length === 0 ? <div className="cms-empty"><ImageIcon size={30} /><h2>Pustaka masih kosong</h2><p>Media yang diunggah dari editor akan tersimpan di sini.</p></div> : null}

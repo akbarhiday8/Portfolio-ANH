@@ -1,4 +1,5 @@
 import { ArrowUp } from 'lucide-react';
+import Link from 'next/link';
 import { getPortfolioContent } from '@/lib/cms-server';
 
 const footerLinks = [
@@ -16,7 +17,7 @@ export async function SiteFooter() {
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
           <div className="site-footer-identity">
-            <a href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>{profile.monogram}</a>
+            <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>{profile.monogram}</Link>
             <div>
               <strong>{siteContent.footerName}</strong>
               <span>{siteContent.footerSubtitle}</span>
@@ -25,7 +26,7 @@ export async function SiteFooter() {
         <div className="site-footer-navigation">
           <p>Navigasi</p>
           <nav className="site-footer-nav" aria-label="Navigasi footer">
-            {footerLinks.map((link) => <a href={link.href} key={link.href}>{link.label}</a>)}
+            {footerLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
           </nav>
         </div>
       </div>

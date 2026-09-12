@@ -1,6 +1,6 @@
 import type { CmsCollection } from '@/lib/cms-server';
 
-export type CmsFieldType = 'text' | 'textarea' | 'url' | 'image' | 'list' | 'select' | 'steps' | 'articleSections';
+export type CmsFieldType = 'text' | 'textarea' | 'url' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections';
 export type CmsField = {
   key: string;
   label: string;
@@ -79,7 +79,7 @@ export const cmsModules: CmsModuleDefinition[] = [
     collection: 'experience', label: 'Pengalaman', singular: 'pengalaman',
     description: 'Riwayat pekerjaan beserta tugas dan tanggung jawabnya.',
     fields: [
-      text('index', 'Nomor urut'), text('role', 'Posisi', { required: true }), text('organization', 'Organisasi / Bidang'), text('period', 'Periode', { required: true }),
+      text('role', 'Posisi', { required: true }), text('organization', 'Organisasi / Bidang'), text('period', 'Periode', { required: true }),
       area('description', 'Ringkasan', { required: true }),
       { key: 'responsibilities', label: 'Tugas dan tanggung jawab', type: 'list', wide: true, helper: 'Satu tanggung jawab per baris.' },
       { key: 'image', label: 'Gambar pengalaman', type: 'image', wide: true },
@@ -92,7 +92,7 @@ export const cmsModules: CmsModuleDefinition[] = [
     collection: 'projects', label: 'Portfolio', singular: 'proyek',
     description: 'Studi kasus, proyek digital, dokumen, data, dan hasil pekerjaan lainnya.',
     fields: [
-      text('index', 'Nomor urut'), text('slug', 'Alamat halaman', { required: true, helper: 'Huruf kecil dan tanda hubung, contoh: sistem-pelaporan.' }),
+      text('slug', 'Alamat halaman', { required: true, helper: 'Huruf kecil dan tanda hubung, contoh: sistem-pelaporan.' }),
       text('title', 'Judul proyek', { required: true }), text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
       { key: 'layout', label: 'Proporsi kartu', type: 'select', options: [
         { value: 'wide', label: 'Lebar' }, { value: 'tall', label: 'Tinggi' }, { value: 'square', label: 'Persegi' },
@@ -100,7 +100,7 @@ export const cmsModules: CmsModuleDefinition[] = [
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true },
       text('role', 'Peran'), text('discipline', 'Bidang'), text('artifactType', 'Jenis hasil'),
       area('summary', 'Ringkasan proyek', { required: true }), area('challenge', 'Konteks / Tantangan'), area('approach', 'Pendekatan / Solusi'),
-      text('evidence.label', 'Label tautan bukti'), { key: 'evidence.href', label: 'Tautan bukti proyek', type: 'url', helper: 'Satu tautan: website atau dokumen yang dapat dilihat.' },
+      text('evidence.label', 'Label tautan bukti'), { key: 'evidence.href', label: 'Tautan atau dokumen bukti', type: 'asset', wide: true, helper: 'Gunakan satu tautan website atau unggah PDF, Word, Excel, PowerPoint, OpenDocument, TXT, maupun CSV.' },
       { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Satu kontribusi per baris.' },
       { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Format setiap baris: Judul | Penjelasan.' },
       area('outcome', 'Hasil akhir'),

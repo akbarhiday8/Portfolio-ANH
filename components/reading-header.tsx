@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -20,9 +21,9 @@ export function ReadingHeader({ activePage }: { activePage: 'article' | 'work' }
   return (
     <header className={`reading-header-shell${expanded ? ' is-expanded' : ' is-collapsed'}`}>
       <div className="reading-header-bar page-wrap">
-        <a className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></a>
+        <Link className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></Link>
         <nav className="reading-header-nav" aria-label="Navigasi halaman dalam">
-          {readingLinks.map((link) => <a className={activePage === link.id ? 'active' : ''} href={link.href} key={link.id}>{link.label}</a>)}
+          {readingLinks.map((link) => <Link className={activePage === link.id ? 'active' : ''} href={link.href} key={link.id}>{link.label}</Link>)}
         </nav>
         <ThemeToggle />
       </div>

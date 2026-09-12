@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   ArrowRight, ArrowUpRight, BarChart3, BookOpen,
   BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
@@ -77,7 +78,7 @@ function WebsiteLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><pat
 type SocialLinkData = { label: string; href: string | null; icon?: string; customIcon?: string };
 
 function SocialIcon({ social }: { social: SocialLinkData }) {
-  if (social.customIcon) return <img src={social.customIcon} alt="" loading="lazy" decoding="async" />;
+  if (social.customIcon) return <Image src={social.customIcon} width={24} height={24} unoptimized alt="" />;
   const key = (social.icon || social.label).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (key.includes('linkedin')) return <LinkedInLogo />;
   if (key.includes('github')) return <GitHubLogo />;
@@ -132,7 +133,7 @@ export default async function Home() {
         </div>
 
         <div className="hero-art" aria-label="Ilustrasi potret Akbar Nur Hidayanto">
-          <img className="hero-portrait" src={profile.artwork} width={941} height={1671} loading="eager" decoding="async" fetchPriority="high" alt={`Potret ${profile.name} bergaya tinta`} />
+          <Image className="hero-portrait" src={profile.artwork} width={941} height={1671} priority sizes="(max-width: 650px) 94vw, (max-width: 1100px) 58vw, 49vw" alt={`Potret ${profile.name} bergaya tinta`} />
           <p className="portrait-kanji" lang="ja" aria-label="Keberlanjutan adalah kekuatan">継続は力なり</p>
         </div>
       </section>
@@ -146,7 +147,7 @@ export default async function Home() {
             <a className="about-link" href="#experience">{siteContent.aboutCta} <ArrowRight size={18} /></a>
           </div>
           <div className="capabilities" data-reveal>
-            {capabilities.map((item, index) => {
+            {capabilities.map((item) => {
               const Icon = capabilityIcons[item.icon as keyof typeof capabilityIcons] ?? capabilityIcons.grid;
               return <article key={item.title}><Icon size={25} strokeWidth={1.6} /><div><h4>{item.title}</h4><p>{item.description}</p></div></article>;
             })}
@@ -181,7 +182,7 @@ export default async function Home() {
         <div className="section-wrap indexed-grid">
           <SectionIndex title={siteContent.experienceTitle} caption={siteContent.experienceCaption} />
           <div className="experience-list" id="experience-heading">
-            {experience.map((item, index) => <article className="experience-card" key={item.index} data-reveal>
+            {experience.map((item) => <article className="experience-card" key={`${item.role}-${item.period}`} data-reveal>
               <div className="experience-media">
                 <Image src={item.image} fill sizes="(max-width: 520px) 100vw, (max-width: 850px) 180px, 220px" alt="" />
               </div>
@@ -208,7 +209,7 @@ export default async function Home() {
           <SectionIndex title={siteContent.portfolioTitle} caption={siteContent.portfolioCaption} />
           <div className="work-main">
             <div className="project-grid" id="work-heading">
-              {projects.map((project, index) => <a className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.index} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
+              {projects.map((project, index) => <Link className={`project${index === 0 ? ' project--featured' : ''}`} href={`/portfolio/${project.slug}`} key={project.slug} data-reveal aria-label={`Lihat detail proyek ${project.title}`}>
                 <div className="project-image">
                   <Image
                     src={project.image}
@@ -226,7 +227,7 @@ export default async function Home() {
                   <p className="project-meta"><span>{project.category}</span><span>{project.year}</span></p>
                   <p className="project-open">Buka studi kasus <ArrowRight size={14} /></p>
                 </div>
-              </a>)}
+              </Link>)}
             </div>
           </div>
         </div>
@@ -254,7 +255,7 @@ export default async function Home() {
                   <SocialIcon social={social} />
                 </a>
               ) : (
-                <span className="social-link is-disabled" aria-label={`${social.label} — tautan belum tersedia`} data-tooltip={`${social.label} segera tersedia`} key={social.label} role="img">
+                <span className="social-link is-disabled" aria-label={`${social.label} — tautan belum tersedia`} data-tooltip={`${social.label} segera tersedia`} key={social.label}>
                   <SocialIcon social={social} />
                 </span>
               ))}
