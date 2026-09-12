@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowDown, ArrowUp, BarChart3, BookOpen, BriefcaseBusiness,
   Check, ChevronDown, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
-  ImageIcon, Link2, LogOut, Menu, MoreHorizontal, Plus, Save, Search,
+  GripVertical, History, ImageIcon, Link2, ListChecks, LogOut, Menu, MoreHorizontal, PanelRightOpen, Plus, Save, Search,
   RotateCcw, Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -25,6 +25,8 @@ type ActiveView = 'overview' | 'media' | CmsCollection;
 type EditorSection = { title: string; description: string; fields: string[] };
 type CmsIcon = React.ComponentType<{ size?: number }>;
 type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
+type ValidationIssue = { label: string; detail: string; level: 'error' | 'warning' };
+type RevisionSnapshot = { savedAt: string; status: CmsStatus; title: string; data: Record<string, unknown> };
 
 const moduleIcons: Record<CmsCollection, React.ComponentType<{ size?: number }>> = {
   siteContent: Settings2,
@@ -80,6 +82,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Gambaran proyek', description: 'Peran, disiplin, hasil kerja, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'summary'] },
     { title: 'Studi kasus', description: 'Konteks, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'approach', 'scope', 'process'] },
     { title: 'Bukti dan hasil', description: 'Tautan bukti serta dampak akhir proyek.', fields: ['evidence.label', 'evidence.href', 'outcome'] },
+    { title: 'SEO & preview', description: 'Judul, deskripsi, dan gambar saat halaman dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
   certifications: [
     { title: 'Informasi sertifikasi', description: 'Nama, penerbit, tahun, dan kategori.', fields: ['name', 'issuer', 'year', 'category'] },
@@ -90,6 +93,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Pembuka', description: 'Lead dan rangkuman gagasan utama.', fields: ['lead', 'takeaways'] },
     { title: 'Isi artikel', description: 'Bagian utama tulisan.', fields: ['sections', 'quote'] },
     { title: 'Penutup', description: 'Kesimpulan artikel.', fields: ['closingHeading', 'closing'] },
+    { title: 'SEO & preview', description: 'Judul, deskripsi, dan gambar sosial untuk artikel.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
 };
 
@@ -163,6 +167,74 @@ function recordImage(record: CmsRecord) {
   return typeof candidate === 'string' && candidate ? candidate : null;
 }
 
+function stringValue(data: Record<string, unknown>, path: string) {
+  const value = getPath(data, path);
+  return typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
+}
+
+function simpleValue(value: unknown) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value).trim();
+  return '';
+}
+
+function listLength(data: Record<string, unknown>, path: string) {
+  const value = getPath(data, path);
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function isValidLink(value: string) {
+  if (!value) return true;
+  return value.startsWith('/') || value.startsWith('mailto:') || value.startsWith('tel:') || /^https?:\/\//i.test(value);
+}
+
+function validateRecord(module: CmsModuleDefinition, data: Record<string, unknown>, nextStatus: CmsStatus): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  module.fields.forEach((field) => {
+    const value = getPath(data, field.key);
+    const fieldValue = simpleValue(value);
+    const empty = Array.isArray(value) ? value.length === 0 : !fieldValue;
+    if (field.required && empty) {
+      issues.push({ level: 'error', label: `${field.label} wajib diisi`, detail: 'Konten tidak sebaiknya dipublikasikan sebelum field penting lengkap.' });
+    }
+    if (field.type === 'url' && !isValidLink(fieldValue)) {
+      issues.push({ level: 'error', label: `${field.label} belum valid`, detail: 'Gunakan https://, mailto:, tel:, atau path internal yang dimulai dengan /.' });
+    }
+  });
+
+  if (module.collection === 'projects') {
+    if (!stringValue(data, 'image')) issues.push({ level: 'warning', label: 'Gambar utama belum ada', detail: 'Portfolio akan terasa kurang kuat tanpa visual pendukung.' });
+    if (!stringValue(data, 'evidence.href')) issues.push({ level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
+    if (nextStatus === 'published' && !stringValue(data, 'slug')) issues.push({ level: 'error', label: 'Alamat halaman belum ada', detail: 'Slug dibutuhkan agar halaman detail proyek dapat dibuka.' });
+  }
+
+  if (module.collection === 'certifications' && !stringValue(data, 'image')) {
+    issues.push({ level: 'warning', label: 'Bukti sertifikat belum diunggah', detail: 'Sertifikasi tetap bisa disimpan, tetapi pengunjung belum bisa melihat bukti visualnya.' });
+  }
+
+  if (module.collection === 'articles') {
+    if (!listLength(data, 'sections')) issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Isi artikel masih kosong', detail: 'Tambahkan minimal satu bagian agar artikel siap dibaca.' });
+    if (!stringValue(data, 'seoDescription')) issues.push({ level: 'warning', label: 'SEO description belum diisi', detail: 'Jika kosong, ringkasan kartu akan dipakai sebagai fallback.' });
+  }
+
+  if (module.collection === 'projects' && !stringValue(data, 'seoDescription')) {
+    issues.push({ level: 'warning', label: 'SEO description belum diisi', detail: 'Jika kosong, ringkasan proyek akan dipakai sebagai fallback.' });
+  }
+
+  return issues;
+}
+
+function previewTitle(module: CmsModuleDefinition, data: Record<string, unknown>) {
+  return stringValue(data, 'title') || stringValue(data, 'name') || stringValue(data, 'role') || stringValue(data, 'label') || module.singular;
+}
+
+function previewSummary(module: CmsModuleDefinition, data: Record<string, unknown>) {
+  return stringValue(data, 'summary') || stringValue(data, 'excerpt') || stringValue(data, 'description') || stringValue(data, 'introduction') || module.description;
+}
+
+function previewImage(data: Record<string, unknown>) {
+  return stringValue(data, 'seoImage') || stringValue(data, 'image') || stringValue(data, 'artwork');
+}
+
 function formatUpdatedAt(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return { date: 'Belum tersimpan', time: '' };
@@ -202,6 +274,18 @@ function ContentEditor({
     () => JSON.stringify(data) !== JSON.stringify(baseline.data) || status !== baseline.status,
     [baseline, data, status],
   );
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [autosaveState, setAutosaveState] = useState('');
+  const [history, setHistory] = useState<RevisionSnapshot[]>([]);
+  const autosaveKey = useMemo(() => `anh-cms-draft:${module.collection}:${record.id}`, [module.collection, record.id]);
+  const historyKey = useMemo(() => `anh-cms-history:${module.collection}:${record.id}`, [module.collection, record.id]);
+  const validationIssues = useMemo(() => validateRecord(module, data, module.singleton ? 'published' : status), [data, module, status]);
+  const preview = useMemo(() => ({
+    title: previewTitle(module, data),
+    summary: previewSummary(module, data),
+    image: previewImage(data),
+    meta: [stringValue(data, 'category'), stringValue(data, 'year') || stringValue(data, 'period'), stringValue(data, 'issuer')].filter(Boolean).join(' / '),
+  }), [data, module]);
 
   useEffect(() => {
     function protectDraft(event: BeforeUnloadEvent) {
@@ -212,8 +296,69 @@ function ContentEditor({
     return () => window.removeEventListener('beforeunload', protectDraft);
   }, [dirty]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(autosaveKey);
+        if (!saved) return;
+        const draft = JSON.parse(saved) as { data?: Record<string, unknown>; status?: CmsStatus; updatedAt?: number };
+        if (!draft.data || JSON.stringify(draft.data) === JSON.stringify(record.data)) return;
+        const time = draft.updatedAt ? new Date(draft.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+        if (window.confirm(`Ada draft otomatis yang belum disimpan${time ? ` dari ${time}` : ''}. Pulihkan draft ini?`)) {
+          setData(draft.data);
+          if (draft.status) setStatus(draft.status);
+          setMessage('Draft otomatis dipulihkan. Cek kembali lalu simpan.');
+        }
+      } catch {
+        window.localStorage.removeItem(autosaveKey);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [autosaveKey, record.data]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(historyKey);
+        setHistory(saved ? JSON.parse(saved) as RevisionSnapshot[] : []);
+      } catch {
+        setHistory([]);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [historyKey]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const timer = window.setTimeout(() => {
+      const draft = { data, status, updatedAt: Date.now() };
+      window.localStorage.setItem(autosaveKey, JSON.stringify(draft));
+      setAutosaveState(`Autosave ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [autosaveKey, data, dirty, status]);
+
   function closeEditor() {
     if (!dirty || window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) onClose();
+  }
+
+  function saveRevision(savedRecord: CmsRecord) {
+    const snapshot: RevisionSnapshot = {
+      savedAt: new Date().toISOString(),
+      status: savedRecord.status,
+      title: recordTitle(savedRecord, module),
+      data: structuredClone(savedRecord.data),
+    };
+    const next = [snapshot, ...history].slice(0, 5);
+    setHistory(next);
+    window.localStorage.setItem(`anh-cms-history:${module.collection}:${savedRecord.id}`, JSON.stringify(next));
+  }
+
+  function restoreRevision(snapshot: RevisionSnapshot) {
+    if (!window.confirm('Pulihkan versi ini ke editor? Konten belum berubah di website sampai Anda menekan Simpan.')) return;
+    setData(structuredClone(snapshot.data));
+    setStatus(snapshot.status);
+    setMessage('Versi sebelumnya dimuat ke editor. Simpan untuk menerapkan.');
   }
 
   async function upload(field: CmsField, file?: File) {
@@ -231,6 +376,12 @@ function ContentEditor({
 
   async function save(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    const blockingIssues = validationIssues.filter((issue) => issue.level === 'error');
+    if (blockingIssues.length) {
+      setMessage(`Periksa ${blockingIssues.length} error sebelum menyimpan.`);
+      setPreviewOpen(true);
+      return;
+    }
     setBusy(true);
     setMessage('');
     const endpoint = record.id === 'new'
@@ -245,6 +396,9 @@ function ContentEditor({
     if (!response.ok || !result.record) setMessage(result.error ?? 'Perubahan tidak dapat disimpan.');
     else {
       setMessage('Perubahan tersimpan.');
+      saveRevision(result.record);
+      window.localStorage.removeItem(autosaveKey);
+      setAutosaveState('');
       setBaseline({ data: structuredClone(result.record.data), status: result.record.status });
       onSaved(result.record);
     }
@@ -288,6 +442,7 @@ function ContentEditor({
           <div><span>{record.id === 'new' ? 'Konten baru' : module.label}</span><h2>{record.id === 'new' ? `Tambah ${module.singular}` : recordTitle(record, module)}</h2></div>
           <div className="cms-editor-actions">
             <span className={dirty ? 'is-dirty' : 'is-saved'}>{dirty ? 'Belum disimpan' : 'Tersimpan'}</span>
+            <Button type="button" variant="outline" onClick={() => setPreviewOpen((value) => !value)}><PanelRightOpen size={16} />Preview</Button>
             <Button className="cms-save-button" type="submit" disabled={busy || !dirty}><Save size={16} />{busy ? 'Menyimpan...' : 'Simpan'}</Button>
             <button type="button" onClick={closeEditor} aria-label="Tutup editor"><X size={18} /></button>
           </div>
@@ -300,7 +455,7 @@ function ContentEditor({
             <nav aria-label="Bagian formulir">
               {sections.map((section, index) => <a href={`#editor-section-${index}`} key={section.title}><i aria-hidden="true" />{section.title}</a>)}
             </nav>
-            <div className="cms-editor-guide-note"><strong>Simpan secara manual</strong><p>Perubahan baru tampil setelah tombol Simpan ditekan.</p></div>
+            <div className="cms-editor-guide-note"><strong>Autosave aktif</strong><p>Draft tersimpan di browser. Website baru berubah setelah tombol Simpan ditekan.</p></div>
           </aside>
 
           <div className="cms-editor-main">
@@ -308,6 +463,35 @@ function ContentEditor({
               <div><strong>Status publikasi</strong><p>{module.singleton ? 'Konten utama selalu ditampilkan di website.' : 'Aktifkan untuk menampilkan konten di website.'}</p></div>
               <div><span className={module.singleton || status === 'published' ? 'is-published' : ''}>{module.singleton || status === 'published' ? 'Ditampilkan' : 'Draft'}</span><Switch checked={module.singleton || status === 'published'} disabled={module.singleton} onCheckedChange={(checked) => setStatus(checked ? 'published' : 'draft')} aria-label="Status publikasi" /></div>
             </section>
+
+            <div className="cms-editor-tools">
+              <span>{autosaveState || (dirty ? 'Menunggu autosave...' : 'Tidak ada perubahan')}</span>
+              <strong>{validationIssues.filter((issue) => issue.level === 'error').length} error / {validationIssues.filter((issue) => issue.level === 'warning').length} saran</strong>
+            </div>
+
+            {validationIssues.length ? (
+              <section className="cms-validation-panel" aria-label="Validasi konten">
+                <header><ListChecks size={17} /><div><strong>Pemeriksaan konten</strong><p>Pastikan konten aman dan rapi sebelum dipublikasikan.</p></div></header>
+                <div>{validationIssues.map((issue) => <article className={issue.level === 'error' ? 'is-error' : ''} key={`${issue.level}-${issue.label}`}><strong>{issue.label}</strong><p>{issue.detail}</p></article>)}</div>
+              </section>
+            ) : null}
+
+            {previewOpen ? (
+              <section className="cms-preview-panel" aria-label="Preview konten">
+                <header><Eye size={17} /><div><strong>Preview ringkas</strong><p>Tampilan ini membantu mengecek judul, visual, dan ringkasan sebelum disimpan.</p></div></header>
+                <article>
+                  {preview.image ? <Image src={preview.image} width={420} height={210} unoptimized alt="" /> : <div className="cms-preview-empty"><ImageIcon size={26} /><span>Belum ada visual</span></div>}
+                  <div><span>{module.label}{preview.meta ? ` / ${preview.meta}` : ''}</span><h3>{preview.title}</h3><p>{preview.summary}</p></div>
+                </article>
+              </section>
+            ) : null}
+
+            {history.length ? (
+              <section className="cms-history-panel" aria-label="Riwayat versi">
+                <header><History size={17} /><div><strong>Riwayat versi</strong><p>5 penyimpanan terakhir tersimpan lokal sebagai cadangan cepat.</p></div></header>
+                <div>{history.map((snapshot) => <button type="button" onClick={() => restoreRevision(snapshot)} key={snapshot.savedAt}><span>{snapshot.title}</span><small>{new Date(snapshot.savedAt).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></button>)}</div>
+              </section>
+            ) : null}
 
             <div className="cms-form-sections">
               {sections.map((section, index) => {
@@ -403,6 +587,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState<number | null>(null);
+  const [draggingId, setDraggingId] = useState('');
   const globalSearchRef = useRef<HTMLInputElement>(null);
 
   const activeModule = cmsModules.find((module) => module.collection === activeView);
@@ -430,11 +615,15 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     const projectsMissingEvidence = (collections.projects ?? []).filter((record) => !getPath(record.data, 'evidence.href')).length;
     const certificatesMissingImage = (collections.certifications ?? []).filter((record) => !record.data.image).length;
     const articlesMissingBody = (collections.articles ?? []).filter((record) => !Array.isArray(record.data.sections) || record.data.sections.length === 0).length;
+    const missingSeo = [...(collections.projects ?? []), ...(collections.articles ?? [])].filter((record) => !record.data.seoDescription).length;
+    const longTitles = allRecords.filter((record) => recordTitle(record, cmsModules.find((item) => item.collection === record.collection)!).length > 70).length;
     return [
       { label: 'Draft belum tampil', value: allRecords.filter((record) => record.status === 'draft').length, view: 'overview' as ActiveView },
       { label: 'Portfolio tanpa bukti', value: projectsMissingEvidence, view: 'projects' as ActiveView },
       { label: 'Sertifikat tanpa gambar', value: certificatesMissingImage, view: 'certifications' as ActiveView },
       { label: 'Artikel belum lengkap', value: articlesMissingBody, view: 'articles' as ActiveView },
+      { label: 'SEO belum lengkap', value: missingSeo, view: 'projects' as ActiveView },
+      { label: 'Judul terlalu panjang', value: longTitles, view: 'overview' as ActiveView },
       { label: 'Media tersimpan', value: mediaCount ?? 0, view: 'media' as ActiveView, positive: true },
     ];
   }, [allRecords, collections.articles, collections.certifications, collections.projects, mediaCount]);
@@ -501,6 +690,20 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
   }
 
+  async function moveTo(record: CmsRecord, targetIndex: number) {
+    const list = [...records];
+    const currentIndex = list.findIndex((item) => item.id === draggingId);
+    if (currentIndex < 0 || currentIndex === targetIndex) {
+      setDraggingId('');
+      return;
+    }
+    const [dragged] = list.splice(currentIndex, 1);
+    list.splice(targetIndex, 0, dragged);
+    setDraggingId('');
+    setCollections((current) => ({ ...current, [record.collection]: list }));
+    await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
+  }
+
   async function logout() { await fetch('/api/cms/auth/logout', { method: 'POST' }); window.location.href = '/admin/login'; }
   async function resetAccount() {
     if (!window.confirm('Reset akun admin? Akun dan semua sesi login akan dihapus, tetapi konten website tetap aman.')) return;
@@ -551,8 +754,9 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
               {activeModule.singleton ? (() => { const record = records[0] ?? newRecord(activeModule); const Icon = moduleIcons[activeModule.collection]; return <div className="cms-singleton-panel"><div className="cms-singleton-main"><span><Icon size={21} /></span><div><strong>{recordTitle(record, activeModule)}</strong><p>{recordSummary(record, activeModule.description)}</p><small>{records[0] ? `Diperbarui ${new Date(record.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Belum dibuat'}</small></div><Button className="cms-primary-button" onClick={() => setEditor({ module: activeModule, record })}>Sunting Pengaturan</Button></div><div className="cms-singleton-sections">{sectionsForModule(activeModule).map((section) => <article key={section.title}><i aria-hidden="true" /><strong>{section.title}</strong><small>{section.description}</small></article>)}</div></div>; })() : <><div className="cms-module-count"><span>{records.length} konten</span></div>
               <div className="cms-record-list">
                 <div className="cms-record-head"><span>Urutan</span><span>Konten</span><span>Status</span><span>Aksi</span></div>
-                {records.map((record, index) => <article key={record.id}>
-                  <div className="cms-record-order"><button type="button" onClick={() => move(record, -1)} disabled={index === 0} aria-label="Geser ke atas"><ArrowUp size={14} /></button><button type="button" onClick={() => move(record, 1)} disabled={index === records.length - 1} aria-label="Geser ke bawah"><ArrowDown size={14} /></button></div>
+                {records.map((record, index) => <article className={draggingId === record.id ? 'is-dragging' : ''} key={record.id}>
+                  <button className="cms-row-drop-target" type="button" onDragOver={(event) => event.preventDefault()} onDrop={() => moveTo(record, index)} aria-label={`Letakkan konten di posisi ${index + 1}`} />
+                  <div className="cms-record-order"><button className="cms-drag-handle" type="button" draggable onDragStart={() => setDraggingId(record.id)} onDragEnd={() => setDraggingId('')} aria-label="Geser dengan drag"><GripVertical size={15} /></button><button type="button" onClick={() => move(record, -1)} disabled={index === 0} aria-label="Geser ke atas"><ArrowUp size={14} /></button><button type="button" onClick={() => move(record, 1)} disabled={index === records.length - 1} aria-label="Geser ke bawah"><ArrowDown size={14} /></button></div>
                   <div className="cms-record-copy"><strong>{recordTitle(record, activeModule)}</strong><p>{recordSummary(record, activeModule.description)}</p><small>Diperbarui {new Date(record.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</small></div>
                   <span className={`cms-record-status ${record.status}`}>{record.status === 'published' ? 'Ditampilkan' : 'Draft'}</span>
                   <div className="cms-record-actions"><Button variant="outline" onClick={() => setEditor({ module: activeModule, record })}>Sunting</Button>{!activeModule.singleton ? <button className="cms-delete-button" type="button" onClick={() => remove(record)} aria-label="Hapus"><Trash2 size={16} /></button> : null}</div>

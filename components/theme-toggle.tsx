@@ -19,8 +19,8 @@ export function ThemeToggle() {
       aria-label="Ganti tema warna"
       title="Ganti tema warna"
     >
-      <span className="theme-option theme-option-light"><Sun size={13} aria-hidden="true" />Terang</span>
-      <span className="theme-option theme-option-dark"><Moon size={13} aria-hidden="true" />Gelap</span>
+      <span className="theme-option theme-option-light"><Sun size={15} aria-hidden="true" /><span>Terang</span></span>
+      <span className="theme-option theme-option-dark"><Moon size={15} aria-hidden="true" /><span>Gelap</span></span>
     </button>
   );
 }

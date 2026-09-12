@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
+
+const SITE_URL = 'https://akbar-nur-portfolio.akbar8nur.chatgpt.site';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 
@@ -13,11 +16,17 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { articles } = await getPortfolioContent();
   const article = articles.find((item) => item.slug === slug);
   if (!article) return {};
+
+  const seo = article as typeof article & { seoTitle?: string; seoDescription?: string; seoImage?: string };
+  const title = seo.seoTitle || `${article.title} — Akbar Nur Hidayanto`;
+  const description = seo.seoDescription || article.excerpt;
+  const image = seo.seoImage ? new URL(seo.seoImage, SITE_URL).toString() : null;
+
   return {
-    title: `${article.title} — Akbar Nur Hidayanto`,
-    description: article.excerpt,
-    openGraph: { title: article.title, description: article.excerpt, type: 'article', images: [] },
-    twitter: { card: 'summary', title: article.title, description: article.excerpt, images: [] },
+    title,
+    description,
+    openGraph: { title: seo.seoTitle || article.title, description, type: 'article', images: image ? [{ url: image, alt: article.title }] : [] },
+    twitter: { card: image ? 'summary_large_image' : 'summary', title: seo.seoTitle || article.title, description, images: image ? [image] : [] },
   };
 }
 
@@ -39,7 +48,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <article>
           <header className="article-hero">
             <div className="section-wrap article-hero-inner">
-              <p className="article-kicker"><a href="/artikel">Artikel</a> / {article.category}</p>
+              <p className="article-kicker"><Link href="/artikel">Artikel</Link> / {article.category}</p>
               <h1>{article.title}</h1>
               <p className="article-lead">{article.lead}</p>
               <div className="article-byline"><span>Akbar Nur Hidayanto</span><span>{article.publishedAt}</span><span><Clock3 size={14} /> {article.readTime}</span></div>
@@ -75,9 +84,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </div>
         </article>
 
-        <a className="article-next" href={`/artikel/${next.slug}`}>
+        <Link className="article-next" href={`/artikel/${next.slug}`}>
           <span className="section-wrap"><small>Baca selanjutnya</small><strong>{next.title}</strong><ArrowRight size={24} /></span>
-        </a>
+        </Link>
 
         <SiteFooter />
       </main>

@@ -19,20 +19,24 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   const project = projects.find((item) => item.slug === slug);
   if (!project) return {};
 
-  const image = new URL(project.image, SITE_URL).toString();
+  const seo = project as typeof project & { seoTitle?: string; seoDescription?: string; seoImage?: string };
+  const pageTitle = seo.seoTitle || `${project.title} — Portfolio Akbar Nur Hidayanto`;
+  const pageDescription = seo.seoDescription || project.summary;
+  const image = new URL(seo.seoImage || project.image, SITE_URL).toString();
+
   return {
-    title: `${project.title} — Portfolio Akbar Nur Hidayanto`,
-    description: project.summary,
+    title: pageTitle,
+    description: pageDescription,
     openGraph: {
-      title: project.title,
-      description: project.summary,
+      title: seo.seoTitle || project.title,
+      description: pageDescription,
       type: 'article',
       images: [{ url: image, alt: `Dokumentasi proyek ${project.title}` }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: project.title,
-      description: project.summary,
+      title: seo.seoTitle || project.title,
+      description: pageDescription,
       images: [image],
     },
   };

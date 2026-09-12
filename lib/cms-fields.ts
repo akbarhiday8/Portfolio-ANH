@@ -104,6 +104,9 @@ export const cmsModules: CmsModuleDefinition[] = [
       { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Satu kontribusi per baris.' },
       { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Format setiap baris: Judul | Penjelasan.' },
       area('outcome', 'Hasil akhir'),
+      text('seoTitle', 'SEO title', { helper: 'Opsional. Jika kosong, judul proyek digunakan.' }),
+      area('seoDescription', 'SEO description', { helper: 'Disarankan 120–160 karakter untuk hasil berbagi yang rapi.' }),
+      { key: 'seoImage', label: 'Gambar social preview', type: 'image', wide: true, helper: 'Opsional. Jika kosong, gambar utama digunakan.' },
     ],
   },
   {
@@ -125,6 +128,9 @@ export const cmsModules: CmsModuleDefinition[] = [
       area('lead', 'Paragraf pembuka'), { key: 'takeaways', label: 'Ringkasan utama', type: 'list', wide: true, helper: 'Satu poin per baris.' },
       { key: 'sections', label: 'Isi artikel', type: 'articleSections', wide: true, helper: 'Gunakan ## untuk judul bagian. Pisahkan paragraf dengan satu baris kosong.' },
       area('quote', 'Kutipan penekanan'), text('closingHeading', 'Judul penutup'), area('closing', 'Penutup'),
+      text('seoTitle', 'SEO title', { helper: 'Opsional. Jika kosong, judul artikel digunakan.' }),
+      area('seoDescription', 'SEO description', { helper: 'Disarankan 120–160 karakter untuk hasil berbagi yang rapi.' }),
+      { key: 'seoImage', label: 'Gambar social preview', type: 'image', wide: true, helper: 'Opsional untuk thumbnail saat artikel dibagikan.' },
     ],
   },
   {
