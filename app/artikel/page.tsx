@@ -5,6 +5,8 @@ import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Artikel — Akbar Nur Hidayanto',
   description: 'Catatan tentang teknologi, dokumentasi, produktivitas, desain sistem, dan cara kerja yang lebih terstruktur.',

@@ -8,6 +8,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
 import { SITE_URL } from '@/lib/site-url';
 
+export const dynamic = 'force-dynamic';
+
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {

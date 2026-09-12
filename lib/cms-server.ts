@@ -31,6 +31,22 @@ export type CmsRecord = {
   updatedAt: string;
 };
 
+export type CmsRevision = {
+  id: string;
+  recordId: string;
+  collection: CmsCollection;
+  status: CmsStatus;
+  data: Record<string, unknown>;
+  createdAt: string;
+};
+
+let publicContentCache: { value: typeof portfolioData; expiresAt: number } | null = null;
+const PUBLIC_CONTENT_CACHE_MS = 30_000;
+
+export function invalidatePortfolioContentCache() {
+  publicContentCache = null;
+}
+
 type CmsBindings = { DB: D1Database; MEDIA: R2Bucket };
 const bindings = () => env as unknown as CmsBindings;
 
@@ -49,10 +65,12 @@ export async function ensureCmsSchema() {
         ['height', 'ALTER TABLE cms_media ADD COLUMN height INTEGER'],
         ['optimized', 'ALTER TABLE cms_media ADD COLUMN optimized INTEGER NOT NULL DEFAULT 0'],
         ['temporary', 'ALTER TABLE cms_media ADD COLUMN temporary INTEGER NOT NULL DEFAULT 0'],
+        ['checksum_sha256', 'ALTER TABLE cms_media ADD COLUMN checksum_sha256 TEXT'],
       ] as const;
       for (const [column, statement] of migrations) {
         if (!existingColumns.has(column)) await db.prepare(statement).run();
       }
+      await db.prepare('CREATE INDEX IF NOT EXISTS idx_cms_media_checksum ON cms_media(checksum_sha256)').run();
       await db.prepare('PRAGMA optimize').run();
       await seedCmsContent();
     })().catch((error) => {
@@ -143,8 +161,8 @@ async function removeUnreferencedMedia(objectKeys: Iterable<string>) {
   let removed = 0;
   for (const objectKey of uniqueKeys) {
     const mediaUrl = `/media/${objectKey}`;
-    const reference = await db.prepare('SELECT id FROM cms_records WHERE data_json LIKE ? LIMIT 1')
-      .bind(`%${mediaUrl}%`)
+    const reference = await db.prepare('SELECT id FROM cms_records WHERE instr(data_json, ?) > 0 LIMIT 1')
+      .bind(mediaUrl)
       .first();
     if (reference) continue;
     const row = await db.prepare('SELECT id FROM cms_media WHERE object_key = ?').bind(objectKey).first<{ id: string }>();
@@ -187,6 +205,7 @@ export async function listCmsRecords(options: { includeDrafts?: boolean; collect
 }
 
 export async function getPortfolioContent() {
+  if (publicContentCache && publicContentCache.expiresAt > Date.now()) return publicContentCache.value;
   try {
     const records = await listCmsRecords();
     const fallback = JSON.parse(JSON.stringify(portfolioData)) as Record<string, unknown>;
@@ -205,8 +224,11 @@ export async function getPortfolioContent() {
         });
       }
     }
-    return fallback as unknown as typeof portfolioData;
-  } catch {
+    const value = fallback as unknown as typeof portfolioData;
+    publicContentCache = { value, expiresAt: Date.now() + PUBLIC_CONTENT_CACHE_MS };
+    return value;
+  } catch (error) {
+    console.error('[cms-content] Falling back to bundled content.', error);
     return portfolioData;
   }
 }
@@ -224,9 +246,9 @@ export async function createCmsRecord(collection: CmsCollection, data: Record<st
   const db = bindings().DB;
   const id = crypto.randomUUID();
   const naturalSlug = scalarString(data.slug ?? data.label ?? data.name ?? data.title, id);
-  let slug = slugify(naturalSlug);
+  const slug = slugify(naturalSlug);
   const duplicate = await db.prepare('SELECT id FROM cms_records WHERE collection = ? AND slug = ?').bind(collection, slug).first();
-  if (duplicate) slug = `${slug}-${id.slice(0, 6)}`;
+  if (duplicate) throw new Error('UNIQUE_SLUG');
   if (collection === 'projects' || collection === 'articles') data.slug = slug;
   const max = await db.prepare('SELECT MAX(sort_order) AS value FROM cms_records WHERE collection = ?').bind(collection).first<{ value: number | null }>();
   const sortOrder = Number(max?.value ?? -1) + 1;
@@ -235,13 +257,17 @@ export async function createCmsRecord(collection: CmsCollection, data: Record<st
     `INSERT INTO cms_records (id, collection, slug, sort_order, status, data_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(id, collection, slug, sortOrder, status, JSON.stringify(data), now, now).run();
+  await db.prepare(
+    'INSERT INTO cms_audit_log (id, action, collection, record_id, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).bind(crypto.randomUUID(), 'created', collection, id, scalarString(data.title ?? data.name ?? data.role ?? data.label, collection), now).run();
   await markReferencedMedia(data);
+  invalidatePortfolioContentCache();
   return { id, collection, slug, sortOrder, status, data, createdAt: now, updatedAt: now } satisfies CmsRecord;
 }
 
-export async function updateCmsRecord(id: string, data: Record<string, unknown>, status: CmsStatus) {
+export async function updateCmsRecord(requestedCollection: CmsCollection, id: string, data: Record<string, unknown>, status: CmsStatus) {
   await ensureCmsSchema();
-  const existing = await bindings().DB.prepare('SELECT * FROM cms_records WHERE id = ?').bind(id).first<Record<string, unknown>>();
+  const existing = await bindings().DB.prepare('SELECT * FROM cms_records WHERE id = ? AND collection = ?').bind(id, requestedCollection).first<Record<string, unknown>>();
   if (!existing) return null;
   const previous = mapRecord(existing);
   const collection = String(existing.collection) as CmsCollection;
@@ -251,33 +277,76 @@ export async function updateCmsRecord(id: string, data: Record<string, unknown>,
     data.slug = slug;
   }
   const now = new Date().toISOString();
-  await bindings().DB.prepare(
+  const db = bindings().DB;
+  await db.prepare(
+    'INSERT INTO cms_revisions (id, record_id, collection, status, data_json, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).bind(crypto.randomUUID(), id, collection, previous.status, JSON.stringify(previous.data), now).run();
+  await db.prepare(
+    `DELETE FROM cms_revisions WHERE record_id = ? AND id NOT IN (
+      SELECT id FROM cms_revisions WHERE record_id = ? ORDER BY created_at DESC LIMIT 10
+    )`,
+  ).bind(id, id).run();
+  await db.prepare(
     'UPDATE cms_records SET slug = ?, status = ?, data_json = ?, updated_at = ? WHERE id = ?',
   ).bind(slug, status, JSON.stringify(data), now, id).run();
+  await db.prepare(
+    'INSERT INTO cms_audit_log (id, action, collection, record_id, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).bind(crypto.randomUUID(), previous.status === status ? 'updated' : status, collection, id, scalarString(data.title ?? data.name ?? data.role ?? data.label, collection), now).run();
   await markReferencedMedia(data);
   await cleanupReplacedMedia(previous.data, data);
+  invalidatePortfolioContentCache();
   return { ...previous, slug, status, data, updatedAt: now };
 }
 
-export async function deleteCmsRecord(id: string) {
+export async function deleteCmsRecord(collection: CmsCollection, id: string) {
   await ensureCmsSchema();
   const existing = await bindings().DB.prepare(
-    "SELECT * FROM cms_records WHERE id = ? AND collection NOT IN ('profile', 'siteContent')",
-  ).bind(id).first<Record<string, unknown>>();
+    "SELECT * FROM cms_records WHERE id = ? AND collection = ? AND collection NOT IN ('profile', 'siteContent')",
+  ).bind(id, collection).first<Record<string, unknown>>();
   if (!existing) return null;
   const deleted = await bindings().DB.prepare(
-    "DELETE FROM cms_records WHERE id = ? AND collection NOT IN ('profile', 'siteContent')",
-  ).bind(id).run();
-  await cleanupReplacedMedia(mapRecord(existing).data);
+    "DELETE FROM cms_records WHERE id = ? AND collection = ? AND collection NOT IN ('profile', 'siteContent')",
+  ).bind(id, collection).run();
+  const mapped = mapRecord(existing);
+  await bindings().DB.batch([
+    bindings().DB.prepare('DELETE FROM cms_revisions WHERE record_id = ?').bind(id),
+    bindings().DB.prepare(
+      'INSERT INTO cms_audit_log (id, action, collection, record_id, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    ).bind(crypto.randomUUID(), 'deleted', collection, id, scalarString(mapped.data.title ?? mapped.data.name ?? mapped.data.role ?? mapped.data.label, collection), new Date().toISOString()),
+  ]);
+  await cleanupReplacedMedia(mapped.data);
+  invalidatePortfolioContentCache();
   return deleted;
 }
 
 export async function reorderCmsRecords(collection: CmsCollection, ids: string[]) {
   await ensureCmsSchema();
   const db = bindings().DB;
+  if (!ids.length || new Set(ids).size !== ids.length) return false;
+  const current = await db.prepare('SELECT id FROM cms_records WHERE collection = ?').bind(collection).all<{ id: string }>();
+  const currentIds = current.results.map((item) => String(item.id)).sort();
+  const requestedIds = [...ids].sort();
+  if (currentIds.length !== requestedIds.length || currentIds.some((id, index) => id !== requestedIds[index])) return false;
   await db.batch(ids.map((id, index) => db.prepare(
     'UPDATE cms_records SET sort_order = ?, updated_at = ? WHERE id = ? AND collection = ?',
   ).bind(index, new Date().toISOString(), id, collection)));
+  invalidatePortfolioContentCache();
+  return true;
+}
+
+export async function getCmsRevisions(collection: CmsCollection, recordId: string) {
+  await ensureCmsSchema();
+  const result = await bindings().DB.prepare(
+    'SELECT * FROM cms_revisions WHERE collection = ? AND record_id = ? ORDER BY created_at DESC LIMIT 10',
+  ).bind(collection, recordId).all<Record<string, unknown>>();
+  return result.results.map((row) => ({
+    id: String(row.id),
+    recordId: String(row.record_id),
+    collection: String(row.collection) as CmsCollection,
+    status: String(row.status) as CmsStatus,
+    data: JSON.parse(String(row.data_json)) as Record<string, unknown>,
+    createdAt: String(row.created_at),
+  } satisfies CmsRevision));
 }
 
 export async function cleanupUnusedCmsMedia(options: { olderThanMs?: number } = {}) {

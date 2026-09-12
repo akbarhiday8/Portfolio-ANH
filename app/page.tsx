@@ -11,6 +11,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { getPortfolioContent } from '@/lib/cms-server';
 
+export const dynamic = 'force-dynamic';
+
 const capabilityIcons = {
   book: GraduationCap,
   briefcase: BriefcaseBusiness,

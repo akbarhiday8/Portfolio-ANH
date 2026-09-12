@@ -3,9 +3,9 @@ import { CMS_SESSION_COOKIE, deleteCmsSession, getCmsTokenFromRequest } from '@/
 import { mutationOriginIsValid } from '@/lib/cms-api';
 
 export async function POST(request: Request) {
-  if (!mutationOriginIsValid(request)) return NextResponse.json({ error: 'Permintaan tidak valid.' }, { status: 403 });
+  if (!mutationOriginIsValid(request)) return NextResponse.json({ error: 'Permintaan tidak valid.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
   await deleteCmsSession(getCmsTokenFromRequest(request));
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   response.cookies.set({ name: CMS_SESSION_COOKIE, value: '', httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 });
   return response;
 }

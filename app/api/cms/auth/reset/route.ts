@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
   if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
   await resetCmsAdminAccount();
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   response.cookies.set({
     name: CMS_SESSION_COOKIE,
     value: '',

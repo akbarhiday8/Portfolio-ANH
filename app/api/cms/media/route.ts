@@ -61,6 +61,11 @@ function signatureMatches(contentType: string, bytes: Uint8Array) {
   return false;
 }
 
+async function sha256Hex(buffer: ArrayBuffer) {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buffer));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function mapMediaRow(row: Record<string, unknown>) {
   return {
     id: String(row.id),
@@ -82,7 +87,7 @@ export async function GET(request: Request) {
   await ensureCmsSchema();
   await cleanupUnusedCmsMedia({ olderThanMs: UNUSED_MEDIA_GRACE_MS }).catch(() => undefined);
   const result = await getCmsDatabase().prepare('SELECT * FROM cms_media ORDER BY created_at DESC').all<Record<string, unknown>>();
-  return NextResponse.json({ media: result.results.map(mapMediaRow) });
+  return NextResponse.json({ media: result.results.map(mapMediaRow) }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST(request: Request) {
@@ -105,6 +110,18 @@ export async function POST(request: Request) {
   }
 
   await ensureCmsSchema();
+  const checksum = await sha256Hex(buffer);
+  const existing = await getCmsDatabase().prepare(
+    'SELECT * FROM cms_media WHERE checksum_sha256 = ? AND content_type = ? AND size_bytes = ? LIMIT 1',
+  ).bind(checksum, contentType, file.size).first<Record<string, unknown>>();
+  if (existing) {
+    if (formData.get('temporary') === '0' && Boolean(existing.temporary)) {
+      await getCmsDatabase().prepare('UPDATE cms_media SET temporary = 0 WHERE id = ?').bind(String(existing.id)).run();
+      existing.temporary = 0;
+    }
+    return NextResponse.json({ media: mapMediaRow(existing), reused: true });
+  }
+
   const id = crypto.randomUUID();
   const extension = MIME_EXTENSIONS[contentType];
   const objectKey = `cms/${id}.${extension}`;
@@ -121,11 +138,11 @@ export async function POST(request: Request) {
   const now = new Date().toISOString();
   await getCmsDatabase().prepare(
     `INSERT INTO cms_media
-      (id, object_key, original_name, content_type, size_bytes, original_size_bytes, width, height, optimized, temporary, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).bind(id, objectKey, originalName, contentType, file.size, originalSize, width, height, optimized ? 1 : 0, temporary ? 1 : 0, now).run();
+      (id, object_key, original_name, content_type, size_bytes, original_size_bytes, width, height, optimized, temporary, checksum_sha256, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(id, objectKey, originalName, contentType, file.size, originalSize, width, height, optimized ? 1 : 0, temporary ? 1 : 0, checksum, now).run();
   return NextResponse.json({ media: mapMediaRow({
     id, object_key: objectKey, original_name: originalName, content_type: contentType,
-    size_bytes: file.size, original_size_bytes: originalSize, width, height, optimized: optimized ? 1 : 0, temporary: temporary ? 1 : 0, created_at: now,
+    size_bytes: file.size, original_size_bytes: originalSize, width, height, optimized: optimized ? 1 : 0, temporary: temporary ? 1 : 0, checksum_sha256: checksum, created_at: now,
   }) }, { status: 201 });
 }

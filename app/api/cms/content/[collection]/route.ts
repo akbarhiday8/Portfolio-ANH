@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { invalidOriginResponse, isCmsCollection, mutationOriginIsValid, parseStatus, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
 import { createCmsRecord, reorderCmsRecords } from '@/lib/cms-server';
+import { validateCmsRecord } from '@/lib/cms-validation';
 
 type RouteProps = { params: Promise<{ collection: string }> };
 
@@ -13,9 +14,19 @@ export async function POST(request: Request, { params }: RouteProps) {
   }
   const body = await request.json().catch(() => null) as { data?: Record<string, unknown>; status?: unknown; ids?: string[] } | null;
   if (body?.ids) {
-    await reorderCmsRecords(collection, body.ids);
-    return NextResponse.json({ ok: true });
+    const reordered = await reorderCmsRecords(collection, body.ids);
+    return reordered
+      ? NextResponse.json({ ok: true })
+      : NextResponse.json({ error: 'Urutan konten tidak lengkap atau tidak valid.' }, { status: 400 });
   }
   if (!body?.data || typeof body.data !== 'object') return NextResponse.json({ error: 'Data konten tidak lengkap.' }, { status: 400 });
-  return NextResponse.json({ record: await createCmsRecord(collection, body.data, parseStatus(body.status)) }, { status: 201 });
+  const status = parseStatus(body.status);
+  const validated = validateCmsRecord(collection, body.data, status);
+  if (!validated.success) return NextResponse.json({ error: 'Konten belum valid.', details: validated.errors }, { status: 422 });
+  try {
+    return NextResponse.json({ record: await createCmsRecord(collection, validated.data, status) }, { status: 201 });
+  } catch (error) {
+    if (String(error).toLowerCase().includes('unique')) return NextResponse.json({ error: 'Alamat halaman sudah digunakan.' }, { status: 409 });
+    throw error;
+  }
 }

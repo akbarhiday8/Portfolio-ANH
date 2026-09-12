@@ -4,5 +4,5 @@ import { getCmsSnapshot } from '@/lib/cms-server';
 
 export async function GET(request: Request) {
   if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
-  return NextResponse.json({ collections: await getCmsSnapshot() });
+  return NextResponse.json({ collections: await getCmsSnapshot() }, { headers: { 'Cache-Control': 'no-store' } });
 }

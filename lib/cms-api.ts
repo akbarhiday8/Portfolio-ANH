@@ -7,12 +7,13 @@ export function isCmsCollection(value: string): value is CmsCollection {
 }
 
 export function parseStatus(value: unknown): CmsStatus {
-  return value === 'draft' ? 'draft' : 'published';
+  return value === 'published' ? 'published' : 'draft';
 }
 
 export function mutationOriginIsValid(request: Request) {
   const origin = request.headers.get('origin');
-  return !origin || origin === new URL(request.url).origin;
+  if (!origin) return process.env.NODE_ENV !== 'production';
+  return origin === new URL(request.url).origin;
 }
 
 export async function requireCmsApiAdmin(request: Request) {
@@ -21,10 +22,10 @@ export async function requireCmsApiAdmin(request: Request) {
 
 export const unauthorizedResponse = () => NextResponse.json(
   { error: 'Sesi admin tidak tersedia atau telah berakhir.' },
-  { status: 401 },
+  { status: 401, headers: { 'Cache-Control': 'no-store' } },
 );
 
 export const invalidOriginResponse = () => NextResponse.json(
   { error: 'Permintaan tidak dapat diverifikasi.' },
-  { status: 403 },
+  { status: 403, headers: { 'Cache-Control': 'no-store' } },
 );

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowDown, ArrowUp, BarChart3, BookOpen, BriefcaseBusiness,
   Check, ChevronDown, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
-  GripVertical, History, ImageIcon, Link2, ListChecks, LogOut, Menu, MoreHorizontal, PanelRightOpen, Plus, Save, Search,
+  Download, GripVertical, History, ImageIcon, Link2, ListChecks, LogOut, Menu, MoreHorizontal, PanelRightOpen, Plus, Save, Search,
   RotateCcw, Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -203,18 +203,40 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
   });
 
   if (module.collection === 'projects') {
-    if (!stringValue(data, 'image')) issues.push({ level: 'warning', label: 'Gambar utama belum ada', detail: 'Portfolio akan terasa kurang kuat tanpa visual pendukung.' });
+    if (!stringValue(data, 'image')) issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Gambar utama belum ada', detail: 'Tambahkan visual utama sebelum proyek dipublikasikan.' });
     if (!stringValue(data, 'evidence.href')) issues.push({ level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
     if (nextStatus === 'published' && !stringValue(data, 'slug')) issues.push({ level: 'error', label: 'Alamat halaman belum ada', detail: 'Slug dibutuhkan agar halaman detail proyek dapat dibuka.' });
+    if (nextStatus === 'published') {
+      ([['role', 'Peran'], ['discipline', 'Bidang'], ['artifactType', 'Jenis hasil'], ['challenge', 'Konteks'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir']] as const).forEach(([key, label]) => {
+        if (!stringValue(data, key)) issues.push({ level: 'error', label: `${label} belum diisi`, detail: 'Bagian ini tampil pada halaman studi kasus dan wajib dilengkapi sebelum publikasi.' });
+      });
+      if (!listLength(data, 'scope')) issues.push({ level: 'error', label: 'Kontribusi utama masih kosong', detail: 'Tambahkan minimal satu kontribusi sebelum publikasi.' });
+      if (!listLength(data, 'process')) issues.push({ level: 'error', label: 'Proses singkat masih kosong', detail: 'Tambahkan minimal satu tahapan sebelum publikasi.' });
+    }
   }
 
   if (module.collection === 'certifications' && !stringValue(data, 'image')) {
-    issues.push({ level: 'warning', label: 'Bukti sertifikat belum diunggah', detail: 'Sertifikasi tetap bisa disimpan, tetapi pengunjung belum bisa melihat bukti visualnya.' });
+    issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Bukti sertifikat belum diunggah', detail: 'Unggah bukti visual sebelum sertifikasi dipublikasikan.' });
+  }
+
+  if (module.collection === 'certifications' && nextStatus === 'published' && !listLength(data, 'topics')) {
+    issues.push({ level: 'error', label: 'Materi sertifikasi masih kosong', detail: 'Tambahkan minimal satu materi yang dipelajari atau diujikan.' });
+  }
+
+  if (module.collection === 'experience' && nextStatus === 'published') {
+    if (!stringValue(data, 'image')) issues.push({ level: 'error', label: 'Gambar pengalaman belum ada', detail: 'Tambahkan visual sebelum pengalaman dipublikasikan.' });
+    if (!listLength(data, 'responsibilities')) issues.push({ level: 'error', label: 'Tanggung jawab masih kosong', detail: 'Tambahkan minimal satu tugas atau tanggung jawab.' });
   }
 
   if (module.collection === 'articles') {
     if (!listLength(data, 'sections')) issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Isi artikel masih kosong', detail: 'Tambahkan minimal satu bagian agar artikel siap dibaca.' });
+    if (nextStatus === 'published' && !stringValue(data, 'lead')) issues.push({ level: 'error', label: 'Paragraf pembuka masih kosong', detail: 'Tambahkan pembuka sebelum artikel dipublikasikan.' });
+    if (nextStatus === 'published' && !stringValue(data, 'closing')) issues.push({ level: 'error', label: 'Penutup artikel masih kosong', detail: 'Tambahkan kesimpulan sebelum artikel dipublikasikan.' });
     if (!stringValue(data, 'seoDescription')) issues.push({ level: 'warning', label: 'SEO description belum diisi', detail: 'Jika kosong, ringkasan kartu akan dipakai sebagai fallback.' });
+  }
+
+  if (module.collection === 'profile' && !stringValue(data, 'artwork')) {
+    issues.push({ level: 'error', label: 'Gambar profil belum ada', detail: 'Visual profil utama wajib tersedia.' });
   }
 
   if (module.collection === 'projects' && !stringValue(data, 'seoDescription')) {
@@ -268,6 +290,8 @@ function ContentEditor({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [uploading, setUploading] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadRequest = useRef<AbortController | null>(null);
   const [baseline, setBaseline] = useState({ data: structuredClone(record.data), status: record.status });
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const temporaryUploads = useRef<Record<string, MediaItem>>({});
@@ -319,6 +343,7 @@ function ContentEditor({
   }, [autosaveKey, record.data]);
 
   useEffect(() => {
+    let active = true;
     const timer = window.setTimeout(() => {
       try {
         const saved = window.localStorage.getItem(historyKey);
@@ -326,9 +351,24 @@ function ContentEditor({
       } catch {
         setHistory([]);
       }
+      if (record.id !== 'new') {
+        void fetch(`/api/cms/content/${module.collection}/${record.id}/revisions`)
+          .then((response) => response.ok ? response.json() : Promise.reject(new Error('Riwayat tidak tersedia.')))
+          .then((result) => {
+            const payload = result as { revisions?: Array<{ status: CmsStatus; data: Record<string, unknown>; createdAt: string }> };
+            if (!active || !payload.revisions?.length) return;
+            setHistory(payload.revisions.map((revision) => ({
+              savedAt: revision.createdAt,
+              status: revision.status,
+              title: previewTitle(module, revision.data),
+              data: revision.data,
+            })));
+          })
+          .catch(() => undefined);
+      }
     }, 0);
-    return () => window.clearTimeout(timer);
-  }, [historyKey]);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [historyKey, module, record.id]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -344,6 +384,7 @@ function ContentEditor({
     if (dirty && !window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) return;
     const abandoned = Object.values(temporaryUploads.current);
     temporaryUploads.current = {};
+    uploadRequest.current?.abort();
     void Promise.all(abandoned.map((item) => discardTemporaryMedia(item)));
     onClose();
   }
@@ -370,20 +411,25 @@ function ContentEditor({
   async function upload(field: CmsField, file?: File) {
     if (!file) return;
     setUploading(field.key);
+    setUploadProgress(0);
     setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar sebelum diunggah...' : 'Memeriksa dokumen sebelum diunggah...');
     try {
       const prepared = await prepareMediaFile(file, field.key === 'customIcon' ? 'icon' : 'content');
       setMessage('Mengunggah media teroptimasi...');
-      const uploaded = await uploadPreparedMedia(prepared);
+      const controller = new AbortController();
+      uploadRequest.current = controller;
+      const uploaded = await uploadPreparedMedia(prepared, { signal: controller.signal, onProgress: setUploadProgress });
       const previousTemporary = temporaryUploads.current[field.key];
       temporaryUploads.current[field.key] = uploaded;
       setData((current) => setPath(current, field.key, uploaded.url));
       if (previousTemporary) void discardTemporaryMedia(previousTemporary);
       setMessage(prepared.message);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
+      setMessage(error instanceof DOMException && error.name === 'AbortError' ? 'Unggahan dibatalkan.' : error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
     } finally {
+      uploadRequest.current = null;
       setUploading('');
+      setUploadProgress(0);
     }
   }
 
@@ -414,8 +460,8 @@ function ContentEditor({
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ data, status: module.singleton ? 'published' : status }),
     });
-    const result = await response.json().catch(() => ({})) as { error?: string; record?: CmsRecord };
-    if (!response.ok || !result.record) setMessage(result.error ?? 'Perubahan tidak dapat disimpan.');
+    const result = await response.json().catch(() => ({})) as { error?: string; details?: string[]; record?: CmsRecord };
+    if (!response.ok || !result.record) setMessage(result.details?.join(' ') || result.error || 'Perubahan tidak dapat disimpan.');
     else {
       setMessage('Perubahan tersimpan.');
       saveRevision(result.record);
@@ -447,7 +493,7 @@ function ContentEditor({
             <div>
               <Input id={inputId} value={value} placeholder={field.type === 'asset' ? 'https://... atau /media/...' : '/media/... atau URL gambar'} onChange={(event) => updateMediaValue(field, event.target.value)} />
               <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
-              <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{value ? <a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a> : null}</div>
+              <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a> : null}</div>
               <small className="cms-upload-policy">Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.</small>
             </div>
           </div>
@@ -614,6 +660,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   const [globalQuery, setGlobalQuery] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarCloseRef = useRef<HTMLButtonElement | null>(null);
   const [mediaCount, setMediaCount] = useState<number | null>(null);
   const [draggingId, setDraggingId] = useState('');
   const globalSearchRef = useRef<HTMLInputElement>(null);
@@ -663,6 +710,21 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     }).catch(() => { if (active) setMediaCount(0); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    sidebarCloseRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [sidebarOpen]);
 
   useEffect(() => {
     function keyboard(event: KeyboardEvent) {
@@ -744,7 +806,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   return (
     <main className="cms-shell">
       <aside className={`cms-sidebar${sidebarOpen ? ' is-open' : ''}`}>
-        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><strong>ANH</strong><span>Portofolio Pribadi</span></Link><button type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
+        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><strong>ANH</strong><span>Portofolio Pribadi</span></Link><button ref={sidebarCloseRef} type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
         <nav aria-label="Navigasi CMS">
           <p>Konten</p>
           {navPrimary.map(({ label, view, Icon }) => <button className={activeView === view ? 'active' : ''} type="button" onClick={() => navigate(view)} key={view}><Icon size={17} /><span>{label}</span></button>)}
@@ -763,7 +825,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
             <kbd>Ctrl K</kbd>
             {globalQuery ? <div className="cms-search-results">{globalResults.map((record) => { const moduleDefinition = cmsModules.find((item) => item.collection === record.collection)!; return <button type="button" onClick={() => editRecord(record)} key={record.id}><span><strong>{recordTitle(record, moduleDefinition)}</strong><small>{moduleDefinition.label}</small></span><ChevronRight size={15} /></button>; })}{!globalResults.length ? <p>Tidak ada konten yang cocok.</p> : null}</div> : null}
           </div>
-          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><button type="button" onClick={logout}><LogOut size={14} />Keluar</button><button className="is-danger" type="button" onClick={resetAccount}><RotateCcw size={14} />Reset akun admin</button></div> : null}</div></div>
+          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><a href="/api/cms/export" download><Download size={14} />Unduh backup konten</a><button type="button" onClick={logout}><LogOut size={14} />Keluar</button><button className="is-danger" type="button" onClick={resetAccount}><RotateCcw size={14} />Reset akun admin</button></div> : null}</div></div>
         </header>
 
         <div className={`cms-content${activeView === 'overview' ? ' is-overview' : ''}`}>

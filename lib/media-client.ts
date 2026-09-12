@@ -86,7 +86,11 @@ export async function prepareMediaFile(file: File, preset: ImagePreset = 'conten
   };
 }
 
-export async function uploadPreparedMedia(prepared: PreparedMedia, options: { temporary?: boolean } = {}): Promise<MediaItem> {
+export async function uploadPreparedMedia(prepared: PreparedMedia, options: {
+  temporary?: boolean;
+  onProgress?: (percentage: number) => void;
+  signal?: AbortSignal;
+} = {}): Promise<MediaItem> {
   const form = new FormData();
   form.set('file', prepared.file);
   form.set('originalSize', String(prepared.originalSize));
@@ -94,10 +98,23 @@ export async function uploadPreparedMedia(prepared: PreparedMedia, options: { te
   form.set('temporary', options.temporary === false ? '0' : '1');
   if (prepared.width) form.set('width', String(prepared.width));
   if (prepared.height) form.set('height', String(prepared.height));
-  const response = await fetch('/api/cms/media', { method: 'POST', body: form });
-  const result = await response.json().catch(() => ({})) as { error?: string; media?: MediaItem };
-  if (!response.ok || !result.media) throw new Error(result.error ?? 'Media tidak dapat diunggah.');
-  return result.media;
+  return new Promise<MediaItem>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', '/api/cms/media');
+    request.responseType = 'json';
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) options.onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () => {
+      const result = request.response as { error?: string; media?: MediaItem } | null;
+      if (request.status >= 200 && request.status < 300 && result?.media) resolve(result.media);
+      else reject(new Error(result?.error ?? 'Media tidak dapat diunggah.'));
+    };
+    request.onerror = () => reject(new Error('Koneksi terputus saat mengunggah media.'));
+    request.onabort = () => reject(new DOMException('Unggahan dibatalkan.', 'AbortError'));
+    options.signal?.addEventListener('abort', () => request.abort(), { once: true });
+    request.send(form);
+  });
 }
 
 export async function discardTemporaryMedia(item?: MediaItem) {

@@ -9,6 +9,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-server';
 import { SITE_URL } from '@/lib/site-url';
 
+export const dynamic = 'force-dynamic';
+
 type ProjectPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -49,6 +51,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   if (projectIndex < 0) notFound();
 
   const project = projects[projectIndex];
+  const challenge = String(project.challenge ?? '');
+  const approach = String(project.approach ?? '');
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
 
@@ -65,18 +69,15 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <h1>{project.title}</h1>
               <p className="case-summary">{project.summary}</p>
               <dl className="case-meta case-meta--compact">
-                <div><dt>Peran</dt><dd>{project.role}</dd></div>
-                <div><dt>Bidang</dt><dd>{project.discipline}</dd></div>
-                <div><dt>Jenis hasil</dt><dd>{project.artifactType}</dd></div>
+                {project.role ? <div><dt>Peran</dt><dd>{project.role}</dd></div> : null}
+                {project.discipline ? <div><dt>Bidang</dt><dd>{project.discipline}</dd></div> : null}
+                {project.artifactType ? <div><dt>Jenis hasil</dt><dd>{project.artifactType}</dd></div> : null}
               </dl>
-              <div className="case-proof">
-                {project.evidence.href ? <a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label}<ArrowUpRight size={16} /></a> : <span><Eye size={17} />Tautan bukti proyek akan ditambahkan</span>}
-              </div>
+              {project.evidence?.href ? <div className="case-proof"><a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label || 'Lihat bukti proyek'}<ArrowUpRight size={16} /></a></div> : null}
             </div>
-            <div className="case-cover">
+            {project.image ? <div className="case-cover">
               <Image src={project.image} fill priority sizes="(max-width: 850px) 100vw, 52vw" alt={`Dokumentasi visual ${project.title}`} />
-              <span>Dokumentasi visual sementara</span>
-            </div>
+            </div> : null}
           </div>
         </section>
 
@@ -87,25 +88,25 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <h2>Ringkasan proyek</h2>
             </header>
 
-            <div className="case-story-grid">
-              <article>
+            {challenge || approach ? <div className="case-story-grid">
+              {challenge ? <article>
                 <h3>Konteks</h3>
-                <p>{project.challenge}</p>
-              </article>
-              <article>
+                <p>{challenge}</p>
+              </article> : null}
+              {approach ? <article>
                 <h3>Solusi</h3>
-                <p>{project.approach}</p>
-              </article>
-            </div>
+                <p>{approach}</p>
+              </article> : null}
+            </div> : null}
 
             <div className="case-details-grid">
-              <section>
+              {project.scope?.length ? <section>
                 <h3>Kontribusi utama</h3>
                 <ul className="case-scope">
                   {project.scope.map((item) => <li key={item}>{item}</li>)}
                 </ul>
-              </section>
-              <section>
+              </section> : null}
+              {project.process?.length ? <section>
                 <h3>Proses singkat</h3>
                 <ol className="case-process">
                   {project.process.map((step) => (
@@ -115,13 +116,13 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                     </li>
                   ))}
                 </ol>
-              </section>
+              </section> : null}
             </div>
 
-            <aside className="case-outcome">
+            {project.outcome ? <aside className="case-outcome">
               <p className="case-label">Hasil</p>
               <p>{project.outcome}</p>
-            </aside>
+            </aside> : null}
           </div>
         </section>
 
