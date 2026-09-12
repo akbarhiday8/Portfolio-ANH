@@ -257,10 +257,10 @@ export const portfolioData = {
     },
   ],
   socials: [
-    { label: 'LinkedIn', href: null as string | null },
-    { label: 'Surel', href: null as string | null },
-    { label: 'GitHub', href: null as string | null },
-    { label: 'Instagram', href: null as string | null },
-    { label: 'WhatsApp', href: null as string | null },
+    { label: 'LinkedIn', icon: 'linkedin', customIcon: '', href: null as string | null },
+    { label: 'Surel', icon: 'email', customIcon: '', href: null as string | null },
+    { label: 'GitHub', icon: 'github', customIcon: '', href: null as string | null },
+    { label: 'Instagram', icon: 'instagram', customIcon: '', href: null as string | null },
+    { label: 'WhatsApp', icon: 'whatsapp', customIcon: '', href: null as string | null },
   ],
 } as const;

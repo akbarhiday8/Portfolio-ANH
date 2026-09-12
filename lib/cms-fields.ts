@@ -129,8 +129,23 @@ export const cmsModules: CmsModuleDefinition[] = [
   },
   {
     collection: 'socials', label: 'Kontak & Sosial', singular: 'tautan',
-    description: 'Tautan LinkedIn, email, GitHub, Instagram, dan WhatsApp.',
-    fields: [text('label', 'Platform', { required: true }), { key: 'href', label: 'Tautan', type: 'url', required: true, helper: 'Untuk email gunakan mailto:, untuk WhatsApp gunakan https://wa.me/...' }],
+    description: 'Tautan LinkedIn, email, GitHub, Instagram, WhatsApp, dan media sosial lainnya.',
+    fields: [
+      text('label', 'Nama tampilan', { required: true }),
+      { key: 'icon', label: 'Ikon bawaan', type: 'select', helper: 'Pilih ikon yang sesuai. Jika memakai ikon kustom, pilihan ini menjadi fallback.', options: [
+        { value: 'linkedin', label: 'LinkedIn' }, { value: 'github', label: 'GitHub' },
+        { value: 'instagram', label: 'Instagram' }, { value: 'whatsapp', label: 'WhatsApp' },
+        { value: 'email', label: 'Email / Surel' }, { value: 'website', label: 'Website' },
+        { value: 'youtube', label: 'YouTube' }, { value: 'tiktok', label: 'TikTok' },
+        { value: 'x', label: 'X / Twitter' }, { value: 'facebook', label: 'Facebook' },
+        { value: 'telegram', label: 'Telegram' }, { value: 'discord', label: 'Discord' },
+        { value: 'dribbble', label: 'Dribbble' }, { value: 'behance', label: 'Behance' },
+        { value: 'medium', label: 'Medium' }, { value: 'threads', label: 'Threads' },
+        { value: 'figma', label: 'Figma' },
+      ] },
+      { key: 'customIcon', label: 'Ikon kustom', type: 'image', wide: true, helper: 'Opsional. Gunakan PNG/WebP/JPG kecil dengan latar transparan; file akan tersimpan di Media agar mudah dikelola.' },
+      { key: 'href', label: 'Tautan', type: 'url', required: true, helper: 'Untuk email gunakan mailto:, untuk WhatsApp gunakan https://wa.me/...' },
+    ],
   },
 ];
 

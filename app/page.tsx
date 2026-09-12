@@ -65,11 +65,36 @@ function WhatsAppLogo() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47a8.88 8.88 0 0 1-1.65-2.05c-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.91-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35zM12.04 2a9.84 9.84 0 0 0-8.4 14.96L2.05 22l5.18-1.55A9.95 9.95 0 0 0 12.04 21 9.86 9.86 0 0 0 22 11.15 9.86 9.86 0 0 0 12.04 2zm0 17.34a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-3.07.92.92-2.99-.2-.31a8.18 8.18 0 1 1 6.83 3.7z" /></svg>;
 }
 
-function SocialIcon({ label }: { label: string }) {
-  if (label === 'LinkedIn') return <LinkedInLogo />;
-  if (label === 'GitHub') return <GitHubLogo />;
-  if (label === 'Instagram') return <InstagramLogo />;
-  if (label === 'WhatsApp') return <WhatsAppLogo />;
+function XLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 10.62 21.17 2h-1.77l-6.49 7.49L7.73 2H1.75l7.83 11.33L1.75 22h1.77l6.85-7.56L15.84 22h5.98l-8.12-11.38Zm-2.43 2.68-.79-1.13L4.16 3.32h2.72l5.1 7.14.79 1.12 6.63 9.29h-2.72l-5.41-7.57Z" /></svg>; }
+function YouTubeLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3.02 3.02 0 0 0-2.12-2.14C19.5 3.56 12 3.56 12 3.56s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.2 31.38 31.38 0 0 0 0 12a31.38 31.38 0 0 0 .5 5.8 3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14A31.38 31.38 0 0 0 24 12a31.38 31.38 0 0 0-.5-5.8ZM9.6 15.57V8.43L15.82 12 9.6 15.57Z" /></svg>; }
+function FacebookLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.4c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.96h-1.51c-1.49 0-1.96.93-1.96 1.88v2.27h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z" /></svg>; }
+function TelegramLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.93 4.23 18.6 19.91c-.25 1.1-.9 1.37-1.83.85l-5.08-3.74-2.45 2.36c-.27.27-.5.5-1.02.5l.36-5.18 9.43-8.52c.41-.36-.09-.57-.64-.2L5.72 13.32.7 11.75c-1.09-.34-1.11-1.09.23-1.61L20.57 2.57c.91-.34 1.7.2 1.36 1.66Z" /></svg>; }
+function DiscordLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.32 4.37A19.79 19.79 0 0 0 15.36 2c-.21.38-.46.9-.63 1.3a18.36 18.36 0 0 0-5.48 0c-.17-.4-.43-.92-.64-1.3a19.73 19.73 0 0 0-4.96 2.38C.5 9.09-.35 13.67.08 18.18A19.9 19.9 0 0 0 6.16 21.2c.49-.66.93-1.36 1.3-2.1-.71-.27-1.39-.6-2.03-.97.17-.13.34-.26.5-.4a14.18 14.18 0 0 0 12.14 0l.5.4c-.64.38-1.32.7-2.03.97.38.74.82 1.44 1.3 2.1a19.86 19.86 0 0 0 6.08-3.02c.5-5.23-.84-9.77-3.6-13.8ZM8.02 15.42c-1.18 0-2.15-1.08-2.15-2.4 0-1.33.95-2.41 2.15-2.41 1.2 0 2.17 1.09 2.15 2.4 0 1.33-.95 2.41-2.15 2.41Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.33.95-2.41 2.15-2.41 1.2 0 2.17 1.09 2.15 2.4 0 1.33-.95 2.41-2.15 2.41Z" /></svg>; }
+function DribbbleLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm7.93 5.53a9.73 9.73 0 0 1 2.21 6.08c-.32-.07-3.52-.72-6.74-.31-.07-.17-.14-.35-.22-.52-.22-.52-.47-1.04-.73-1.55 3.56-1.45 5.17-3.54 5.48-3.7ZM12 1.86a10.1 10.1 0 0 1 6.73 2.56c-.26.37-1.7 2.29-5.11 3.57a54.72 54.72 0 0 0-3.61-5.65c.64-.31 1.31-.48 1.99-.48ZM7.96 3.08a65.4 65.4 0 0 1 3.59 5.58c-4.48 1.19-8.43 1.17-8.85 1.16a10.16 10.16 0 0 1 5.26-6.74ZM1.85 12v-.32c.41.01 5.05.08 10.57-1.57.31.6.6 1.22.87 1.84l-.42.13C7.17 13.93 4.13 18.94 3.88 19.36A10.1 10.1 0 0 1 1.85 12Zm10.15 10.15a10.08 10.08 0 0 1-6.72-2.55c.19-.38 2.44-4.73 8.7-6.91h.03a42.1 42.1 0 0 1 1.79 8.76c-1.17.45-2.45.7-3.8.7Zm5.6-1.7a44.15 44.15 0 0 0-1.64-8.22c3.03-.48 5.68.31 6.01.42a10.14 10.14 0 0 1-4.37 7.8Z" /></svg>; }
+function TextBrand({ children }: { children: string }) { return <svg viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="15.8" textAnchor="middle" fontSize="9.5" fontWeight="800" fill="currentColor">{children}</text></svg>; }
+function WebsiteLogo() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" strokeWidth="1.8" d="M3.4 12h17.2M12 3.3c2.5 2.45 3.8 5.35 3.8 8.7s-1.3 6.25-3.8 8.7M12 3.3C9.5 5.75 8.2 8.65 8.2 12s1.3 6.25 3.8 8.7" /><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>; }
+
+type SocialLinkData = { label: string; href: string | null; icon?: string; customIcon?: string };
+
+function SocialIcon({ social }: { social: SocialLinkData }) {
+  if (social.customIcon) return <img src={social.customIcon} alt="" loading="lazy" decoding="async" />;
+  const key = (social.icon || social.label).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (key.includes('linkedin')) return <LinkedInLogo />;
+  if (key.includes('github')) return <GitHubLogo />;
+  if (key.includes('instagram')) return <InstagramLogo />;
+  if (key.includes('whatsapp')) return <WhatsAppLogo />;
+  if (key === 'x' || key.includes('twitter')) return <XLogo />;
+  if (key.includes('youtube')) return <YouTubeLogo />;
+  if (key.includes('facebook')) return <FacebookLogo />;
+  if (key.includes('telegram')) return <TelegramLogo />;
+  if (key.includes('discord')) return <DiscordLogo />;
+  if (key.includes('dribbble')) return <DribbbleLogo />;
+  if (key.includes('tiktok')) return <TextBrand>Tk</TextBrand>;
+  if (key.includes('behance')) return <TextBrand>Be</TextBrand>;
+  if (key.includes('medium')) return <TextBrand>M</TextBrand>;
+  if (key.includes('threads')) return <TextBrand>@</TextBrand>;
+  if (key.includes('figma')) return <TextBrand>Fg</TextBrand>;
+  if (key.includes('website') || key.includes('web')) return <WebsiteLogo />;
   return <Mail size={19} />;
 }
 
@@ -226,11 +251,11 @@ export default async function Home() {
             <div className="socials" aria-label="Media sosial">
               {socials.map((social) => social.href ? (
                 <a href={social.href} aria-label={social.label} data-tooltip={social.label} key={social.label} target={social.href.startsWith('http') ? '_blank' : undefined} rel={social.href.startsWith('http') ? 'noreferrer' : undefined}>
-                  <SocialIcon label={social.label} />
+                  <SocialIcon social={social} />
                 </a>
               ) : (
                 <span className="social-link is-disabled" aria-label={`${social.label} — tautan belum tersedia`} data-tooltip={`${social.label} segera tersedia`} key={social.label} role="img">
-                  <SocialIcon label={social.label} />
+                  <SocialIcon social={social} />
                 </span>
               ))}
             </div>
