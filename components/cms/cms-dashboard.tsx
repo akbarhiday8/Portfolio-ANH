@@ -7,7 +7,7 @@ import {
   ArrowDown, ArrowUp, BarChart3, BookOpen, BriefcaseBusiness,
   Check, ChevronDown, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
   ImageIcon, Link2, LogOut, Menu, MoreHorizontal, Plus, Save, Search,
-  Settings2, Sparkles, Trash2, Upload, UserRound, X,
+  RotateCcw, Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -306,7 +306,7 @@ function ContentEditor({
           <div className="cms-editor-main">
             <section className="cms-editor-status">
               <div><strong>Status publikasi</strong><p>{module.singleton ? 'Konten utama selalu ditampilkan di website.' : 'Aktifkan untuk menampilkan konten di website.'}</p></div>
-              <div><span>{module.singleton || status === 'published' ? 'Ditampilkan' : 'Draft'}</span><Switch checked={module.singleton || status === 'published'} disabled={module.singleton} onCheckedChange={(checked) => setStatus(checked ? 'published' : 'draft')} aria-label="Status publikasi" /></div>
+              <div><span className={module.singleton || status === 'published' ? 'is-published' : ''}>{module.singleton || status === 'published' ? 'Ditampilkan' : 'Draft'}</span><Switch checked={module.singleton || status === 'published'} disabled={module.singleton} onCheckedChange={(checked) => setStatus(checked ? 'published' : 'draft')} aria-label="Status publikasi" /></div>
             </section>
 
             <div className="cms-form-sections">
@@ -346,6 +346,12 @@ function MediaLibrary() {
     });
   }, [media, mediaFilter, mediaQuery]);
 
+  async function refreshMedia() {
+    const response = await fetch('/api/cms/media');
+    const result = await response.json() as { media?: MediaItem[] };
+    setMedia(result.media ?? []);
+  }
+
   useEffect(() => {
     let active = true;
     void fetch('/api/cms/media')
@@ -371,9 +377,22 @@ function MediaLibrary() {
     if (response.ok) setMedia((current) => current?.filter((value) => value.id !== item.id) ?? []);
   }
 
+  async function cleanupUnused() {
+    if (!window.confirm('Bersihkan media yang tidak dipakai konten mana pun? File yang masih digunakan tidak akan dihapus.')) return;
+    setMessage('Membersihkan media tidak terpakai...');
+    const response = await fetch('/api/cms/media', { method: 'DELETE' });
+    const result = await response.json().catch(() => ({})) as { removed?: number; error?: string };
+    if (!response.ok) {
+      setMessage(result.error ?? 'Media tidak terpakai tidak dapat dibersihkan.');
+      return;
+    }
+    await refreshMedia();
+    setMessage(`${result.removed ?? 0} media tidak terpakai dibersihkan.`);
+  }
+
   return (
     <section className="cms-module-page">
-      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Simpan dan kelola gambar, dokumen, sertifikat, serta ikon kustom yang dipakai di konten website.</p></div><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></header>
+      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Simpan dan kelola gambar, dokumen, sertifikat, serta ikon kustom yang dipakai di konten website.</p></div><div className="cms-header-actions"><Button variant="outline" onClick={cleanupUnused}><Trash2 size={16} />Bersihkan aset tak dipakai</Button><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></div></header>
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" hidden onChange={(event) => upload(event.target.files?.[0])} />
       {message ? <p className="cms-inline-message">{message}</p> : null}
       <div className="cms-media-controls">
@@ -502,6 +521,13 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   }
 
   async function logout() { await fetch('/api/cms/auth/logout', { method: 'POST' }); window.location.href = '/admin/login'; }
+  async function resetAccount() {
+    if (!window.confirm('Reset akun admin? Akun dan semua sesi login akan dihapus, tetapi konten website tetap aman.')) return;
+    if (!window.confirm('Setelah reset, CMS akan kembali ke halaman register agar Anda bisa membuat akun admin baru. Lanjutkan?')) return;
+    const response = await fetch('/api/cms/auth/reset', { method: 'POST' });
+    if (response.ok) window.location.href = '/admin/register';
+    else window.alert('Akun admin tidak dapat direset. Coba login ulang lalu ulangi proses.');
+  }
 
   return (
     <main className="cms-shell">
@@ -525,7 +551,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
             <kbd>Ctrl K</kbd>
             {globalQuery ? <div className="cms-search-results">{globalResults.map((record) => { const moduleDefinition = cmsModules.find((item) => item.collection === record.collection)!; return <button type="button" onClick={() => editRecord(record)} key={record.id}><span><strong>{recordTitle(record, moduleDefinition)}</strong><small>{moduleDefinition.label}</small></span><ChevronRight size={15} /></button>; })}{!globalResults.length ? <p>Tidak ada konten yang cocok.</p> : null}</div> : null}
           </div>
-          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><button type="button" onClick={logout}><LogOut size={14} />Keluar</button></div> : null}</div></div>
+          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><button type="button" onClick={logout}><LogOut size={14} />Keluar</button><button className="is-danger" type="button" onClick={resetAccount}><RotateCcw size={14} />Reset akun admin</button></div> : null}</div></div>
         </header>
 
         <div className={`cms-content${activeView === 'overview' ? ' is-overview' : ''}`}>

@@ -134,6 +134,48 @@ function mapRecord(row: Record<string, unknown>): CmsRecord {
   };
 }
 
+function extractMediaObjectKeys(value: unknown, result = new Set<string>()) {
+  if (typeof value === 'string') {
+    const matches = value.match(/\/media\/cms\/[A-Za-z0-9_.-]+/g) ?? [];
+    for (const match of matches) {
+      const key = match.replace(/^\/media\//, '');
+      result.add(key.split('/').map((part) => decodeURIComponent(part)).join('/'));
+    }
+  } else if (Array.isArray(value)) {
+    value.forEach((item) => extractMediaObjectKeys(item, result));
+  } else if (value && typeof value === 'object') {
+    Object.values(value as Record<string, unknown>).forEach((item) => extractMediaObjectKeys(item, result));
+  }
+  return result;
+}
+
+async function removeUnreferencedMedia(objectKeys: Iterable<string>) {
+  const db = bindings().DB;
+  const bucket = bindings().MEDIA;
+  const uniqueKeys = [...new Set(objectKeys)].filter((key) => key.startsWith('cms/'));
+  let removed = 0;
+  for (const objectKey of uniqueKeys) {
+    const mediaUrl = `/media/${objectKey}`;
+    const reference = await db.prepare('SELECT id FROM cms_records WHERE data_json LIKE ? LIMIT 1')
+      .bind(`%${mediaUrl}%`)
+      .first();
+    if (reference) continue;
+    const row = await db.prepare('SELECT id FROM cms_media WHERE object_key = ?').bind(objectKey).first<{ id: string }>();
+    if (!row) continue;
+    await bucket.delete(objectKey);
+    await db.prepare('DELETE FROM cms_media WHERE id = ?').bind(row.id).run();
+    removed += 1;
+  }
+  return removed;
+}
+
+async function cleanupReplacedMedia(previousData: Record<string, unknown>, nextData?: Record<string, unknown>) {
+  const previousKeys = extractMediaObjectKeys(previousData);
+  const nextKeys = nextData ? extractMediaObjectKeys(nextData) : new Set<string>();
+  const removedKeys = [...previousKeys].filter((key) => !nextKeys.has(key));
+  if (removedKeys.length) await removeUnreferencedMedia(removedKeys);
+}
+
 export async function listCmsRecords(options: { includeDrafts?: boolean; collection?: CmsCollection } = {}) {
   await ensureCmsSchema();
   const conditions: string[] = [];
@@ -206,6 +248,7 @@ export async function updateCmsRecord(id: string, data: Record<string, unknown>,
   await ensureCmsSchema();
   const existing = await bindings().DB.prepare('SELECT * FROM cms_records WHERE id = ?').bind(id).first<Record<string, unknown>>();
   if (!existing) return null;
+  const previous = mapRecord(existing);
   const collection = String(existing.collection) as CmsCollection;
   let slug = String(existing.slug ?? id);
   if ((collection === 'projects' || collection === 'articles') && typeof data.slug === 'string') {
@@ -216,14 +259,21 @@ export async function updateCmsRecord(id: string, data: Record<string, unknown>,
   await bindings().DB.prepare(
     'UPDATE cms_records SET slug = ?, status = ?, data_json = ?, updated_at = ? WHERE id = ?',
   ).bind(slug, status, JSON.stringify(data), now, id).run();
-  return { ...mapRecord(existing), slug, status, data, updatedAt: now };
+  await cleanupReplacedMedia(previous.data, data);
+  return { ...previous, slug, status, data, updatedAt: now };
 }
 
 export async function deleteCmsRecord(id: string) {
   await ensureCmsSchema();
-  return bindings().DB.prepare(
+  const existing = await bindings().DB.prepare(
+    "SELECT * FROM cms_records WHERE id = ? AND collection NOT IN ('profile', 'siteContent')",
+  ).bind(id).first<Record<string, unknown>>();
+  if (!existing) return null;
+  const deleted = await bindings().DB.prepare(
     "DELETE FROM cms_records WHERE id = ? AND collection NOT IN ('profile', 'siteContent')",
   ).bind(id).run();
+  await cleanupReplacedMedia(mapRecord(existing).data);
+  return deleted;
 }
 
 export async function reorderCmsRecords(collection: CmsCollection, ids: string[]) {
@@ -232,6 +282,13 @@ export async function reorderCmsRecords(collection: CmsCollection, ids: string[]
   await db.batch(ids.map((id, index) => db.prepare(
     'UPDATE cms_records SET sort_order = ?, updated_at = ? WHERE id = ? AND collection = ?',
   ).bind(index, new Date().toISOString(), id, collection)));
+}
+
+export async function cleanupUnusedCmsMedia() {
+  await ensureCmsSchema();
+  const result = await bindings().DB.prepare("SELECT object_key FROM cms_media WHERE object_key LIKE 'cms/%'")
+    .all<{ object_key: string }>();
+  return removeUnreferencedMedia(result.results.map((row) => row.object_key));
 }
 
 export function getMediaBucket() {

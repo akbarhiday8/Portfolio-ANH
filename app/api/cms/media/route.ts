@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCmsDatabase, getMediaBucket, ensureCmsSchema } from '@/lib/cms-server';
+import { cleanupUnusedCmsMedia, getCmsDatabase, getMediaBucket, ensureCmsSchema } from '@/lib/cms-server';
 import { invalidOriginResponse, mutationOriginIsValid, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
 
 const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
@@ -48,4 +48,11 @@ export async function POST(request: Request) {
     size: file.size,
     createdAt: now,
   } }, { status: 201 });
+}
+
+export async function DELETE(request: Request) {
+  if (!mutationOriginIsValid(request)) return invalidOriginResponse();
+  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+  const removed = await cleanupUnusedCmsMedia();
+  return NextResponse.json({ ok: true, removed });
 }

@@ -122,6 +122,15 @@ export async function deleteCmsSession(token?: string | null) {
   await getCmsDatabase().prepare('DELETE FROM cms_sessions WHERE token_hash = ?').bind(await sha256(token)).run();
 }
 
+export async function resetCmsAdminAccount() {
+  await ensureCmsSchema();
+  const db = getCmsDatabase();
+  await db.batch([
+    db.prepare('DELETE FROM cms_sessions'),
+    db.prepare('DELETE FROM cms_admins WHERE id = 1'),
+  ]);
+}
+
 export const cmsSessionCookie = (token: string, expiresAt: Date) => ({
   name: CMS_SESSION_COOKIE,
   value: token,
