@@ -284,11 +284,15 @@ export async function reorderCmsRecords(collection: CmsCollection, ids: string[]
   ).bind(index, new Date().toISOString(), id, collection)));
 }
 
-export async function cleanupUnusedCmsMedia() {
+export async function cleanupUnusedCmsMedia(options: { olderThanMs?: number } = {}) {
   await ensureCmsSchema();
-  const result = await bindings().DB.prepare("SELECT object_key FROM cms_media WHERE object_key LIKE 'cms/%'")
-    .all<{ object_key: string }>();
-  return removeUnreferencedMedia(result.results.map((row) => row.object_key));
+  const result = await bindings().DB.prepare("SELECT object_key, created_at FROM cms_media WHERE object_key LIKE 'cms/%'")
+    .all<{ object_key: string; created_at: string }>();
+  const cutoff = options.olderThanMs ? Date.now() - options.olderThanMs : 0;
+  const candidates = result.results
+    .filter((row) => !cutoff || Date.parse(row.created_at) < cutoff)
+    .map((row) => row.object_key);
+  return removeUnreferencedMedia(candidates);
 }
 
 export function getMediaBucket() {

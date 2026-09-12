@@ -346,12 +346,6 @@ function MediaLibrary() {
     });
   }, [media, mediaFilter, mediaQuery]);
 
-  async function refreshMedia() {
-    const response = await fetch('/api/cms/media');
-    const result = await response.json() as { media?: MediaItem[] };
-    setMedia(result.media ?? []);
-  }
-
   useEffect(() => {
     let active = true;
     void fetch('/api/cms/media')
@@ -377,22 +371,9 @@ function MediaLibrary() {
     if (response.ok) setMedia((current) => current?.filter((value) => value.id !== item.id) ?? []);
   }
 
-  async function cleanupUnused() {
-    if (!window.confirm('Bersihkan media yang tidak dipakai konten mana pun? File yang masih digunakan tidak akan dihapus.')) return;
-    setMessage('Membersihkan media tidak terpakai...');
-    const response = await fetch('/api/cms/media', { method: 'DELETE' });
-    const result = await response.json().catch(() => ({})) as { removed?: number; error?: string };
-    if (!response.ok) {
-      setMessage(result.error ?? 'Media tidak terpakai tidak dapat dibersihkan.');
-      return;
-    }
-    await refreshMedia();
-    setMessage(`${result.removed ?? 0} media tidak terpakai dibersihkan.`);
-  }
-
   return (
     <section className="cms-module-page">
-      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Simpan dan kelola gambar, dokumen, sertifikat, serta ikon kustom yang dipakai di konten website.</p></div><div className="cms-header-actions"><Button variant="outline" onClick={cleanupUnused}><Trash2 size={16} />Bersihkan aset tak dipakai</Button><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></div></header>
+      <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Simpan dan kelola gambar, dokumen, sertifikat, serta ikon kustom yang dipakai di konten website. Aset yang diganti atau dihapus akan dibersihkan otomatis.</p></div><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></header>
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" hidden onChange={(event) => upload(event.target.files?.[0])} />
       {message ? <p className="cms-inline-message">{message}</p> : null}
       <div className="cms-media-controls">

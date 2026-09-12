@@ -4,10 +4,12 @@ import { invalidOriginResponse, mutationOriginIsValid, requireCmsApiAdmin, unaut
 
 const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
 const MAX_SIZE = 12 * 1024 * 1024;
+const UNUSED_MEDIA_GRACE_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(request: Request) {
   if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
   await ensureCmsSchema();
+  await cleanupUnusedCmsMedia({ olderThanMs: UNUSED_MEDIA_GRACE_MS }).catch(() => undefined);
   const result = await getCmsDatabase().prepare('SELECT * FROM cms_media ORDER BY created_at DESC').all<Record<string, unknown>>();
   return NextResponse.json({ media: result.results.map((row) => ({
     id: String(row.id),
@@ -48,11 +50,4 @@ export async function POST(request: Request) {
     size: file.size,
     createdAt: now,
   } }, { status: 201 });
-}
-
-export async function DELETE(request: Request) {
-  if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
-  const removed = await cleanupUnusedCmsMedia();
-  return NextResponse.json({ ok: true, removed });
 }
