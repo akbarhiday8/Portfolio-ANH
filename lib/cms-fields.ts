@@ -75,7 +75,7 @@ export const cmsModules: CmsModuleDefinition[] = [
       text('portfolioTitle', 'Judul Portfolio'), text('portfolioCaption', 'Caption Portfolio'),
       text('certificatesTitle', 'Judul Sertifikasi'), text('certificatesCaption', 'Caption Sertifikasi'),
       text('contactTitle', 'Judul Kontak'), text('contactCaption', 'Caption Kontak'), text('contactHeading', 'Headline Kontak'),
-      area('contactDescription', 'Deskripsi Kontak'), text('contactAvailability', 'Status kontak'), area('contactNote', 'Catatan dekoratif Kontak'),
+      area('contactDescription', 'Deskripsi Kontak'), text('contactLinksLabel', 'Label tautan kontak'),
       text('articleEyebrow', 'Label halaman Artikel'), text('articleHeading', 'Headline halaman Artikel'), area('articleDescription', 'Deskripsi halaman Artikel'),
       text('footerName', 'Nama pada footer'), text('footerSubtitle', 'Subjudul footer'), text('copyrightText', 'Teks hak cipta'),
     ],

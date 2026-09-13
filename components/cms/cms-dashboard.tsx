@@ -70,7 +70,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Identitas website', description: 'Logo, footer, dan identitas utama.', fields: ['brandSubtitle', 'footerName', 'footerSubtitle', 'copyrightText'] },
     { title: 'Tentang saya', description: 'Judul dan narasi pada section Tentang.', fields: ['aboutTitle', 'aboutCaption', 'aboutHeading', 'aboutBody', 'aboutCta'] },
     { title: 'Judul section', description: 'Nama dan caption setiap bagian portfolio.', fields: ['educationTitle', 'educationCaption', 'educationNote', 'experienceTitle', 'experienceCaption', 'portfolioTitle', 'portfolioCaption', 'certificatesTitle', 'certificatesCaption'] },
-    { title: 'Kontak', description: 'Ajakan dan informasi pada bagian kontak.', fields: ['contactTitle', 'contactCaption', 'contactHeading', 'contactDescription', 'contactAvailability', 'contactNote'] },
+    { title: 'Kontak', description: 'Ajakan dan informasi pada bagian kontak.', fields: ['contactTitle', 'contactCaption', 'contactHeading', 'contactDescription', 'contactLinksLabel'] },
     { title: 'Halaman artikel', description: 'Pengantar untuk daftar artikel.', fields: ['articleEyebrow', 'articleHeading', 'articleDescription'] },
     { title: 'Kebijakan Privasi', description: 'Judul, tanggal pembaruan, dan isi halaman privasi.', fields: ['privacyEyebrow', 'privacyTitle', 'privacyDescription', 'privacyUpdatedAt', 'privacySections'] },
     { title: 'Disclaimer', description: 'Judul, tanggal pembaruan, dan isi halaman disclaimer.', fields: ['disclaimerEyebrow', 'disclaimerTitle', 'disclaimerDescription', 'disclaimerUpdatedAt', 'disclaimerSections'] },

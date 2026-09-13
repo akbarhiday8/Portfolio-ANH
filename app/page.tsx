@@ -53,6 +53,12 @@ function MultilineAccent({ children }: { children: string }) {
   return <>{lines.map((line, index) => <span key={`${line}-${index}`}>{index === lines.length - 1 ? <LastWordAccent edge>{line}</LastWordAccent> : line}{index < lines.length - 1 ? <br /> : null}</span>)}</>;
 }
 
+function TerminalPunctuationAccent({ children }: { children: string }) {
+  const match = children.trim().match(/^(.*?)([.!?])$/);
+  if (!match) return children;
+  return <>{match[1]}<span className="contact-terminal-accent">{match[2]}</span></>;
+}
+
 function LinkedInLogo() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" /></svg>;
 }
@@ -247,11 +253,11 @@ export default async function Home() {
       <section className="contact" id="contact" aria-labelledby="contact-heading">
         <Image className="contact-art" src="/footer-castle-art.webp" fill sizes="100vw" alt="" />
         <div className="section-wrap contact-grid">
-          <SectionIndex title={siteContent.contactTitle} caption={siteContent.contactCaption} />
+          <SectionIndex title={siteContent.contactTitle} caption={siteContent.contactCaption.replace(/\s*\/\s*/g, '\n')} />
           <div className="contact-copy" data-reveal>
-            <h3 id="contact-heading">{siteContent.contactHeading}</h3>
+            <h3 id="contact-heading"><TerminalPunctuationAccent>{siteContent.contactHeading}</TerminalPunctuationAccent></h3>
             <p>{siteContent.contactDescription}</p>
-            <span className="contact-availability">{siteContent.contactAvailability}</span>
+            <span className="contact-links-label">{siteContent.contactLinksLabel || 'Tautan Kontak'}</span>
             <div className="socials" aria-label="Media sosial">
               {socials.map((social) => social.href ? (
                 <a href={social.href} aria-label={social.label} data-tooltip={social.label} key={social.label} target={social.href.startsWith('http') ? '_blank' : undefined} rel={social.href.startsWith('http') ? 'noreferrer' : undefined}>
@@ -264,7 +270,6 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          <p className="contact-note">{siteContent.contactNote}</p>
         </div>
       </section>
 
