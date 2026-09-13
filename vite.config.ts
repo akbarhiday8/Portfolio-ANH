@@ -1,7 +1,7 @@
 import { sites } from '@openai/sites-vite-plugin';
 import tailwindcss from '@tailwindcss/postcss';
 import vinext from 'vinext';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import hostingConfig from './.openai/hosting.json' with { type: 'json' };
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
@@ -34,7 +34,12 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ mode }) => {
+  // Vite reads `.env.local`, but its values are not automatically placed on
+  // `process.env` inside the Cloudflare Worker runtime. Only this non-secret,
+  // server-only selector is injected into the server bundle.
+  const cmsDataBackend = loadEnv(mode, process.cwd(), '').CMS_DATA_BACKEND ?? '';
+
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= 'false';
@@ -45,6 +50,9 @@ export default defineConfig(async () => {
   const { cloudflare } = await import('@cloudflare/vite-plugin');
 
   return {
+    define: {
+      __CMS_DATA_BACKEND__: JSON.stringify(cmsDataBackend),
+    },
     css: { postcss: { plugins: [tailwindcss()] } },
     optimizeDeps: { exclude: ['lucide-react', 'vinext'] },
     server: isCodexSeatbeltSandbox
