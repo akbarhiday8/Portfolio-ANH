@@ -1,4 +1,4 @@
-import type { CmsCollection, CmsRecord, CmsRevision, CmsStatus } from '@/lib/cms-server';
+import type { CmsCollection, CmsRecord, CmsRevision, CmsStatus } from '@/lib/cms/types';
 
 const COLLECTIONS = new Set([
   'siteContent',

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { CmsCollection, CmsStatus } from '@/lib/cms-server';
+import type { CmsCollection, CmsStatus } from '@/lib/cms/types';
 
 const shortText = z.string().trim().max(240);
 const longText = z.string().trim().max(12_000);

@@ -1,4 +1,4 @@
-import type { CmsCollection } from '@/lib/cms-server';
+import type { CmsCollection } from '@/lib/cms/types';
 
 export type CmsFieldType = 'text' | 'textarea' | 'url' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections';
 export type CmsField = {

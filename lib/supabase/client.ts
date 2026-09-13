@@ -2,10 +2,7 @@ import { createBrowserClient } from '@supabase/ssr';
 
 import { getSupabasePublicConfig } from '@/lib/supabase/config';
 
-/**
- * Buat client baru pada browser saat fitur Supabase diaktifkan pada tahap
- * berikutnya. Client ini hanya memakai publishable key, bukan secret key.
- */
+/** Client browser hanya memakai publishable key dan tetap tunduk pada RLS. */
 export function createSupabaseBrowserClient() {
   const { url, publishableKey } = getSupabasePublicConfig();
 

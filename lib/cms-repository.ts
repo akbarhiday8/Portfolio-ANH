@@ -1,25 +1,13 @@
 import 'server-only';
 
-import { resolveCmsDataBackend } from '@/lib/cms/backend';
-import { d1CmsRepository } from '@/lib/cms/d1-repository';
 import type { CmsExpectedVersions } from '@/lib/cms/repository-contract';
 import { supabaseCmsRepository } from '@/lib/cms/supabase-repository';
-import type { CmsCollection, CmsStatus } from '@/lib/cms-server';
-
-function repository() {
-  return resolveCmsDataBackend() === 'supabase'
-    ? supabaseCmsRepository
-    : d1CmsRepository;
-}
-
-export function getCmsDataBackend() {
-  return resolveCmsDataBackend();
-}
+import type { CmsCollection, CmsStatus } from '@/lib/cms/types';
 
 export function listCmsRecords(
-  options: Parameters<typeof d1CmsRepository.listRecords>[0] = {},
+  options: Parameters<typeof supabaseCmsRepository.listRecords>[0] = {},
 ) {
-  return repository().listRecords(options);
+  return supabaseCmsRepository.listRecords(options);
 }
 
 export function getCmsRecord(
@@ -27,15 +15,15 @@ export function getCmsRecord(
   id: string,
   options: { includeDrafts?: boolean } = {},
 ) {
-  return repository().getRecord(collection, id, options);
+  return supabaseCmsRepository.getRecord(collection, id, options);
 }
 
 export function getPortfolioContent() {
-  return repository().getPortfolioContent();
+  return supabaseCmsRepository.getPortfolioContent();
 }
 
 export function getCmsSnapshot() {
-  return repository().getSnapshot();
+  return supabaseCmsRepository.getSnapshot();
 }
 
 export function createCmsRecord(
@@ -43,7 +31,7 @@ export function createCmsRecord(
   data: Record<string, unknown>,
   status: CmsStatus,
 ) {
-  return repository().createRecord(collection, data, status);
+  return supabaseCmsRepository.createRecord(collection, data, status);
 }
 
 export function updateCmsRecord(
@@ -53,7 +41,7 @@ export function updateCmsRecord(
   status: CmsStatus,
   expectedVersion?: number,
 ) {
-  return repository().updateRecord(collection, id, data, status, expectedVersion);
+  return supabaseCmsRepository.updateRecord(collection, id, data, status, expectedVersion);
 }
 
 export function setCmsPublication(
@@ -62,7 +50,7 @@ export function setCmsPublication(
   publish: boolean,
   expectedVersion?: number,
 ) {
-  return repository().setPublication(collection, id, publish, expectedVersion);
+  return supabaseCmsRepository.setPublication(collection, id, publish, expectedVersion);
 }
 
 export function deleteCmsRecord(
@@ -70,7 +58,7 @@ export function deleteCmsRecord(
   id: string,
   expectedVersion?: number,
 ) {
-  return repository().deleteRecord(collection, id, expectedVersion);
+  return supabaseCmsRepository.deleteRecord(collection, id, expectedVersion);
 }
 
 export function reorderCmsRecords(
@@ -78,9 +66,9 @@ export function reorderCmsRecords(
   ids: string[],
   expectedVersions?: CmsExpectedVersions,
 ) {
-  return repository().reorderRecords(collection, ids, expectedVersions);
+  return supabaseCmsRepository.reorderRecords(collection, ids, expectedVersions);
 }
 
 export function getCmsRevisions(collection: CmsCollection, recordId: string) {
-  return repository().getRevisions(collection, recordId);
+  return supabaseCmsRepository.getRevisions(collection, recordId);
 }

@@ -17,7 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cmsModules, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
 import type { CmsAdmin } from '@/lib/cms-auth';
-import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms-server';
+import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms/types';
 import { discardTemporaryMedia, prepareMediaFile, uploadPreparedMedia } from '@/lib/media-client';
 import { formatMediaSize, IMAGE_ACCEPT, MEDIA_ACCEPT, type MediaItem } from '@/lib/media-policy';
 

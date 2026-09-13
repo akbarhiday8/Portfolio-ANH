@@ -5,11 +5,7 @@ import { cookies } from 'next/headers';
 
 import { getSupabasePublicConfig } from '@/lib/supabase/config';
 
-/**
- * Buat satu client per request pada server. Server Components tidak selalu
- * dapat menulis cookie; pembaruan sesi di sana ditangani secara best effort
- * sampai proxy native Next.js dipasang setelah runtime Vinext dimigrasikan.
- */
+/** Buat satu client per request pada Server Components dan Route Handlers. */
 export async function createSupabaseServerClient() {
   const { url, publishableKey } = getSupabasePublicConfig();
   const cookieStore = await cookies();
@@ -31,9 +27,8 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // Server Components are read-only for cookies. Route Handlers can
-          // persist refreshed cookies; a native Next.js proxy will own this
-          // responsibility in the later runtime migration stage.
+          // Server Components tidak dapat menulis cookie. proxy.ts menangani
+          // refresh sesi untuk seluruh route admin dan API CMS.
         }
       },
     },

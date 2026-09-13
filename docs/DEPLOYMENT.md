@@ -1,49 +1,54 @@
 # Deployment Portfolio ANH
 
-## Kondisi runtime saat ini
+## Arsitektur produksi
 
-Kode aplikasi saat ini menggunakan Vinext dan binding Cloudflare:
+Repository ini memakai native Next.js dan ditujukan untuk Vercel. Seluruh data
+CMS berada di Supabase PostgreSQL, autentikasi admin memakai Supabase Auth, dan
+media baru memakai Supabase Storage. Cloudflare D1, R2, Workers, Sites, serta
+Vinext telah dipensiunkan dari runtime dan tidak didukung oleh aplikasi ini.
 
-- `DB` untuk D1
-- `MEDIA` untuk R2
+## Environment variables
 
-Karena itu build lokal yang lulus saat ini siap untuk runtime Cloudflare/Sites. Menambahkan environment variable Supabase saja belum membuat build kompatibel dengan Vercel; `lib/cms-server.ts` dan `lib/cms-auth.ts` masih memakai binding D1/R2.
+Atur nilai berikut pada Vercel untuk Production, Preview, dan Development:
 
-## Target Vercel + Supabase
+```dotenv
+NEXT_PUBLIC_SITE_URL=https://domain-final.example
+NEXT_PUBLIC_SUPABASE_URL=https://project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_PUBLIC_BUCKET=portfolio-public
+```
 
-Langkah migrasi yang harus dilakukan sebelum deployment Vercel:
+`SUPABASE_PUBLIC_BUCKET` opsional dan akan memakai `portfolio-public` bila tidak
+diisi. Jangan menambahkan service-role atau secret key: runtime bekerja dengan
+publishable key, sesi pengguna, RLS, dan RPC yang memverifikasi allowlist admin.
 
-1. Buat project Supabase dan bucket privat/publik sesuai kebutuhan.
-2. Jalankan `supabase/migrations/0001_portfolio_cms.sql` melalui SQL Editor Supabase.
-3. Implementasikan provider database/storage Supabase pada server, lalu hapus import `cloudflare:workers` dari runtime aplikasi.
-4. Pastikan seluruh operasi admin memakai service role hanya di server. Jangan pernah memakai service role pada variabel `NEXT_PUBLIC_*`.
-5. Tambahkan environment variables Vercel:
-   - `NEXT_PUBLIC_SITE_URL`
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_MEDIA_BUCKET`
-6. Jalankan preview deployment dan checklist audit sebelum mengarahkan domain.
+## Pengembangan lokal
 
-## Pengembangan lokal saat ini
+Salin `.env.example` menjadi `.env.local`, isi nilai Supabase, lalu jalankan:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Buka:
-
 - Website: `http://localhost:3000`
 - CMS: `http://localhost:3000/admin`
 
-Database, akun admin, sesi, dan media lokal tersimpan di `.wrangler/` dan tidak dikirim ke Git.
+`.env.local` diabaikan Git. Tidak ada database atau storage lokal Cloudflare.
 
-## Pemeriksaan wajib
+## Pemeriksaan sebelum Vercel
 
 ```bash
+npm run typecheck
 npm run lint
 npm run build
 npm audit
 ```
 
-Semua perintah harus lulus sebelum push atau deployment produksi.
+Pastikan migration Supabase `0001`, `0002`, dan `0003` sudah diterapkan,
+`cms_records` berisi 33 record hasil rekonsiliasi, dan satu pengguna admin aktif
+di `cms_admin_users`. Hubungkan repository GitHub ke Vercel, isi environment
+variables, lalu gunakan build command standar `npm run build`.
+
+Deployment Cloudflare lama boleh tetap hidup sementara sebagai rollback
+eksternal, tetapi tidak boleh menjadi dependency deployment Vercel.

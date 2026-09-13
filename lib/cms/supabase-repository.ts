@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { CMS_COLLECTIONS, type CmsCollection, type CmsRecord } from '@/lib/cms-server';
+import { CMS_COLLECTIONS, type CmsCollection, type CmsRecord } from '@/lib/cms/types';
+import { processPendingMediaDeletions } from '@/lib/cms/media';
 import type { CmsRepository, PortfolioContent } from '@/lib/cms/repository-contract';
 import { CmsRepositoryError } from '@/lib/cms/repository-contract';
 import { mapSupabaseCmsRecord, mapSupabaseCmsRevision } from '@/lib/cms/supabase-mapping';
@@ -156,21 +157,77 @@ async function versionedRecord(
   return { existing, version: Number(version) };
 }
 
-async function getExistingMediaLinks(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  recordId: string,
-) {
-  const { data, error } = await supabase
-    .from('cms_record_media')
-    .select('media_id,field_path')
-    .eq('record_id', recordId)
-    .order('field_path', { ascending: true });
-  if (error) repositoryFailure('list record media links', error);
+type MediaLink = { media_id: string; field_path: string };
 
-  return (data ?? []).map((link) => ({
-    media_id: link.media_id,
-    field_path: link.field_path,
-  }));
+function publicStorageObjectKey(value: string) {
+  let pathname = value;
+  try {
+    pathname = new URL(value).pathname;
+  } catch {
+    return null;
+  }
+
+  const marker = '/storage/v1/object/public/portfolio-public/';
+  const markerIndex = pathname.indexOf(marker);
+  if (markerIndex < 0) return null;
+  const encodedKey = pathname.slice(markerIndex + marker.length);
+  if (!encodedKey) return null;
+  try {
+    return encodedKey.split('/').map(decodeURIComponent).join('/');
+  } catch {
+    return null;
+  }
+}
+
+function collectMediaFieldPaths(
+  value: unknown,
+  path = '',
+  result = new Map<string, string>(),
+) {
+  if (typeof value === 'string') {
+    const objectKey = publicStorageObjectKey(value);
+    if (objectKey && path && path.length <= 240) result.set(objectKey, path);
+    return result;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectMediaFieldPaths(item, `${path}[${index}]`, result));
+    return result;
+  }
+  if (value && typeof value === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      collectMediaFieldPaths(item, path ? `${path}.${key}` : key, result);
+    });
+  }
+  return result;
+}
+
+async function resolveMediaLinks(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  data: Record<string, unknown>,
+): Promise<MediaLink[]> {
+  const fields = collectMediaFieldPaths(data);
+  const objectKeys = [...fields.keys()];
+  if (!objectKeys.length) return [];
+
+  const { data: media, error } = await supabase
+    .from('cms_media')
+    .select('id,object_key')
+    .eq('bucket', 'portfolio-public')
+    .eq('status', 'ready')
+    .in('object_key', objectKeys);
+  if (error) repositoryFailure('resolve record media links', error);
+
+  const links = (media ?? []).flatMap((item) => {
+    const fieldPath = fields.get(String(item.object_key));
+    return fieldPath ? [{ media_id: String(item.id), field_path: fieldPath }] : [];
+  });
+  if (links.length !== objectKeys.length) {
+    throw new CmsRepositoryError(
+      'invalid',
+      'Salah satu media Supabase belum siap digunakan. Unggah ulang media lalu simpan kembali.',
+    );
+  }
+  return links;
 }
 
 export const supabaseCmsRepository = {
@@ -203,6 +260,7 @@ export const supabaseCmsRepository = {
     if (collection === 'projects' || collection === 'articles') nextData.slug = slug;
     const existing = await listRecords({ collection, includeDrafts: true });
     const sortOrder = existing.reduce((maximum, record) => Math.max(maximum, record.sortOrder), -1) + 1;
+    const mediaLinks = await resolveMediaLinks(supabase, nextData);
 
     const { data: created, error } = await supabase.rpc('cms_create_record', {
       record_id: id,
@@ -211,7 +269,7 @@ export const supabaseCmsRepository = {
       record_sort_order: sortOrder,
       record_status: status,
       record_data: nextData,
-      media_links: [],
+      media_links: mediaLinks,
       audit_metadata: {},
     });
     if (error) repositoryFailure('create record', error);
@@ -222,15 +280,13 @@ export const supabaseCmsRepository = {
     const versioned = await versionedRecord(collection, id, expectedVersion);
     if (!versioned) return null;
     const supabase = await createSupabaseServerClient();
-    // Media upload remains on D1/R2 during Stage 4A. Preserve any Supabase
-    // relation that already exists instead of detaching it during a text edit.
-    const mediaLinks = await getExistingMediaLinks(supabase, id);
     const nextData = { ...data };
     let slug = versioned.existing.slug;
     if ((collection === 'projects' || collection === 'articles') && typeof nextData.slug === 'string') {
       slug = slugify(nextData.slug);
       nextData.slug = slug;
     }
+    const mediaLinks = await resolveMediaLinks(supabase, nextData);
 
     const { data: updated, error } = await supabase.rpc('cms_update_record', {
       record_id: id,
@@ -243,7 +299,13 @@ export const supabaseCmsRepository = {
       audit_metadata: {},
     });
     if (error) repositoryFailure('update record', error);
-    return mapRecordResult(updated, 'map updated record');
+    const record = mapRecordResult(updated, 'map updated record');
+    await processPendingMediaDeletions(supabase).catch((cleanupError: unknown) => {
+      console.error('[supabase-media] deferred cleanup failed after update', {
+        name: cleanupError instanceof Error ? cleanupError.name : 'UnknownError',
+      });
+    });
+    return record;
   },
 
   async setPublication(collection, id, publish, expectedVersion) {
@@ -270,6 +332,11 @@ export const supabaseCmsRepository = {
       audit_metadata: {},
     });
     if (error) repositoryFailure('delete record', error);
+    await processPendingMediaDeletions(supabase).catch((cleanupError: unknown) => {
+      console.error('[supabase-media] deferred cleanup failed after delete', {
+        name: cleanupError instanceof Error ? cleanupError.name : 'UnknownError',
+      });
+    });
     return true;
   },
 

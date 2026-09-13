@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireCmsAdmin } from '@/lib/cms-auth';
-import { CmsBackendConfigurationError } from '@/lib/cms/backend';
 import { CmsRepositoryError } from '@/lib/cms/repository-contract';
-import { CMS_COLLECTIONS, type CmsCollection, type CmsStatus } from '@/lib/cms-server';
+import { CMS_COLLECTIONS, type CmsCollection, type CmsStatus } from '@/lib/cms/types';
 
 export function isCmsCollection(value: string): value is CmsCollection {
   return (CMS_COLLECTIONS as readonly string[]).includes(value);
@@ -52,14 +51,6 @@ export function cmsRepositoryErrorResponse(error: unknown) {
     return NextResponse.json(
       { error: error.message },
       { status, headers: { 'Cache-Control': 'private, no-store' } },
-    );
-  }
-
-  if (error instanceof CmsBackendConfigurationError) {
-    console.error('[cms-repository] Invalid backend configuration.');
-    return NextResponse.json(
-      { error: 'Backend CMS belum dikonfigurasi dengan benar.' },
-      { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
     );
   }
 

@@ -15,6 +15,58 @@ export type PreparedMedia = {
   message: string;
 };
 
+const ZIP_TYPES = new Set([
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
+]);
+const LEGACY_OFFICE_TYPES = new Set([
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
+]);
+
+function startsWith(bytes: Uint8Array, signature: number[]) {
+  return signature.every((value, index) => bytes[index] === value);
+}
+
+function signatureMatches(contentType: string, bytes: Uint8Array) {
+  if (contentType === 'image/jpeg') return startsWith(bytes, [0xff, 0xd8, 0xff]);
+  if (contentType === 'image/png') return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (contentType === 'image/webp') {
+    return startsWith(bytes, [0x52, 0x49, 0x46, 0x46])
+      && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+  }
+  if (contentType === 'application/pdf') {
+    return String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-';
+  }
+  if (ZIP_TYPES.has(contentType)) {
+    return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])
+      || startsWith(bytes, [0x50, 0x4b, 0x05, 0x06]);
+  }
+  if (LEGACY_OFFICE_TYPES.has(contentType)) {
+    return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+  }
+  if (contentType === 'text/plain' || contentType === 'text/csv') {
+    return !bytes.slice(0, 512).includes(0);
+  }
+  return false;
+}
+
+async function sha256Hex(file: File) {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function jsonResponse<T>(response: Response) {
+  const payload = await response.json().catch(() => null) as (T & { error?: string }) | null;
+  if (!response.ok || !payload) throw new Error(payload?.error ?? 'Permintaan media gagal.');
+  return payload;
+}
+
 function extensionlessName(name: string) {
   const dot = name.lastIndexOf('.');
   return (dot > 0 ? name.slice(0, dot) : name).replace(/[\\/:*?"<>|]+/g, '-').trim() || 'media';
@@ -91,30 +143,82 @@ export async function uploadPreparedMedia(prepared: PreparedMedia, options: {
   onProgress?: (percentage: number) => void;
   signal?: AbortSignal;
 } = {}): Promise<MediaItem> {
-  const form = new FormData();
-  form.set('file', prepared.file);
-  form.set('originalSize', String(prepared.originalSize));
-  form.set('optimized', prepared.optimized ? '1' : '0');
-  form.set('temporary', options.temporary === false ? '0' : '1');
-  if (prepared.width) form.set('width', String(prepared.width));
-  if (prepared.height) form.set('height', String(prepared.height));
-  return new Promise<MediaItem>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('POST', '/api/cms/media');
-    request.responseType = 'json';
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) options.onProgress?.(Math.round((event.loaded / event.total) * 100));
-    };
-    request.onload = () => {
-      const result = request.response as { error?: string; media?: MediaItem } | null;
-      if (request.status >= 200 && request.status < 300 && result?.media) resolve(result.media);
-      else reject(new Error(result?.error ?? 'Media tidak dapat diunggah.'));
-    };
-    request.onerror = () => reject(new Error('Koneksi terputus saat mengunggah media.'));
-    request.onabort = () => reject(new DOMException('Unggahan dibatalkan.', 'AbortError'));
-    options.signal?.addEventListener('abort', () => request.abort(), { once: true });
-    request.send(form);
+  const header = new Uint8Array(await prepared.file.slice(0, 512).arrayBuffer());
+  if (!signatureMatches(prepared.file.type, header)) {
+    throw new Error('Isi berkas tidak sesuai dengan formatnya. Ekspor ulang berkas lalu coba lagi.');
+  }
+  const metadata = {
+    name: prepared.file.name,
+    contentType: prepared.file.type,
+    size: prepared.file.size,
+    originalSize: prepared.originalSize,
+    width: prepared.width,
+    height: prepared.height,
+    optimized: prepared.optimized,
+    checksum: await sha256Hex(prepared.file),
+  };
+  options.onProgress?.(2);
+  const preparedResponse = await fetch('/api/cms/media', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'prepare', ...metadata }),
+    signal: options.signal,
   });
+  const preparedPayload = await jsonResponse<{
+    media?: MediaItem;
+    upload?: { objectKey: string; signedUrl: string };
+  }>(preparedResponse);
+  if (preparedPayload.media) {
+    options.onProgress?.(100);
+    return preparedPayload.media;
+  }
+  if (!preparedPayload.upload) throw new Error('Alamat upload media tidak tersedia.');
+
+  const { objectKey, signedUrl } = preparedPayload.upload;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const body = new FormData();
+      body.append('cacheControl', '31536000');
+      body.append('', prepared.file);
+      const request = new XMLHttpRequest();
+      request.open('PUT', signedUrl);
+      request.responseType = 'json';
+      request.setRequestHeader('x-upsert', 'false');
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          options.onProgress?.(Math.round(5 + (event.loaded / event.total) * 85));
+        }
+      };
+      request.onload = () => {
+        if (request.status >= 200 && request.status < 300) resolve();
+        else reject(new Error('Media tidak dapat diunggah ke Supabase Storage.'));
+      };
+      request.onerror = () => reject(new Error('Koneksi terputus saat mengunggah media.'));
+      request.onabort = () => reject(new DOMException('Unggahan dibatalkan.', 'AbortError'));
+      options.signal?.addEventListener('abort', () => request.abort(), { once: true });
+      request.send(body);
+    });
+
+    options.onProgress?.(94);
+    const completedResponse = await fetch('/api/cms/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'complete', objectKey, ...metadata }),
+      signal: options.signal,
+    });
+    const completed = await jsonResponse<{ media?: MediaItem }>(completedResponse);
+    if (!completed.media) throw new Error('Metadata media tidak tersedia setelah upload.');
+    options.onProgress?.(100);
+    return completed.media;
+  } catch (error) {
+    await fetch('/api/cms/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'abort', objectKey }),
+      keepalive: true,
+    }).catch(() => undefined);
+    throw error;
+  }
 }
 
 export async function discardTemporaryMedia(item?: MediaItem) {

@@ -1,202 +1,87 @@
-# Skema Supabase final — Stage 1
+# Supabase CMS â€” arsitektur final
 
-Dokumen ini menjelaskan fondasi PostgreSQL, Supabase Auth, dan Supabase Storage
-untuk arsitektur akhir Next.js + Vercel. Migration Stage 1 dan hardening Stage
-1.5 telah diterapkan pada proyek Supabase. Client Stage 2 dan autentikasi admin
-Stage 3 sudah terhubung, tetapi konten produksi belum dimigrasikan.
+Supabase adalah satu-satunya backend runtime untuk repository ini. PostgreSQL
+menyimpan konten, Supabase Auth memegang identitas/sesi, dan Supabase Storage
+menyimpan media CMS. Aplikasi hanya memakai publishable key serta sesi pengguna;
+tidak ada service-role atau secret key pada source code maupun environment
+publik.
 
-## Sumber data migrasi
-
-Backup D1 produksi adalah satu-satunya sumber utama untuk migrasi berikutnya.
-Backup tersebut berisi 33 record dan lebih baru daripada D1 lokal. Sebelas
-`data_json` berbeda dari backup lokal, sehingga data D1 lokal tidak boleh
-menimpa data produksi.
-
-## Tabel
+## Data dan tabel
 
 | Tabel | Fungsi |
 | --- | --- |
-| `cms_admin_users` | Allowlist pengguna Supabase Auth yang menjadi administrator. |
-| `cms_records` | Konten aktif/draft, urutan, versi, dan waktu publikasi. ID lama dipertahankan sebagai `text`. |
-| `cms_revisions` | Snapshot sebelum mutasi. RPC memangkas riwayat menjadi maksimal 10 per record. |
-| `cms_audit_log` | Jejak create, update, publish, delete, reorder, dan siklus media. |
-| `cms_media` | Metadata aset, checksum, ukuran asli/optimal, dimensi, bucket, dan status. |
-| `cms_record_media` | Relasi eksplisit record–media berdasarkan `field_path`. |
-| `cms_media_deletion_queue` | Transactional outbox untuk penghapusan objek Storage. |
-| `cms_auth_attempts` | Tabel warisan; tidak lagi digunakan oleh autentikasi runtime. |
+| `cms_admin_users` | Allowlist satu pengguna Supabase Auth yang boleh mengelola CMS. |
+| `cms_records` | Konten, status draft/published, urutan, versi, dan timestamp. |
+| `cms_revisions` | Maksimal 10 snapshot sebelum mutasi per record. |
+| `cms_audit_log` | Jejak mutasi konten dan siklus media. |
+| `cms_media` | Metadata, checksum, ukuran, dimensi, bucket, dan status media. |
+| `cms_record_media` | Relasi eksplisit field konten dengan media. |
+| `cms_media_deletion_queue` | Outbox untuk penghapusan objek Storage yang dapat dicoba ulang. |
+| `cms_auth_attempts` | Warisan schema; tidak digunakan runtime login. |
 
-Allowlist admin juga memiliki indeks unik konstan sehingga hanya satu akun
-admin yang dapat aktif, sesuai kebutuhan CMS ini.
+`cms_records` berisi 33 record produksi yang telah direkonsiliasi. Singleton
+`profile` dan `siteContent` dilindungi, sedangkan slug proyek/artikel unik per
+koleksi. Frontend hanya membaca record `published`; CMS admin dapat membaca
+draft melalui RLS.
 
-`profile` dan `siteContent` dilindungi sebagai singleton. `projects` dan
-`articles` wajib memiliki slug. Slug unik per koleksi, status hanya `draft` atau
-`published`, dan record publik wajib memiliki `published_at`.
+## Auth dan otorisasi
 
-## Model autentikasi dan otorisasi
+Login memakai `signInWithPassword`. Route terlindungi memvalidasi identitas
+dengan `getClaims()`, lalu RPC `cms_is_admin()` dan tabel allowlist memastikan
+pengguna benar-benar admin. Tidak ada registrasi publik. `/admin/register` tidak
+tersedia. Proxy native Next.js memperbarui cookie sesi pada route `/admin` dan
+`/api/cms`.
 
-Supabase Auth menjadi pemilik identitas, password, refresh token, dan sesi.
-Tidak ada tabel password atau sesi kustom. Pengguna terautentikasi baru menjadi
-admin jika `auth.uid()` tercantum di `cms_admin_users`.
+- `anon` tidak dapat menjalankan `cms_is_admin()`;
+- `authenticated` dapat menjalankannya untuk evaluasi policy;
+- mutasi CMS hanya melalui RPC yang memanggil `cms_assert_admin()`;
+- Origin validation tetap diterapkan pada seluruh mutation route;
+- pembatasan login mengikuti rate limit bawaan Supabase Auth.
 
-Tidak tersedia policy atau RPC untuk mendaftarkan diri sebagai admin. Admin
-pertama harus dibuat melalui alur bootstrap tepercaya pada Stage 2 atau secara
-manual melalui Dashboard/server dengan service role. Ini mencegah akun pertama
-diambil oleh pengunjung anonim.
+## CRUD dan konsistensi
 
-## RLS
+RPC `cms_create_record`, `cms_update_record`, `cms_set_publication`,
+`cms_delete_record`, dan `cms_reorder_collection` menangani validasi, audit,
+revision, relasi media, dan optimistic concurrency. Aplikasi tidak melakukan
+direct write ke `cms_records`. Query gagal atau koleksi kosong tidak pernah
+jatuh kembali ke data bawaan atau backend lain.
 
-- `anon` dan pengguna terautentikasi non-admin hanya dapat membaca
-  `cms_records` berstatus `published`.
-- Draft tidak dapat dibaca oleh anonim/non-admin.
-- Tidak ada grant tulis langsung ke tabel CMS untuk `anon` atau
-  `authenticated`.
-- Admin dapat membaca data pengelolaan, revisi, audit, media, dan antrean.
-- Mutasi admin dilakukan melalui RPC `security definer` yang selalu memanggil
-  pemeriksaan allowlist.
-- `anon` tidak dapat menjalankan `cms_is_admin()`; hanya `authenticated` yang
-  dapat memakainya untuk evaluasi policy/RPC.
-- `anon` maupun `authenticated` tidak dapat menjalankan `rls_auto_enable()`.
-- RPC CMS tetap dapat dipanggil oleh `authenticated` secara sengaja, tetapi
-  setiap mutasi admin selalu menegakkan `cms_assert_admin()`.
-- Metadata media publik hanya terlihat saat bucket `portfolio-public` dan
-  status `ready`.
-- Relasi media publik hanya terlihat jika record-nya dipublikasikan dan
-  medianya siap-publik.
+## Media
 
-Service role hanya digunakan pada server dan worker antrean. Kunci tersebut
-tidak boleh dikirim ke browser.
+Browser mengoptimalkan JPG/PNG/WebP menjadi WebP sebelum upload. Server kembali
+memeriksa metadata, batas ukuran, checksum, nama, dan metadata objek setelah
+upload; browser juga memeriksa signature file sebelum meminta URL upload. Objek
+memakai key `<auth.uid()>/<uuid>.<ext>` agar path tidak dipengaruhi nama
+pengguna. Upload memakai signed upload URL langsung ke Supabase agar dokumen
+tidak melewati batas payload Vercel Function, sambil mempertahankan progress dan
+pembatalan di CMS.
 
-## Storage
+Media final disimpan di bucket publik `portfolio-public`; operasi upload/delete
+tetap dibatasi policy kepada admin dan prefix miliknya. Metadata didaftarkan
+melalui `cms_register_ready_media`. URL di field konten diubah menjadi relasi
+`cms_record_media` saat RPC create/update berjalan. Media yang diganti, record
+yang dihapus, atau upload yang ditinggalkan masuk ke deletion queue dan diproses
+melalui Storage API tanpa service-role.
 
-### `portfolio-public`
+Penyimpanan objek dan transaksi PostgreSQL tidak dapat menjadi satu transaksi
+ACID. Runtime menghapus objek baru bila pendaftaran metadata gagal dan memakai
+outbox idempoten untuk penghapusan, sehingga kegagalan dapat dicoba ulang pada
+request admin berikutnya.
 
-Bucket publik untuk aset yang sudah siap dan digunakan konten publik. Pengunjung
-dapat membaca objeknya. Penulisan/penghapusan tidak diberikan langsung kepada
-browser admin; proses promosi dari staging dilakukan server tepercaya.
+## Migration
 
-### `portfolio-staging`
+- `0001_portfolio_cms.sql`: schema, RLS, RPC konten, bucket, dan fondasi outbox;
+- `0002_stage1_5_security_hardening.sql`: pencabutan execute yang tidak perlu;
+- `0003_native_next_media_runtime.sql`: policy/RPC media untuk runtime native
+  Next.js tanpa privileged key.
 
-Bucket privat untuk unggahan sementara dan aset draft. Admin dapat mengelola
-objek hanya di prefix `<auth.uid()>/...`. Non-admin dan anonim tidak dapat
-membaca bucket ini.
-
-Kedua bucket membatasi berkas hingga 24 MiB dan hanya menerima format gambar,
-PDF, dokumen kantor/OpenDocument, TXT, dan CSV yang telah ditentukan. SVG tidak
-diizinkan untuk mengurangi risiko konten aktif.
-
-SQL tidak menghapus `storage.objects` secara langsung. Penghapusan menggunakan
-alur berikut:
-
-1. transaksi CMS menandai media `pending_delete` dan menulis outbox;
-2. worker server mengambil antrean dengan `FOR UPDATE SKIP LOCKED`;
-3. worker menghapus objek lewat Supabase Storage API;
-4. worker mengakui hasil melalui RPC sehingga metadata dibersihkan atau dicoba
-   ulang dengan backoff.
-
-Promosi atau penghapusan objek Storage dan transaksi PostgreSQL tidak dapat menjadi
-satu transaksi ACID. Outbox, object key yang idempoten, dan proses rekonsiliasi
-di Stage 2 wajib dipakai untuk menutup kemungkinan orphan object ketika salah
-satu sisi gagal.
-
-## RPC dan transaksi
-
-| RPC | Jaminan utama |
-| --- | --- |
-| `cms_create_record` | Create, validasi publikasi, relasi media, dan audit dalam satu transaksi. |
-| `cms_update_record` | Lock record, expected version, revision, update, relasi media, dan audit secara atomik. |
-| `cms_set_publication` | Publish/unpublish atomik dan menolak media staging pada record publik. |
-| `cms_delete_record` | Melindungi singleton, menghapus record, mengaudit, dan mengantrekan media orphan. |
-| `cms_reorder_collection` | Mengunci koleksi, memverifikasi himpunan ID/versi, menyimpan revision, lalu mengurutkan atomik. |
-| `cms_register_staged_media` | Mendaftarkan metadata staging dan memakai checksum untuk deteksi duplikat. |
-| `cms_mark_media_ready` | Mengubah metadata menjadi publik setelah Storage API berhasil mempromosikan objek. |
-| `cms_claim_media_deletion_batch` | Mengambil pekerjaan outbox secara aman untuk worker. |
-| `cms_complete_media_deletion` | Menyelesaikan atau menjadwalkan ulang penghapusan. |
-| `cms_cleanup_auth_attempts` | Membersihkan state rate-limit yang kedaluwarsa. |
-
-Semua perubahan record memakai `version` dan `expected_version` untuk mencegah
-lost update. Revision menyimpan keadaan sebelum perubahan dan dipangkas menjadi
-10 record terbaru.
-
-## Validasi publikasi
-
-`cms_validate_record` mengulang persyaratan minimum yang saat ini diterapkan
-CMS: field utama per koleksi, responsibilities untuk pengalaman, scope dan
-process untuk proyek, topics untuk sertifikasi, serta sections untuk artikel.
-Validasi detail tipe/panjang tetap dilakukan aplikasi pada Stage 2, sedangkan
-constraint PostgreSQL menjaga keadaan yang tidak boleh dilanggar.
-
-## Variabel lingkungan untuk tahap berikutnya
+## Environment variables
 
 ```dotenv
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_PUBLIC_BUCKET=portfolio-public
-SUPABASE_STAGING_BUCKET=portfolio-staging
 ```
 
-Factory client browser dan server hanya memakai publishable key. Tidak ada
-secret atau service-role key pada repository atau konfigurasi runtime saat ini.
-Client server membaca dan menulis cookie melalui `next/headers` dalam lingkup
-request. Cookie autentikasi admin ditandai `HttpOnly`, `SameSite=Lax`, dan
-`Secure` pada production. Jangan menyimpan dump produksi, password, session,
-atau kredensial di repositori.
-
-## Stage 3: autentikasi admin
-
-Login CMS menggunakan `supabase.auth.signInWithPassword`. Identitas untuk
-halaman dan API terlindungi selalu divalidasi server-side dengan
-`supabase.auth.getClaims()`, kemudian `cms_is_admin()` dipanggil menggunakan
-sesi pengguna tersebut. Akses hanya diberikan bila token valid, RPC
-mengembalikan `true`, dan profil allowlist milik pengguna dapat dibaca dari
-`cms_admin_users`. Semua kegagalan ditutup sebagai akses tidak sah.
-
-Tidak ada UI atau endpoint registrasi admin. Aplikasi tidak memanggil
-`signUp()` dan tidak pernah menambahkan pengguna ke `cms_admin_users`.
-Pengguna Supabase biasa tetap ditolak dan sesi hasil login tersebut langsung
-dikeluarkan. Logout menggunakan `supabase.auth.signOut()`.
-
-Runtime konten masih memakai D1. Tabel D1 `cms_admins` dan `cms_sessions` tetap
-ada hanya sebagai warisan schema dan tidak lagi dibaca atau ditulis kode
-runtime. Tabel `cms_auth_attempts` juga hanya tersisa sebagai warisan schema dan
-tidak lagi berpartisipasi dalam login. Pembatasan percobaan autentikasi mengikuti
-rate limit bawaan Supabase Auth. Tabel warisan tidak boleh dihapus sebelum
-migrasi data dan runtime selesai diverifikasi.
-
-### Catatan kompatibilitas Vinext
-
-Vinext saat ini mendukung akses cookie request melalui `next/headers`, sehingga
-Route Handler dapat menyimpan cookie login, refresh, dan logout. Server
-Component hanya melakukan pembaruan cookie secara best effort. Mekanisme
-`proxy.ts` resmi untuk refresh sesi belum dipasang karena itu bergantung pada
-migrasi ke runtime Next.js native. Setelah migrasi runtime, tambahkan proxy
-session Supabase dan pastikan setiap respons yang menulis cookie memakai
-`Cache-Control: private, no-store` sebelum autentikasi dianggap final di
-Vercel.
-
-## Stage 4A: repository konten paralel
-
-Lapisan `lib/cms-repository.ts` memilih repository konten secara server-only
-melalui `CMS_DATA_BACKEND`. Nilai kosong atau `d1` tetap memilih D1; hanya nilai
-`supabase` yang memilih Supabase, sedangkan nilai lain ditolak sebagai salah
-konfigurasi. Variabel ini tidak boleh memakai awalan `NEXT_PUBLIC_`.
-
-Repository Supabase membaca `cms_records` dan `cms_revisions` melalui RLS.
-Pembacaan publik tetap menambahkan filter `published`, sementara snapshot dan
-revision admin tetap dilindungi `requireCmsAdmin()` pada API. Semua mutasi
-record memakai RPC `cms_create_record`, `cms_update_record`,
-`cms_set_publication`, `cms_delete_record`, atau `cms_reorder_collection`;
-tidak ada direct write ke `cms_records`. Versi record diteruskan sebagai
-optimistic concurrency guard.
-
-Pemilihan Supabase bersifat eksplisit dan tidak pernah jatuh kembali ke D1 atau
-data bawaan ketika query gagal. Hasil nol record juga dipertahankan sebagai
-hasil kosong. Ini penting agar kegagalan atau data migrasi yang belum lengkap
-tidak tersamarkan saat cutover.
-
-Stage 4A belum memindahkan 33 record produksi dan belum mengaktifkan cutover.
-D1 masih backend default. Upload, cleanup, dan penyajian media tetap memakai
-D1/R2; relasi media Supabase yang sudah ada hanya dipertahankan saat teks record
-diubah. `CMS_DATA_BACKEND=supabase` belum boleh dipakai pada produksi sebelum
-impor serta rekonsiliasi data selesai, dan mutasi konten Supabase belum boleh
-diaktifkan sampai pipeline media dimigrasikan.
+Cloudflare D1/R2/Vinext/Workers/Sites sudah retired dan bukan opsi backend.

@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
-import { cleanupUnusedCmsMedia, getCmsDatabase, getMediaBucket, ensureCmsSchema } from '@/lib/cms-server';
-import { invalidOriginResponse, mutationOriginIsValid, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
+
+import {
+  invalidOriginResponse,
+  mutationOriginIsValid,
+  requireCmsApiAdmin,
+  unauthorizedResponse,
+} from '@/lib/cms-api';
+import {
+  getCmsPublicBucket,
+  mapSupabaseMedia,
+  processPendingMediaDeletions,
+} from '@/lib/cms/media';
 import { MAX_DOCUMENT_SIZE, MAX_OPTIMIZED_IMAGE_SIZE } from '@/lib/media-policy';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 const MIME_EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -21,128 +32,238 @@ const MIME_EXTENSIONS: Record<string, string> = {
   'text/csv': 'csv',
 };
 
-const EXTENSION_MIMES = Object.fromEntries(Object.entries(MIME_EXTENSIONS).map(([mime, extension]) => [extension, mime]));
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const ZIP_TYPES = new Set([
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/vnd.oasis.opendocument.text',
-  'application/vnd.oasis.opendocument.spreadsheet',
-  'application/vnd.oasis.opendocument.presentation',
-]);
-const LEGACY_OFFICE_TYPES = new Set(['application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint']);
-const UNUSED_MEDIA_GRACE_MS = 60 * 60 * 1000;
+const UNUSED_MEDIA_GRACE_SECONDS = 60 * 60;
+const MEDIA_COLUMNS = [
+  'id',
+  'bucket',
+  'object_key',
+  'original_name',
+  'mime_type',
+  'original_size',
+  'optimized_size',
+  'width',
+  'height',
+  'status',
+  'created_at',
+].join(',');
 
-function asPositiveInteger(value: FormDataEntryValue | null) {
+type UploadRequest = {
+  action?: 'prepare' | 'complete' | 'abort';
+  objectKey?: string;
+  name?: string;
+  contentType?: string;
+  size?: number;
+  originalSize?: number;
+  width?: number;
+  height?: number;
+  optimized?: boolean;
+  checksum?: string;
+};
+
+function cleanPositiveInteger(value: unknown) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 
-function resolvedContentType(file: File) {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-  const byExtension = EXTENSION_MIMES[extension];
-  if (file.type && MIME_EXTENSIONS[file.type]) return file.type;
-  return byExtension ?? '';
-}
+function validateUploadMetadata(body: UploadRequest) {
+  const name = body.name?.replace(/[\r\n]/g, ' ').trim().slice(0, 180) ?? '';
+  const contentType = body.contentType?.trim().toLowerCase() ?? '';
+  const size = cleanPositiveInteger(body.size);
+  const originalSize = cleanPositiveInteger(body.originalSize) ?? size;
+  const checksum = body.checksum?.trim().toLowerCase() ?? '';
+  const width = IMAGE_TYPES.has(contentType) ? cleanPositiveInteger(body.width) : null;
+  const height = IMAGE_TYPES.has(contentType) ? cleanPositiveInteger(body.height) : null;
+  const maximumSize = IMAGE_TYPES.has(contentType)
+    ? MAX_OPTIMIZED_IMAGE_SIZE
+    : MAX_DOCUMENT_SIZE;
 
-function startsWith(bytes: Uint8Array, signature: number[]) {
-  return signature.every((value, index) => bytes[index] === value);
-}
-
-function signatureMatches(contentType: string, bytes: Uint8Array) {
-  if (contentType === 'image/jpeg') return startsWith(bytes, [0xff, 0xd8, 0xff]);
-  if (contentType === 'image/png') return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  if (contentType === 'image/webp') return startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
-  if (contentType === 'application/pdf') return String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-';
-  if (ZIP_TYPES.has(contentType)) return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) || startsWith(bytes, [0x50, 0x4b, 0x05, 0x06]);
-  if (LEGACY_OFFICE_TYPES.has(contentType)) return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
-  if (contentType === 'text/plain' || contentType === 'text/csv') return !bytes.slice(0, 512).includes(0);
-  return false;
-}
-
-async function sha256Hex(buffer: ArrayBuffer) {
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buffer));
-  return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function mapMediaRow(row: Record<string, unknown>) {
+  if (!name || !MIME_EXTENSIONS[contentType] || !size || !originalSize) {
+    return { error: 'Metadata berkas tidak lengkap.' } as const;
+  }
+  if (size > maximumSize || originalSize > MAX_DOCUMENT_SIZE) {
+    return {
+      error: IMAGE_TYPES.has(contentType)
+        ? 'Gambar hasil optimasi maksimal 8 MB.'
+        : 'Dokumen maksimal 24 MB.',
+    } as const;
+  }
+  if (!/^[0-9a-f]{64}$/.test(checksum)) {
+    return { error: 'Checksum berkas tidak valid.' } as const;
+  }
+  if (IMAGE_TYPES.has(contentType) && (!width || !height)) {
+    return { error: 'Dimensi gambar tidak tersedia.' } as const;
+  }
   return {
-    id: String(row.id),
-    url: `/media/${String(row.object_key).split('/').map(encodeURIComponent).join('/')}`,
-    name: String(row.original_name),
-    contentType: String(row.content_type),
-    size: Number(row.size_bytes),
-    originalSize: Number(row.original_size_bytes ?? row.size_bytes),
-    width: row.width ? Number(row.width) : undefined,
-    height: row.height ? Number(row.height) : undefined,
-    optimized: Boolean(row.optimized),
-    temporary: Boolean(row.temporary),
-    createdAt: String(row.created_at),
-  };
+    name,
+    contentType,
+    size,
+    originalSize,
+    width,
+    height,
+    checksum,
+  } as const;
+}
+
+function ownedObjectKey(userId: string, objectKey: string | undefined) {
+  return Boolean(
+    objectKey
+      && objectKey.startsWith(`${userId}/`)
+      && /^[0-9a-f-]{36}\.[a-z0-9]+$/.test(objectKey.slice(userId.length + 1)),
+  );
 }
 
 export async function GET() {
   if (!await requireCmsApiAdmin()) return unauthorizedResponse();
-  await ensureCmsSchema();
-  await cleanupUnusedCmsMedia({ olderThanMs: UNUSED_MEDIA_GRACE_MS }).catch(() => undefined);
-  const result = await getCmsDatabase().prepare('SELECT * FROM cms_media ORDER BY created_at DESC').all<Record<string, unknown>>();
-  return NextResponse.json({ media: result.results.map(mapMediaRow) }, { headers: { 'Cache-Control': 'private, no-store' } });
+  const supabase = await createSupabaseServerClient();
+  await supabase.rpc('cms_queue_unused_media_admin', {
+    older_than_seconds: UNUSED_MEDIA_GRACE_SECONDS,
+  });
+  await processPendingMediaDeletions(supabase).catch(() => undefined);
+
+  const { data, error } = await supabase
+    .from('cms_media')
+    .select(MEDIA_COLUMNS)
+    .neq('status', 'pending_delete')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[supabase-media] list failed', { code: error.code });
+    return NextResponse.json({ error: 'Pustaka media tidak dapat dimuat.' }, { status: 503 });
+  }
+  return NextResponse.json(
+    {
+      media: (data ?? []).map((row) =>
+        mapSupabaseMedia(supabase, row as unknown as Record<string, unknown>),
+      ),
+    },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }
 
 export async function POST(request: Request) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
-  const formData = await request.formData();
-  const file = formData.get('file');
-  if (!(file instanceof File)) return NextResponse.json({ error: 'Pilih berkas yang ingin diunggah.' }, { status: 400 });
-
-  const contentType = resolvedContentType(file);
-  if (!contentType) return NextResponse.json({ error: 'Format berkas belum didukung oleh CMS.' }, { status: 400 });
-  const maximumSize = IMAGE_TYPES.has(contentType) ? MAX_OPTIMIZED_IMAGE_SIZE : MAX_DOCUMENT_SIZE;
-  if (file.size > maximumSize) {
-    return NextResponse.json({ error: IMAGE_TYPES.has(contentType) ? 'Gambar hasil optimasi maksimal 8 MB.' : 'Dokumen maksimal 24 MB.' }, { status: 400 });
+  const admin = await requireCmsApiAdmin();
+  if (!admin) return unauthorizedResponse();
+  const body = await request.json().catch(() => null) as UploadRequest | null;
+  if (!body?.action) {
+    return NextResponse.json({ error: 'Permintaan upload tidak valid.' }, { status: 400 });
   }
 
-  const buffer = await file.arrayBuffer();
-  if (!signatureMatches(contentType, new Uint8Array(buffer))) {
-    return NextResponse.json({ error: 'Isi berkas tidak sesuai dengan formatnya. Ekspor ulang berkas lalu coba lagi.' }, { status: 400 });
-  }
+  const supabase = await createSupabaseServerClient();
+  const bucket = getCmsPublicBucket();
 
-  await ensureCmsSchema();
-  const checksum = await sha256Hex(buffer);
-  const existing = await getCmsDatabase().prepare(
-    'SELECT * FROM cms_media WHERE checksum_sha256 = ? AND content_type = ? AND size_bytes = ? LIMIT 1',
-  ).bind(checksum, contentType, file.size).first<Record<string, unknown>>();
-  if (existing) {
-    if (formData.get('temporary') === '0' && Boolean(existing.temporary)) {
-      await getCmsDatabase().prepare('UPDATE cms_media SET temporary = 0 WHERE id = ?').bind(String(existing.id)).run();
-      existing.temporary = 0;
+  if (body.action === 'abort') {
+    if (!ownedObjectKey(admin.id, body.objectKey)) {
+      return NextResponse.json({ error: 'Path media tidak valid.' }, { status: 400 });
     }
-    return NextResponse.json({ media: mapMediaRow(existing), reused: true });
+    const { data: registered, error: registeredError } = await supabase
+      .from('cms_media')
+      .select('id')
+      .eq('bucket', bucket)
+      .eq('object_key', body.objectKey!)
+      .maybeSingle();
+    if (registeredError) {
+      console.error('[supabase-media] abort registration check failed', {
+        code: registeredError.code,
+      });
+      return NextResponse.json({ error: 'Status media tidak dapat diperiksa.' }, { status: 503 });
+    }
+    if (registered) return NextResponse.json({ ok: true });
+
+    const { error } = await supabase.storage.from(bucket).remove([body.objectKey!]);
+    return error
+      ? NextResponse.json({ error: 'Upload yang dibatalkan belum dapat dibersihkan.' }, { status: 503 })
+      : NextResponse.json({ ok: true });
   }
 
-  const id = crypto.randomUUID();
-  const extension = MIME_EXTENSIONS[contentType];
-  const objectKey = `cms/${id}.${extension}`;
-  const originalSize = asPositiveInteger(formData.get('originalSize')) ?? file.size;
-  const width = IMAGE_TYPES.has(contentType) ? asPositiveInteger(formData.get('width')) : null;
-  const height = IMAGE_TYPES.has(contentType) ? asPositiveInteger(formData.get('height')) : null;
-  const optimized = formData.get('optimized') === '1';
-  const temporary = formData.get('temporary') !== '0';
-  const originalName = file.name.replace(/[\r\n]/g, ' ').slice(0, 180);
-  await getMediaBucket().put(objectKey, buffer, {
-    httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
-    customMetadata: { originalName, originalSize: String(originalSize), optimized: optimized ? '1' : '0' },
-  });
-  const now = new Date().toISOString();
-  await getCmsDatabase().prepare(
-    `INSERT INTO cms_media
-      (id, object_key, original_name, content_type, size_bytes, original_size_bytes, width, height, optimized, temporary, checksum_sha256, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).bind(id, objectKey, originalName, contentType, file.size, originalSize, width, height, optimized ? 1 : 0, temporary ? 1 : 0, checksum, now).run();
-  return NextResponse.json({ media: mapMediaRow({
-    id, object_key: objectKey, original_name: originalName, content_type: contentType,
-    size_bytes: file.size, original_size_bytes: originalSize, width, height, optimized: optimized ? 1 : 0, temporary: temporary ? 1 : 0, checksum_sha256: checksum, created_at: now,
-  }) }, { status: 201 });
+  const metadata = validateUploadMetadata(body);
+  if ('error' in metadata) {
+    return NextResponse.json({ error: metadata.error }, { status: 400 });
+  }
+
+  if (body.action === 'prepare') {
+    const { data: existing, error: duplicateError } = await supabase
+      .from('cms_media')
+      .select(MEDIA_COLUMNS)
+      .eq('bucket', bucket)
+      .eq('checksum_sha256', metadata.checksum)
+      .eq('mime_type', metadata.contentType)
+      .eq('optimized_size', metadata.size)
+      .eq('status', 'ready')
+      .maybeSingle();
+    if (duplicateError) {
+      console.error('[supabase-media] duplicate check failed', { code: duplicateError.code });
+      return NextResponse.json({ error: 'Media tidak dapat diperiksa.' }, { status: 503 });
+    }
+    if (existing) {
+      return NextResponse.json({
+        media: mapSupabaseMedia(supabase, existing as unknown as Record<string, unknown>),
+        reused: true,
+      });
+    }
+
+    const extension = MIME_EXTENSIONS[metadata.contentType];
+    const objectKey = `${admin.id}/${crypto.randomUUID()}.${extension}`;
+    const { data: signed, error: signedError } = await supabase.storage
+      .from(bucket)
+      .createSignedUploadUrl(objectKey);
+    if (signedError || !signed?.signedUrl) {
+      console.error('[supabase-media] signed upload URL failed', {
+        statusCode: signedError?.statusCode,
+      });
+      return NextResponse.json({ error: 'Alamat upload tidak dapat dibuat.' }, { status: 503 });
+    }
+    return NextResponse.json({ upload: { objectKey, signedUrl: signed.signedUrl } });
+  }
+
+  if (body.action !== 'complete' || !ownedObjectKey(admin.id, body.objectKey)) {
+    return NextResponse.json({ error: 'Penyelesaian upload tidak valid.' }, { status: 400 });
+  }
+
+  const objectKey = body.objectKey!;
+  const { data: objectInfo, error: infoError } = await supabase.storage
+    .from(bucket)
+    .info(objectKey);
+  const storedSize = cleanPositiveInteger(objectInfo?.size);
+  const storedContentType = objectInfo?.contentType?.toLowerCase();
+  if (
+    infoError
+      || storedSize !== metadata.size
+      || (storedContentType && storedContentType !== metadata.contentType)
+  ) {
+    await supabase.storage.from(bucket).remove([objectKey]).catch(() => undefined);
+    return NextResponse.json({ error: 'Berkas tersimpan tidak sesuai metadata upload.' }, { status: 422 });
+  }
+
+  const { data: registered, error: registerError } = await supabase.rpc(
+    'cms_register_ready_media',
+    {
+      media_object_key: objectKey,
+      media_original_name: metadata.name,
+      media_mime_type: metadata.contentType,
+      media_original_size: metadata.originalSize,
+      media_optimized_size: metadata.size,
+      media_width: metadata.width,
+      media_height: metadata.height,
+      media_checksum_sha256: metadata.checksum,
+    },
+  );
+  if (registerError || !registered) {
+    await supabase.storage.from(bucket).remove([objectKey]).catch(() => undefined);
+    console.error('[supabase-media] metadata registration failed', { code: registerError?.code });
+    return NextResponse.json({ error: 'Metadata media tidak dapat disimpan.' }, { status: 503 });
+  }
+
+  const row = Array.isArray(registered) ? registered[0] : registered;
+  if (!row || typeof row !== 'object') {
+    await supabase.storage.from(bucket).remove([objectKey]).catch(() => undefined);
+    return NextResponse.json({ error: 'Respons penyimpanan media tidak valid.' }, { status: 503 });
+  }
+  if (String(row.object_key) !== objectKey) {
+    await supabase.storage.from(bucket).remove([objectKey]).catch(() => undefined);
+  }
+  return NextResponse.json(
+    { media: mapSupabaseMedia(supabase, row as Record<string, unknown>) },
+    { status: 201 },
+  );
 }

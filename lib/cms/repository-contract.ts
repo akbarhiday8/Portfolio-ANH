@@ -1,5 +1,5 @@
 import type { portfolioData } from '@/lib/portfolio-data';
-import type { CmsCollection, CmsRecord, CmsRevision, CmsStatus } from '@/lib/cms-server';
+import type { CmsCollection, CmsRecord, CmsRevision, CmsStatus } from '@/lib/cms/types';
 
 export type PortfolioContent = typeof portfolioData;
 export type ListCmsRecordsOptions = {

@@ -1,20 +1,31 @@
 import { NextResponse } from 'next/server';
-import { ensureCmsSchema, getCmsDatabase, getMediaBucket } from '@/lib/cms-server';
 import { invalidOriginResponse, mutationOriginIsValid, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
+import { processPendingMediaDeletions } from '@/lib/cms/media';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 type RouteProps = { params: Promise<{ id: string }> };
 
 export async function DELETE(request: Request, { params }: RouteProps) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
   if (!await requireCmsApiAdmin()) return unauthorizedResponse();
-  await ensureCmsSchema();
   const { id } = await params;
-  const row = await getCmsDatabase().prepare('SELECT object_key FROM cms_media WHERE id = ?').bind(id).first<{ object_key: string }>();
-  if (!row) return NextResponse.json({ error: 'Media tidak ditemukan.' }, { status: 404 });
-  const mediaUrl = `/media/${row.object_key}`;
-  const reference = await getCmsDatabase().prepare('SELECT id FROM cms_records WHERE instr(data_json, ?) > 0 LIMIT 1').bind(mediaUrl).first();
-  if (reference) return NextResponse.json({ error: 'Media masih digunakan oleh konten. Ganti media pada konten tersebut terlebih dahulu.' }, { status: 409 });
-  await getMediaBucket().delete(row.object_key);
-  await getCmsDatabase().prepare('DELETE FROM cms_media WHERE id = ?').bind(id).run();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc('cms_queue_media_deletion_admin', {
+    media_id_value: id,
+  });
+  if (error?.code === 'P0002') {
+    return NextResponse.json({ error: 'Media tidak ditemukan.' }, { status: 404 });
+  }
+  if (error?.code === '23503') {
+    return NextResponse.json({ error: 'Media masih digunakan oleh konten. Ganti media pada konten tersebut terlebih dahulu.' }, { status: 409 });
+  }
+  if (error) {
+    console.error('[supabase-media] queue deletion failed', { code: error.code });
+    return NextResponse.json({ error: 'Media tidak dapat dihapus.' }, { status: 503 });
+  }
+  const cleanup = await processPendingMediaDeletions(supabase);
+  if (cleanup.failed) {
+    return NextResponse.json({ error: 'Penghapusan media akan dicoba kembali.' }, { status: 503 });
+  }
   return NextResponse.json({ ok: true });
 }
