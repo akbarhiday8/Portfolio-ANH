@@ -9,20 +9,21 @@ import {
   Download, GripVertical, History, ImageIcon, Link2, ListChecks, LogOut, Menu, MoreHorizontal, PanelRightOpen, Plus, Save, Search,
   Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
+import { BrandIdentity } from '@/components/brand-identity';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { cmsModules, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
+import { brandingModule, cmsModules, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
 import type { CmsAdmin } from '@/lib/cms-auth';
 import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms/types';
 import { discardTemporaryMedia, prepareMediaFile, uploadPreparedMedia } from '@/lib/media-client';
 import { formatMediaSize, IMAGE_ACCEPT, MEDIA_ACCEPT, type MediaItem } from '@/lib/media-policy';
 
 type CmsCollections = Record<string, CmsRecord[]>;
-type ActiveView = 'overview' | 'media' | CmsCollection;
+type ActiveView = 'overview' | 'media' | 'branding' | CmsCollection;
 type EditorSection = { title: string; description: string; fields: string[] };
 type CmsIcon = React.ComponentType<{ size?: number }>;
 type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
@@ -54,6 +55,7 @@ const navPrimary: NavItem[] = [
 ];
 
 const navSettings: NavItem[] = [
+  { label: 'Branding', view: 'branding', Icon: Sparkles },
   { label: 'Teks Website', view: 'siteContent', Icon: Settings2 },
   { label: 'Statistik', view: 'statistics', Icon: BarChart3 },
   { label: 'Keunggulan', view: 'capabilities', Icon: Sparkles },
@@ -62,6 +64,7 @@ const navSettings: NavItem[] = [
 
 const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   siteContent: [
+    { title: 'Branding', description: 'Logo utama, variasi konteks, favicon, dan label aksesibel.', fields: ['branding.primaryLogo', 'branding.publicLogo', 'branding.cmsLogo', 'branding.loginLogo', 'branding.favicon', 'branding.altText', 'branding.label'] },
     { title: 'Identitas website', description: 'Logo, footer, dan identitas utama.', fields: ['brandSubtitle', 'footerName', 'footerSubtitle', 'copyrightText'] },
     { title: 'Tentang saya', description: 'Judul dan narasi pada section Tentang.', fields: ['aboutTitle', 'aboutCaption', 'aboutHeading', 'aboutBody', 'aboutCta'] },
     { title: 'Judul section', description: 'Nama dan caption setiap bagian portfolio.', fields: ['educationTitle', 'educationCaption', 'educationNote', 'experienceTitle', 'experienceCaption', 'portfolioTitle', 'portfolioCaption', 'certificatesTitle', 'certificatesCaption'] },
@@ -101,9 +104,13 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
 function sectionsForModule(module: CmsModuleDefinition) {
   const configured = editorSections[module.collection];
   if (!configured) return [{ title: 'Informasi konten', description: module.description, fields: module.fields.map((field) => field.key) }];
-  const knownFields = new Set(configured.flatMap((section) => section.fields));
+  const availableFields = new Set(module.fields.map((field) => field.key));
+  const relevant = configured
+    .map((section) => ({ ...section, fields: section.fields.filter((field) => availableFields.has(field)) }))
+    .filter((section) => section.fields.length > 0);
+  const knownFields = new Set(relevant.flatMap((section) => section.fields));
   const remaining = module.fields.filter((field) => !knownFields.has(field.key)).map((field) => field.key);
-  return remaining.length ? [...configured, { title: 'Informasi lainnya', description: 'Pengaturan tambahan untuk konten ini.', fields: remaining }] : configured;
+  return remaining.length ? [...relevant, { title: 'Informasi lainnya', description: 'Pengaturan tambahan untuk konten ini.', fields: remaining }] : relevant;
 }
 
 function getPath(data: Record<string, unknown>, path: string): unknown {
@@ -277,11 +284,39 @@ function newRecord(module: CmsModuleDefinition): CmsRecord {
   };
 }
 
+function BrandingPreview({ data, profile }: { data: Record<string, unknown>; profile: Record<string, unknown> }) {
+  const contexts = [
+    { context: 'public' as const, label: 'Website publik' },
+    { context: 'cms' as const, label: 'Sidebar CMS' },
+    { context: 'login' as const, label: 'Halaman login' },
+  ];
+  const favicon = stringValue(data, 'branding.favicon');
+
+  return (
+    <section className="cms-branding-preview" aria-label="Preview branding">
+      <header><Eye size={17} /><div><strong>Preview setiap konteks</strong><p>Logo override yang kosong otomatis memakai logo utama, lalu fallback teks ANH.</p></div></header>
+      <div className="cms-branding-preview-grid">
+        {contexts.map(({ context, label }) => (
+          <article className={`is-${context}`} key={context}>
+            <small>{label}</small>
+            <BrandIdentity context={context} siteContent={data} profile={profile} />
+          </article>
+        ))}
+        <article className="is-favicon">
+          <small>Favicon</small>
+          {favicon ? <Image src={favicon} width={40} height={40} unoptimized alt="Preview favicon" /> : <strong aria-label="Fallback favicon ANH">A</strong>}
+        </article>
+      </div>
+    </section>
+  );
+}
+
 function ContentEditor({
-  module, record, onClose, onSaved,
+  module, record, profileData, onClose, onSaved,
 }: {
   module: CmsModuleDefinition;
   record: CmsRecord;
+  profileData: Record<string, unknown>;
   onClose: () => void;
   onSaved: (record: CmsRecord) => void;
 }) {
@@ -414,7 +449,7 @@ function ContentEditor({
     setUploadProgress(0);
     setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar sebelum diunggah...' : 'Memeriksa dokumen sebelum diunggah...');
     try {
-      const prepared = await prepareMediaFile(file, field.key === 'customIcon' ? 'icon' : 'content');
+      const prepared = await prepareMediaFile(file, field.key === 'customIcon' || field.key.startsWith('branding.') ? 'icon' : 'content');
       setMessage('Mengunggah media teroptimasi...');
       const controller = new AbortController();
       uploadRequest.current = controller;
@@ -497,7 +532,7 @@ function ContentEditor({
             <div>
               <Input id={inputId} value={value} placeholder={field.type === 'asset' ? 'https://... atau /media/...' : '/media/... atau URL gambar'} onChange={(event) => updateMediaValue(field, event.target.value)} />
               <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
-              <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a> : null}</div>
+              <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <><a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a><button className="cms-remove-media" type="button" onClick={() => updateMediaValue(field, '')} aria-label={`Hapus ${field.label}`} title={`Hapus ${field.label}`}><Trash2 size={14} />Hapus</button></> : null}</div>
               <small className="cms-upload-policy">Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.</small>
             </div>
           </div>
@@ -513,12 +548,12 @@ function ContentEditor({
     <dialog className="cms-editor-layer" open aria-label={`Editor ${module.singular}`}>
       <form className="cms-editor" onSubmit={save}>
         <header className="cms-editor-header">
-          <div><span>{record.id === 'new' ? 'Konten baru' : module.label}</span><h2>{record.id === 'new' ? `Tambah ${module.singular}` : recordTitle(record, module)}</h2></div>
+          <div className="cms-editor-heading"><span className="cms-window-markers" aria-hidden="true"><i /><i /><i /></span><div><span>{record.id === 'new' ? 'Konten baru' : module.label}</span><h2>{record.id === 'new' ? `Tambah ${module.singular}` : recordTitle(record, module)}</h2></div></div>
           <div className="cms-editor-actions">
-            <span className={dirty ? 'is-dirty' : 'is-saved'}>{dirty ? 'Belum disimpan' : 'Tersimpan'}</span>
-            <Button type="button" variant="outline" onClick={() => setPreviewOpen((value) => !value)}><PanelRightOpen size={16} />Preview</Button>
-            <Button className="cms-save-button" type="submit" disabled={busy || !dirty}><Save size={16} />{busy ? 'Menyimpan...' : 'Simpan'}</Button>
-            <button type="button" onClick={closeEditor} aria-label="Tutup editor"><X size={18} /></button>
+            <span className={`cms-editor-save-status ${dirty ? 'is-dirty' : 'is-saved'}`}><i aria-hidden="true" />{dirty ? 'Belum disimpan' : 'Tersimpan'}</span>
+            <button className="cms-editor-action" type="button" onClick={() => setPreviewOpen((value) => !value)} aria-label={previewOpen ? 'Tutup preview' : 'Buka preview'} aria-pressed={previewOpen} title={previewOpen ? 'Tutup preview' : 'Buka preview'}><PanelRightOpen size={16} /><span>Preview</span></button>
+            <button className="cms-editor-action cms-editor-action--save" type="submit" disabled={busy || !dirty} aria-label={busy ? 'Sedang menyimpan' : 'Simpan perubahan'} title="Simpan perubahan">{busy ? <i className="cms-inline-spinner" aria-hidden="true" /> : <Save size={16} />}<span>{busy ? 'Menyimpan' : 'Simpan'}</span></button>
+            <button className="cms-editor-action cms-editor-action--close" type="button" onClick={closeEditor} aria-label="Tutup editor" title="Tutup editor"><X size={17} /><span>Tutup</span></button>
           </div>
         </header>
 
@@ -550,7 +585,9 @@ function ContentEditor({
               </section>
             ) : null}
 
-            {previewOpen ? (
+            {previewOpen && module === brandingModule ? <BrandingPreview data={data} profile={profileData} /> : null}
+
+            {previewOpen && module !== brandingModule ? (
               <section className="cms-preview-panel" aria-label="Preview konten">
                 <header><Eye size={17} /><div><strong>Preview ringkas</strong><p>Tampilan ini membantu mengecek judul, visual, dan ringkasan sebelum disimpan.</p></div></header>
                 <article>
@@ -669,8 +706,12 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   const [draggingId, setDraggingId] = useState('');
   const globalSearchRef = useRef<HTMLInputElement>(null);
 
-  const activeModule = cmsModules.find((module) => module.collection === activeView);
+  const activeModule = activeView === 'branding'
+    ? brandingModule
+    : cmsModules.find((module) => module.collection === activeView);
   const records = activeModule ? collections[activeModule.collection] ?? [] : [];
+  const siteContentData = (collections.siteContent ?? [])[0]?.data ?? {};
+  const profileData = (collections.profile ?? [])[0]?.data ?? {};
   const totalContent = Object.values(collections).reduce((sum, values) => sum + values.length, 0);
   const published = Object.values(collections).flat().filter((record) => record.status === 'published').length;
   const allRecords = useMemo(() => Object.values(collections).flat(), [collections]);
@@ -837,7 +878,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
   return (
     <main className="cms-shell">
       <aside className={`cms-sidebar${sidebarOpen ? ' is-open' : ''}`}>
-        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><strong>ANH</strong><span>Portofolio Pribadi</span></Link><button ref={sidebarCloseRef} type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
+        <div className="cms-sidebar-brand"><Link href="/" aria-label="Buka portfolio"><BrandIdentity context="cms" profile={profileData} siteContent={siteContentData} /></Link><button ref={sidebarCloseRef} type="button" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu"><X size={18} /></button></div>
         <nav aria-label="Navigasi CMS">
           <p>Konten</p>
           {navPrimary.map(({ label, view, Icon }) => <button className={activeView === view ? 'active' : ''} type="button" onClick={() => navigate(view)} key={view}><Icon size={17} /><span>{label}</span></button>)}
@@ -888,7 +929,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
           ) : null}
         </div>
       </div>
-      {editor ? <ContentEditor key={editor.record.id} module={editor.module} record={editor.record} onClose={() => setEditor(null)} onSaved={saveRecord} /> : null}
+      {editor ? <ContentEditor key={`${editor.module.label}-${editor.record.id}`} module={editor.module} record={editor.record} profileData={profileData} onClose={() => setEditor(null)} onSaved={saveRecord} /> : null}
     </main>
   );
 }

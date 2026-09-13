@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ArticleIndexPage() {
-  const { articles, siteContent } = await getPortfolioContent();
+  const { articles, profile, siteContent } = await getPortfolioContent();
   return (
     <>
       <MotionController />
-      <ReadingHeader activePage="article" />
+      <ReadingHeader activePage="article" profile={profile} siteContent={siteContent} />
 
       <main className="article-index-page" id="top">
         <section className="article-index-hero">

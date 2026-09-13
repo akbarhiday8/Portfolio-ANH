@@ -24,6 +24,25 @@ export type CmsModuleDefinition = {
 const text = (key: string, label: string, options: Partial<CmsField> = {}): CmsField => ({ key, label, type: 'text', ...options });
 const area = (key: string, label: string, options: Partial<CmsField> = {}): CmsField => ({ key, label, type: 'textarea', wide: true, ...options });
 
+export const brandingFields: CmsField[] = [
+  { key: 'branding.primaryLogo', label: 'Logo utama', type: 'image', wide: true, helper: 'Fallback bersama untuk website, CMS, dan halaman login. Gunakan PNG atau WebP transparan.' },
+  { key: 'branding.publicLogo', label: 'Override logo website', type: 'image', wide: true, helper: 'Opsional. Kosongkan untuk memakai logo utama.' },
+  { key: 'branding.cmsLogo', label: 'Override logo CMS', type: 'image', wide: true, helper: 'Opsional. Kosongkan untuk memakai logo utama.' },
+  { key: 'branding.loginLogo', label: 'Override logo login', type: 'image', wide: true, helper: 'Opsional. Kosongkan untuk memakai logo utama.' },
+  { key: 'branding.favicon', label: 'Favicon', type: 'image', wide: true, helper: 'Gunakan PNG atau WebP persegi. SVG tidak dibuka melalui uploader CMS.' },
+  text('branding.altText', 'Teks alternatif logo', { helper: 'Jelaskan identitas logo secara singkat untuk pembaca layar.' }),
+  text('branding.label', 'Label merek', { helper: 'Nama identitas yang dipakai sebagai fallback aksesibilitas.' }),
+];
+
+export const brandingModule: CmsModuleDefinition = {
+  collection: 'siteContent',
+  label: 'Branding',
+  singular: 'branding',
+  description: 'Logo bersama dan override untuk website, CMS, halaman login, serta favicon.',
+  singleton: true,
+  fields: brandingFields,
+};
+
 export const cmsModules: CmsModuleDefinition[] = [
   {
     collection: 'siteContent', label: 'Teks & Struktur', singular: 'pengaturan teks', singleton: true,

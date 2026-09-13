@@ -1,6 +1,15 @@
 export const portfolioData = {
   siteContent: {
     brandSubtitle: 'Portofolio Pribadi',
+    branding: {
+      primaryLogo: '',
+      publicLogo: '',
+      cmsLogo: '',
+      loginLogo: '',
+      favicon: '',
+      altText: 'Logo Akbar Nur Hidayanto',
+      label: 'Akbar Nur Hidayanto',
+    },
     aboutTitle: 'Tentang Saya',
     aboutCaption: 'Manusia / Gagasan / Kemajuan',
     aboutHeading: 'Pikiran yang ingin tahu.\nPencipta solusi nyata.',

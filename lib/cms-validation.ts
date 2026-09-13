@@ -24,6 +24,17 @@ const slug = z.string().trim().toLowerCase().max(120).regex(/^[a-z0-9]+(?:-[a-z0
 
 const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
   siteContent: z.object({
+    branding: z.object({
+      primaryLogo: optionalLink,
+      publicLogo: optionalLink,
+      cmsLogo: optionalLink,
+      loginLogo: optionalLink,
+      favicon: optionalLink,
+      altText: optionalShortText,
+      label: optionalShortText,
+    }).loose().optional().default({
+      primaryLogo: '', publicLogo: '', cmsLogo: '', loginLogo: '', favicon: '', altText: '', label: '',
+    }),
     brandSubtitle: optionalShortText,
     aboutTitle: optionalShortText,
     aboutCaption: optionalShortText,

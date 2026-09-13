@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import type { CmsExpectedVersions } from '@/lib/cms/repository-contract';
 import { supabaseCmsRepository } from '@/lib/cms/supabase-repository';
 import type { CmsCollection, CmsStatus } from '@/lib/cms/types';
@@ -18,8 +19,10 @@ export function getCmsRecord(
   return supabaseCmsRepository.getRecord(collection, id, options);
 }
 
+const getPortfolioContentCached = cache(() => supabaseCmsRepository.getPortfolioContent());
+
 export function getPortfolioContent() {
-  return supabaseCmsRepository.getPortfolioContent();
+  return getPortfolioContentCached();
 }
 
 export function getCmsSnapshot() {

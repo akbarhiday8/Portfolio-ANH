@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const { articles } = await getPortfolioContent();
+  const { articles, profile, siteContent } = await getPortfolioContent();
   const articleIndex = articles.findIndex((item) => item.slug === slug);
   if (articleIndex < 0) notFound();
 
@@ -43,7 +43,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <>
       <MotionController />
-      <ReadingHeader activePage="article" />
+      <ReadingHeader activePage="article" profile={profile} siteContent={siteContent} />
 
       <main className="article-page" id="top">
         <article>

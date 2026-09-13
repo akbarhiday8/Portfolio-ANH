@@ -1,5 +1,6 @@
 import { ArrowUp } from 'lucide-react';
 import Link from 'next/link';
+import { BrandIdentity } from '@/components/brand-identity';
 import { getPortfolioContent } from '@/lib/cms-repository';
 
 const footerLinks = [
@@ -16,12 +17,10 @@ export async function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
-          <div className="site-footer-identity">
-            <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>{profile.monogram}</Link>
-            <div>
-              <strong>{siteContent.footerName}</strong>
-              <span>{siteContent.footerSubtitle}</span>
-          </div>
+        <div className="site-footer-identity">
+          <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>
+            <BrandIdentity context="public" profile={profile} siteContent={siteContent} />
+          </Link>
         </div>
         <div className="site-footer-navigation">
           <p>Navigasi</p>
@@ -31,7 +30,7 @@ export async function SiteFooter() {
         </div>
       </div>
       <div className="section-wrap site-footer-bottom">
-          <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
+        <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
         <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
           <span>Kembali ke atas</span>
           <ArrowUp size={16} />

@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
-  const { projects } = await getPortfolioContent();
+  const { projects, profile, siteContent } = await getPortfolioContent();
   const projectIndex = projects.findIndex((item) => item.slug === slug);
   if (projectIndex < 0) notFound();
 
@@ -59,7 +59,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   return (
     <>
       <MotionController />
-      <ReadingHeader activePage="work" />
+      <ReadingHeader activePage="work" profile={profile} siteContent={siteContent} />
 
       <main className="project-detail-page" id="top">
         <section className="case-hero">

@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness, FileBadge2, Gamepad2, GraduationCap, Mail,
 } from 'lucide-react';
 import { CertificateGallery } from '@/components/certificate-gallery';
+import { BrandIdentity } from '@/components/brand-identity';
 import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
 import { SiteFooter } from '@/components/site-footer';
@@ -111,7 +112,7 @@ export default async function Home() {
       <header className="masthead-shell">
         <div className="masthead page-wrap">
           <a className="brand" href="#top" aria-label="ANH — kembali ke atas">
-            <strong>{profile.monogram}</strong><span>{siteContent.brandSubtitle}</span>
+            <BrandIdentity context="public" profile={profile} siteContent={siteContent} />
           </a>
           <SiteNavigation />
           <ThemeToggle />

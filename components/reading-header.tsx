@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { BrandIdentity } from '@/components/brand-identity';
+import type { BrandingSource } from '@/lib/branding';
 
 const readingLinks = [
   { id: 'home', href: '/', label: 'Beranda' },
@@ -15,13 +17,21 @@ const readingLinks = [
   { id: 'article', href: '/artikel', label: 'Artikel' },
 ] as const;
 
-export function ReadingHeader({ activePage }: { activePage: 'article' | 'work' }) {
+export function ReadingHeader({
+  activePage,
+  profile,
+  siteContent,
+}: {
+  activePage: 'article' | 'work';
+  profile: BrandingSource;
+  siteContent: BrandingSource;
+}) {
   const [expanded, setExpanded] = useState(true);
 
   return (
     <header className={`reading-header-shell${expanded ? ' is-expanded' : ' is-collapsed'}`}>
       <div className="reading-header-bar page-wrap">
-        <Link className="brand" href="/" aria-label="ANH — kembali ke beranda"><strong>ANH</strong><span>Portofolio Pribadi</span></Link>
+        <Link className="brand" href="/" aria-label="ANH — kembali ke beranda"><BrandIdentity context="public" profile={profile} siteContent={siteContent} /></Link>
         <nav className="reading-header-nav" aria-label="Navigasi halaman dalam">
           {readingLinks.map((link) => <Link className={activePage === link.id ? 'active' : ''} href={link.href} key={link.id}>{link.label}</Link>)}
         </nav>
