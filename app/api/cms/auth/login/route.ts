@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import {
-  clearCmsAuthFailures,
-  cmsAuthAttemptKey,
-  getCmsAuthRetryAfter,
-  recordCmsAuthFailure,
-  requireCmsAdmin,
-} from '@/lib/cms-auth';
+import { requireCmsAdmin } from '@/lib/cms-auth';
 import { mutationOriginIsValid } from '@/lib/cms-api';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -29,24 +23,8 @@ export async function POST(request: Request) {
   } | null;
   const email = body?.email?.trim().toLowerCase() ?? '';
   const password = body?.password ?? '';
-  const attemptKey = await cmsAuthAttemptKey(request, email);
-  const retryAfter = await getCmsAuthRetryAfter(attemptKey);
-
-  if (retryAfter) {
-    return NextResponse.json(
-      { error: `Terlalu banyak percobaan. Coba kembali dalam ${Math.ceil(retryAfter / 60)} menit.` },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(retryAfter),
-          'Cache-Control': 'private, no-store',
-        },
-      },
-    );
-  }
 
   if (!email || !password) {
-    await recordCmsAuthFailure(attemptKey);
     return genericLoginError();
   }
 
@@ -60,7 +38,6 @@ export async function POST(request: Request) {
   }
 
   if (signInError) {
-    await recordCmsAuthFailure(attemptKey);
     return genericLoginError();
   }
 
@@ -68,11 +45,9 @@ export async function POST(request: Request) {
     await requireCmsAdmin(supabase);
   } catch {
     await supabase.auth.signOut().catch(() => undefined);
-    await recordCmsAuthFailure(attemptKey);
     return genericLoginError();
   }
 
-  await clearCmsAuthFailures(attemptKey);
   return NextResponse.json(
     { ok: true },
     { headers: { 'Cache-Control': 'private, no-store' } },

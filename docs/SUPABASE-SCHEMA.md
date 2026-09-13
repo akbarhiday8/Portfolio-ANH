@@ -23,7 +23,7 @@ menimpa data produksi.
 | `cms_media` | Metadata aset, checksum, ukuran asli/optimal, dimensi, bucket, dan status. |
 | `cms_record_media` | Relasi eksplisit record–media berdasarkan `field_path`. |
 | `cms_media_deletion_queue` | Transactional outbox untuk penghapusan objek Storage. |
-| `cms_auth_attempts` | Rate limit tambahan berbasis kunci hash; tidak menyimpan email/IP mentah. |
+| `cms_auth_attempts` | Tabel warisan; tidak lagi digunakan oleh autentikasi runtime. |
 
 Allowlist admin juga memiliki indeks unik konstan sehingga hanya satu akun
 admin yang dapat aktif, sesuai kebutuhan CMS ini.
@@ -158,9 +158,10 @@ dikeluarkan. Logout menggunakan `supabase.auth.signOut()`.
 
 Runtime konten masih memakai D1. Tabel D1 `cms_admins` dan `cms_sessions` tetap
 ada hanya sebagai warisan schema dan tidak lagi dibaca atau ditulis kode
-runtime. Tabel D1 `cms_auth_attempts` masih dipakai sementara untuk rate-limit
-login sampai repository autentikasi dipindahkan sepenuhnya. Tabel warisan
-tidak boleh dihapus sebelum migrasi data dan runtime selesai diverifikasi.
+runtime. Tabel `cms_auth_attempts` juga hanya tersisa sebagai warisan schema dan
+tidak lagi berpartisipasi dalam login. Pembatasan percobaan autentikasi mengikuti
+rate limit bawaan Supabase Auth. Tabel warisan tidak boleh dihapus sebelum
+migrasi data dan runtime selesai diverifikasi.
 
 ### Catatan kompatibilitas Vinext
 
