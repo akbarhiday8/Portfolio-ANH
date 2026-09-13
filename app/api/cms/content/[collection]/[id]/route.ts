@@ -7,7 +7,7 @@ type RouteProps = { params: Promise<{ collection: string; id: string }> };
 
 export async function PUT(request: Request, { params }: RouteProps) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
   const { collection, id } = await params;
   if (!isCmsCollection(collection)) return NextResponse.json({ error: 'Modul konten tidak valid.' }, { status: 400 });
   const body = await request.json().catch(() => null) as { data?: Record<string, unknown>; status?: unknown } | null;
@@ -26,7 +26,7 @@ export async function PUT(request: Request, { params }: RouteProps) {
 
 export async function DELETE(request: Request, { params }: RouteProps) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
   const { collection, id } = await params;
   if (!isCmsCollection(collection)) return NextResponse.json({ error: 'Modul konten tidak valid.' }, { status: 400 });
   if (collection === 'profile' || collection === 'siteContent') return NextResponse.json({ error: 'Modul utama tidak dapat dihapus.' }, { status: 400 });

@@ -82,17 +82,17 @@ function mapMediaRow(row: Record<string, unknown>) {
   };
 }
 
-export async function GET(request: Request) {
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+export async function GET() {
+  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
   await ensureCmsSchema();
   await cleanupUnusedCmsMedia({ olderThanMs: UNUSED_MEDIA_GRACE_MS }).catch(() => undefined);
   const result = await getCmsDatabase().prepare('SELECT * FROM cms_media ORDER BY created_at DESC').all<Record<string, unknown>>();
-  return NextResponse.json({ media: result.results.map(mapMediaRow) }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json({ media: result.results.map(mapMediaRow) }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function POST(request: Request) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
   const formData = await request.formData();
   const file = formData.get('file');
   if (!(file instanceof File)) return NextResponse.json({ error: 'Pilih berkas yang ingin diunggah.' }, { status: 400 });

@@ -7,7 +7,7 @@ import {
   ArrowDown, ArrowUp, BarChart3, BookOpen, BriefcaseBusiness,
   Check, ChevronDown, ChevronRight, Eye, FileBadge2, FileText, FolderKanban, GraduationCap,
   Download, GripVertical, History, ImageIcon, Link2, ListChecks, LogOut, Menu, MoreHorizontal, PanelRightOpen, Plus, Save, Search,
-  RotateCcw, Settings2, Sparkles, Trash2, Upload, UserRound, X,
+  Settings2, Sparkles, Trash2, Upload, UserRound, X,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -794,13 +794,10 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
   }
 
-  async function logout() { await fetch('/api/cms/auth/logout', { method: 'POST' }); window.location.href = '/admin/login'; }
-  async function resetAccount() {
-    if (!window.confirm('Reset akun admin? Akun dan semua sesi login akan dihapus, tetapi konten website tetap aman.')) return;
-    if (!window.confirm('Setelah reset, CMS akan kembali ke halaman register agar Anda bisa membuat akun admin baru. Lanjutkan?')) return;
-    const response = await fetch('/api/cms/auth/reset', { method: 'POST' });
-    if (response.ok) window.location.href = '/admin/register';
-    else window.alert('Akun admin tidak dapat direset. Coba login ulang lalu ulangi proses.');
+  async function logout() {
+    const response = await fetch('/api/cms/auth/logout', { method: 'POST' });
+    if (response.ok) window.location.href = '/admin/login';
+    else window.alert('Sesi tidak dapat diakhiri. Coba kembali.');
   }
 
   return (
@@ -825,7 +822,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
             <kbd>Ctrl K</kbd>
             {globalQuery ? <div className="cms-search-results">{globalResults.map((record) => { const moduleDefinition = cmsModules.find((item) => item.collection === record.collection)!; return <button type="button" onClick={() => editRecord(record)} key={record.id}><span><strong>{recordTitle(record, moduleDefinition)}</strong><small>{moduleDefinition.label}</small></span><ChevronRight size={15} /></button>; })}{!globalResults.length ? <p>Tidak ada konten yang cocok.</p> : null}</div> : null}
           </div>
-          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><a href="/api/cms/export" download><Download size={14} />Unduh backup konten</a><button type="button" onClick={logout}><LogOut size={14} />Keluar</button><button className="is-danger" type="button" onClick={resetAccount}><RotateCcw size={14} />Reset akun admin</button></div> : null}</div></div>
+          <div className="cms-topbar-actions"><ThemeToggle /><div className="cms-account"><button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen}><span>{admin.displayName.slice(0, 1).toUpperCase()}</span><strong>{admin.displayName}</strong><ChevronDown size={15} /></button>{profileOpen ? <div><small>{admin.email}</small><Link href="/" target="_blank" rel="noreferrer"><Eye size={14} />Lihat website</Link><a href="/api/cms/export" download><Download size={14} />Unduh backup konten</a><button type="button" onClick={logout}><LogOut size={14} />Keluar</button></div> : null}</div></div>
         </header>
 
         <div className={`cms-content${activeView === 'overview' ? ' is-overview' : ''}`}>

@@ -7,7 +7,7 @@ type RouteProps = { params: Promise<{ collection: string }> };
 
 export async function POST(request: Request, { params }: RouteProps) {
   if (!mutationOriginIsValid(request)) return invalidOriginResponse();
-  if (!await requireCmsApiAdmin(request)) return unauthorizedResponse();
+  if (!await requireCmsApiAdmin()) return unauthorizedResponse();
   const { collection } = await params;
   if (!isCmsCollection(collection) || collection === 'profile' || collection === 'siteContent') {
     return NextResponse.json({ error: 'Modul konten tidak valid.' }, { status: 400 });

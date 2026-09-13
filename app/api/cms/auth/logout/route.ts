@@ -1,11 +1,27 @@
 import { NextResponse } from 'next/server';
-import { CMS_SESSION_COOKIE, deleteCmsSession, getCmsTokenFromRequest } from '@/lib/cms-auth';
+
 import { mutationOriginIsValid } from '@/lib/cms-api';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
-  if (!mutationOriginIsValid(request)) return NextResponse.json({ error: 'Permintaan tidak valid.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
-  await deleteCmsSession(getCmsTokenFromRequest(request));
-  const response = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
-  response.cookies.set({ name: CMS_SESSION_COOKIE, value: '', httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 });
-  return response;
+  if (!mutationOriginIsValid(request)) {
+    return NextResponse.json(
+      { error: 'Permintaan tidak valid.' },
+      { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    return NextResponse.json(
+      { error: 'Sesi tidak dapat diakhiri. Coba kembali.' },
+      { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
+  return NextResponse.json(
+    { ok: true },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }

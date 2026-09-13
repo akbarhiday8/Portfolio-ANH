@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCmsAdminFromToken, getCmsTokenFromRequest } from '@/lib/cms-auth';
+import { requireCmsAdmin } from '@/lib/cms-auth';
 import { CMS_COLLECTIONS, type CmsCollection, type CmsStatus } from '@/lib/cms-server';
 
 export function isCmsCollection(value: string): value is CmsCollection {
@@ -16,16 +16,20 @@ export function mutationOriginIsValid(request: Request) {
   return origin === new URL(request.url).origin;
 }
 
-export async function requireCmsApiAdmin(request: Request) {
-  return getCmsAdminFromToken(getCmsTokenFromRequest(request));
+export async function requireCmsApiAdmin() {
+  try {
+    return await requireCmsAdmin();
+  } catch {
+    return null;
+  }
 }
 
 export const unauthorizedResponse = () => NextResponse.json(
   { error: 'Sesi admin tidak tersedia atau telah berakhir.' },
-  { status: 401, headers: { 'Cache-Control': 'no-store' } },
+  { status: 401, headers: { 'Cache-Control': 'private, no-store' } },
 );
 
 export const invalidOriginResponse = () => NextResponse.json(
   { error: 'Permintaan tidak dapat diverifikasi.' },
-  { status: 403, headers: { 'Cache-Control': 'no-store' } },
+  { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
 );

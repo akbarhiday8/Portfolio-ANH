@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' | 'register'; redirectPath?: string }) {
+export function CmsAuthForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,20 +15,13 @@ export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' |
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const passwordValue = form.get('password');
-    const confirmPasswordValue = form.get('confirmPassword');
     const password = typeof passwordValue === 'string' ? passwordValue : '';
-    const confirmPassword = typeof confirmPasswordValue === 'string' ? confirmPasswordValue : '';
-    if (mode === 'register' && password !== confirmPassword) {
-      setError('Konfirmasi kata sandi belum sama.');
-      return;
-    }
     setBusy(true);
     setError('');
-    const response = await fetch(`/api/cms/auth/${mode}`, {
+    const response = await fetch('/api/cms/auth/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        displayName: form.get('displayName'),
         email: form.get('email'),
         password,
       }),
@@ -38,20 +30,13 @@ export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' |
     if (!response.ok) {
       setError(result.error ?? 'Permintaan tidak dapat diproses.');
       setBusy(false);
-      if (response.status === 409) window.setTimeout(() => { window.location.href = `${redirectPath}/login`; }, 900);
       return;
     }
-    window.location.href = redirectPath;
+    window.location.href = '/admin';
   }
 
   return (
     <form className="cms-auth-form" onSubmit={submit}>
-      {mode === 'register' ? (
-        <div className="cms-field">
-          <Label htmlFor="displayName">Nama admin</Label>
-          <Input id="displayName" name="displayName" autoComplete="name" minLength={2} placeholder="Akbar Nur Hidayanto" required />
-        </div>
-      ) : null}
       <div className="cms-field">
         <Label htmlFor="email">Alamat email</Label>
         <Input id="email" name="email" type="email" autoComplete="email" placeholder="nama@email.com" required />
@@ -59,27 +44,16 @@ export function CmsAuthForm({ mode, redirectPath = '/admin' }: { mode: 'login' |
       <div className="cms-field">
         <Label htmlFor="password">Kata sandi</Label>
         <div className="cms-password-field">
-          <Input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={10} placeholder="Minimal 10 karakter" required />
+          <Input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Masukkan kata sandi" required />
           <button type="button" aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} onClick={() => setShowPassword((value) => !value)}>
             {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
         </div>
       </div>
-      {mode === 'register' ? (
-        <div className="cms-field">
-          <Label htmlFor="confirmPassword">Ulangi kata sandi</Label>
-          <div className="cms-password-field">
-            <Input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} placeholder="Ketik kembali kata sandi" required />
-            <button type="button" aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi kata sandi' : 'Tampilkan konfirmasi kata sandi'} onClick={() => setShowConfirmPassword((value) => !value)}>
-              {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
-          </div>
-        </div>
-      ) : null}
       {error ? <p className="cms-form-error" role="alert">{error}</p> : null}
       <Button className="cms-primary-button" type="submit" disabled={busy}>
         <LockKeyhole size={16} />
-        {busy ? 'Memproses...' : mode === 'register' ? 'Buat akun admin' : 'Masuk ke CMS'}
+        {busy ? 'Memproses...' : 'Masuk ke CMS'}
         <ArrowRight size={16} />
       </Button>
     </form>

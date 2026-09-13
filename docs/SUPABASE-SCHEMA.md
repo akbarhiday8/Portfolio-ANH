@@ -134,12 +134,43 @@ SUPABASE_PUBLIC_BUCKET=portfolio-public
 SUPABASE_STAGING_BUCKET=portfolio-staging
 ```
 
-Stage 2 menyediakan factory client browser dan server yang keduanya hanya
-memakai publishable key. Tidak ada secret atau service-role key pada repository
-atau konfigurasi runtime saat ini. Client server menerima adapter cookie per
-request; adapter tersebut baru akan dipasang ketika migrasi Supabase Auth
-dikerjakan. Jangan menyimpan dump produksi, password, session, atau
-kredensial di repositori.
+Factory client browser dan server hanya memakai publishable key. Tidak ada
+secret atau service-role key pada repository atau konfigurasi runtime saat ini.
+Client server membaca dan menulis cookie melalui `next/headers` dalam lingkup
+request. Cookie autentikasi admin ditandai `HttpOnly`, `SameSite=Lax`, dan
+`Secure` pada production. Jangan menyimpan dump produksi, password, session,
+atau kredensial di repositori.
+
+## Stage 3: autentikasi admin
+
+Login CMS menggunakan `supabase.auth.signInWithPassword`. Identitas untuk
+halaman dan API terlindungi selalu divalidasi server-side dengan
+`supabase.auth.getClaims()`, kemudian `cms_is_admin()` dipanggil menggunakan
+sesi pengguna tersebut. Akses hanya diberikan bila token valid, RPC
+mengembalikan `true`, dan profil allowlist milik pengguna dapat dibaca dari
+`cms_admin_users`. Semua kegagalan ditutup sebagai akses tidak sah.
+
+Tidak ada UI atau endpoint registrasi admin. Aplikasi tidak memanggil
+`signUp()` dan tidak pernah menambahkan pengguna ke `cms_admin_users`.
+Pengguna Supabase biasa tetap ditolak dan sesi hasil login tersebut langsung
+dikeluarkan. Logout menggunakan `supabase.auth.signOut()`.
+
+Runtime konten masih memakai D1. Tabel D1 `cms_admins` dan `cms_sessions` tetap
+ada hanya sebagai warisan schema dan tidak lagi dibaca atau ditulis kode
+runtime. Tabel D1 `cms_auth_attempts` masih dipakai sementara untuk rate-limit
+login sampai repository autentikasi dipindahkan sepenuhnya. Tabel warisan
+tidak boleh dihapus sebelum migrasi data dan runtime selesai diverifikasi.
+
+### Catatan kompatibilitas Vinext
+
+Vinext saat ini mendukung akses cookie request melalui `next/headers`, sehingga
+Route Handler dapat menyimpan cookie login, refresh, dan logout. Server
+Component hanya melakukan pembaruan cookie secara best effort. Mekanisme
+`proxy.ts` resmi untuk refresh sesi belum dipasang karena itu bergantung pada
+migrasi ke runtime Next.js native. Setelah migrasi runtime, tambahkan proxy
+session Supabase dan pastikan setiap respons yang menulis cookie memakai
+`Cache-Control: private, no-store` sebelum autentikasi dianggap final di
+Vercel.
 
 ## Batas Stage 1
 
