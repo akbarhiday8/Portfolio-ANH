@@ -23,7 +23,6 @@ export async function SiteFooter() {
           </Link>
         </div>
         <div className="site-footer-navigation">
-          <p>Navigasi</p>
           <nav className="site-footer-nav" aria-label="Navigasi footer">
             {footerLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
           </nav>
@@ -32,7 +31,6 @@ export async function SiteFooter() {
       <div className="section-wrap site-footer-bottom">
         <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
         <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
-          <span>Kembali ke atas</span>
           <ArrowUp size={16} />
         </a>
       </div>

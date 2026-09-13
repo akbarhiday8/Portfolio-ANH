@@ -304,7 +304,7 @@ function BrandingPreview({ data, profile }: { data: Record<string, unknown>; pro
         ))}
         <article className="is-favicon">
           <small>Favicon</small>
-          {favicon ? <Image src={favicon} width={40} height={40} unoptimized alt="Preview favicon" /> : <strong aria-label="Fallback favicon ANH">A</strong>}
+          <Image src={favicon || '/favicon.svg'} width={40} height={40} unoptimized alt="Pratinjau favicon ANH" />
         </article>
       </div>
     </section>

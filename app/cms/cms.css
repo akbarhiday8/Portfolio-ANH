@@ -582,7 +582,7 @@
 .cms-branding-preview-grid .brand-lockup-image img { width:100%; height:100%; object-fit:contain; object-position:left center; }
 .cms-branding-preview-grid .is-cms .brand-lockup-subtitle { border-color:#484a46; color:#a3a39f; }
 .cms-branding-preview-grid .is-favicon { align-content:center; grid-template-columns:1fr auto; }
-.cms-branding-preview-grid .is-favicon img,.cms-branding-preview-grid .is-favicon > strong { width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--cms-line); border-radius:8px; object-fit:contain; font:400 19px var(--serif); }
+.cms-branding-preview-grid .is-favicon img { width:40px; height:40px; border:1px solid var(--cms-line); border-radius:50%; background:#111; object-fit:contain; }
 .cms-editor-action:focus-visible,.cms-remove-media:focus-visible { outline:2px solid var(--red); outline-offset:2px; }
 
 @media (max-width:720px) {
