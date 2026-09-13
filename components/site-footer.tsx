@@ -32,6 +32,10 @@ export async function SiteFooter() {
       </div>
       <div className="section-wrap site-footer-bottom">
         <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
+        <nav className="site-footer-legal" aria-label="Informasi kebijakan">
+          <Link href="/privasi">Privasi</Link>
+          <Link href="/disclaimer">Disclaimer</Link>
+        </nav>
         <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
           <ArrowUp size={16} />
         </a>
