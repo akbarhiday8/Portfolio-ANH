@@ -1,6 +1,6 @@
 import { ArrowUp } from 'lucide-react';
 import Link from 'next/link';
-import { getPortfolioContent } from '@/lib/cms-server';
+import { getPortfolioContent } from '@/lib/cms-repository';
 
 const footerLinks = [
   { href: '/#about', label: 'Tentang' },

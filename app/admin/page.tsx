@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { CmsDashboard } from '@/components/cms/cms-dashboard';
 import { requireCmsAdmin } from '@/lib/cms-auth';
-import { getCmsSnapshot } from '@/lib/cms-server';
+import { getCmsSnapshot } from '@/lib/cms-repository';
 
 export const dynamic = 'force-dynamic';
 

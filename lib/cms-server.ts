@@ -27,6 +27,8 @@ export type CmsRecord = {
   sortOrder: number;
   status: CmsStatus;
   data: Record<string, unknown>;
+  version?: number;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -37,6 +39,10 @@ export type CmsRevision = {
   collection: CmsCollection;
   status: CmsStatus;
   data: Record<string, unknown>;
+  slug?: string | null;
+  sortOrder?: number;
+  version?: number;
+  publishedAt?: string | null;
   createdAt: string;
 };
 

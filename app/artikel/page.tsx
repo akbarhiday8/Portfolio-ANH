@@ -3,7 +3,7 @@ import { ArrowRight, Clock3 } from 'lucide-react';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
-import { getPortfolioContent } from '@/lib/cms-server';
+import { getPortfolioContent } from '@/lib/cms-repository';
 
 export const dynamic = 'force-dynamic';
 

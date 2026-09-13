@@ -458,7 +458,11 @@ function ContentEditor({
     const response = await fetch(endpoint, {
       method: record.id === 'new' ? 'POST' : 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ data, status: module.singleton ? 'published' : status }),
+      body: JSON.stringify({
+        data,
+        status: module.singleton ? 'published' : status,
+        version: record.version,
+      }),
     });
     const result = await response.json().catch(() => ({})) as { error?: string; details?: string[]; record?: CmsRecord };
     if (!response.ok || !result.record) setMessage(result.details?.join(' ') || result.error || 'Perubahan tidak dapat disimpan.');
@@ -766,21 +770,39 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
 
   async function remove(record: CmsRecord) {
     if (!window.confirm(`Hapus “${recordTitle(record, activeModule!)}”? Tindakan ini tidak dapat dibatalkan.`)) return;
-    const response = await fetch(`/api/cms/content/${record.collection}/${record.id}`, { method: 'DELETE' });
+    const response = await fetch(`/api/cms/content/${record.collection}/${record.id}`, {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ version: record.version }),
+    });
     if (response.ok) setCollections((current) => ({ ...current, [record.collection]: current[record.collection].filter((item) => item.id !== record.id) }));
   }
 
   async function move(record: CmsRecord, direction: -1 | 1) {
+    const previous = records;
     const list = [...records];
     const index = list.findIndex((item) => item.id === record.id);
     const target = index + direction;
     if (target < 0 || target >= list.length) return;
     [list[index], list[target]] = [list[target], list[index]];
     setCollections((current) => ({ ...current, [record.collection]: list }));
-    await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
+    const response = await fetch(`/api/cms/content/${record.collection}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ids: list.map((item) => item.id),
+        expectedVersions: Object.fromEntries(list.map((item) => [item.id, item.version])),
+      }),
+    });
+    const result = await response.json().catch(() => ({})) as { records?: CmsRecord[] };
+    setCollections((current) => ({
+      ...current,
+      [record.collection]: response.ok && result.records ? result.records : previous,
+    }));
   }
 
   async function moveTo(record: CmsRecord, targetIndex: number) {
+    const previous = records;
     const list = [...records];
     const currentIndex = list.findIndex((item) => item.id === draggingId);
     if (currentIndex < 0 || currentIndex === targetIndex) {
@@ -791,7 +813,19 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     list.splice(targetIndex, 0, dragged);
     setDraggingId('');
     setCollections((current) => ({ ...current, [record.collection]: list }));
-    await fetch(`/api/cms/content/${record.collection}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: list.map((item) => item.id) }) });
+    const response = await fetch(`/api/cms/content/${record.collection}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ids: list.map((item) => item.id),
+        expectedVersions: Object.fromEntries(list.map((item) => [item.id, item.version])),
+      }),
+    });
+    const result = await response.json().catch(() => ({})) as { records?: CmsRecord[] };
+    setCollections((current) => ({
+      ...current,
+      [record.collection]: response.ok && result.records ? result.records : previous,
+    }));
   }
 
   async function logout() {

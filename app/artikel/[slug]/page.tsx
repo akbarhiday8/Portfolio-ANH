@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
-import { getPortfolioContent } from '@/lib/cms-server';
+import { getPortfolioContent } from '@/lib/cms-repository';
 import { SITE_URL } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';

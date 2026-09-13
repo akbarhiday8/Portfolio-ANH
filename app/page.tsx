@@ -9,7 +9,7 @@ import { MotionController } from '@/components/motion-controller';
 import { SiteNavigation } from '@/components/site-navigation';
 import { SiteFooter } from '@/components/site-footer';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { getPortfolioContent } from '@/lib/cms-server';
+import { getPortfolioContent } from '@/lib/cms-repository';
 
 export const dynamic = 'force-dynamic';
 

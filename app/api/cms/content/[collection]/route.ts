@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { invalidOriginResponse, isCmsCollection, mutationOriginIsValid, parseStatus, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
-import { createCmsRecord, reorderCmsRecords } from '@/lib/cms-server';
+import { cmsRepositoryErrorResponse, invalidOriginResponse, isCmsCollection, mutationOriginIsValid, parseStatus, requireCmsApiAdmin, unauthorizedResponse } from '@/lib/cms-api';
+import { createCmsRecord, listCmsRecords, reorderCmsRecords } from '@/lib/cms-repository';
 import { validateCmsRecord } from '@/lib/cms-validation';
 
 type RouteProps = { params: Promise<{ collection: string }> };
@@ -12,12 +12,24 @@ export async function POST(request: Request, { params }: RouteProps) {
   if (!isCmsCollection(collection) || collection === 'profile' || collection === 'siteContent') {
     return NextResponse.json({ error: 'Modul konten tidak valid.' }, { status: 400 });
   }
-  const body = await request.json().catch(() => null) as { data?: Record<string, unknown>; status?: unknown; ids?: string[] } | null;
+  const body = await request.json().catch(() => null) as {
+    data?: Record<string, unknown>;
+    status?: unknown;
+    ids?: string[];
+    expectedVersions?: Record<string, number>;
+  } | null;
   if (body?.ids) {
-    const reordered = await reorderCmsRecords(collection, body.ids);
-    return reordered
-      ? NextResponse.json({ ok: true })
-      : NextResponse.json({ error: 'Urutan konten tidak lengkap atau tidak valid.' }, { status: 400 });
+    try {
+      const reordered = await reorderCmsRecords(collection, body.ids, body.expectedVersions);
+      return reordered
+        ? NextResponse.json({
+            ok: true,
+            records: await listCmsRecords({ collection, includeDrafts: true }),
+          })
+        : NextResponse.json({ error: 'Urutan konten tidak lengkap atau tidak valid.' }, { status: 400 });
+    } catch (error) {
+      return cmsRepositoryErrorResponse(error);
+    }
   }
   if (!body?.data || typeof body.data !== 'object') return NextResponse.json({ error: 'Data konten tidak lengkap.' }, { status: 400 });
   const status = parseStatus(body.status);
@@ -27,6 +39,6 @@ export async function POST(request: Request, { params }: RouteProps) {
     return NextResponse.json({ record: await createCmsRecord(collection, validated.data, status) }, { status: 201 });
   } catch (error) {
     if (String(error).toLowerCase().includes('unique')) return NextResponse.json({ error: 'Alamat halaman sudah digunakan.' }, { status: 409 });
-    throw error;
+    return cmsRepositoryErrorResponse(error);
   }
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireCmsAdmin } from '@/lib/cms-auth';
+import { CmsBackendConfigurationError } from '@/lib/cms/backend';
+import { CmsRepositoryError } from '@/lib/cms/repository-contract';
 import { CMS_COLLECTIONS, type CmsCollection, type CmsStatus } from '@/lib/cms-server';
 
 export function isCmsCollection(value: string): value is CmsCollection {
@@ -33,3 +35,39 @@ export const invalidOriginResponse = () => NextResponse.json(
   { error: 'Permintaan tidak dapat diverifikasi.' },
   { status: 403, headers: { 'Cache-Control': 'private, no-store' } },
 );
+
+export function cmsRepositoryErrorResponse(error: unknown) {
+  if (error instanceof CmsRepositoryError) {
+    const status = error.code === 'duplicate'
+      ? 409
+      : error.code === 'conflict'
+        ? 409
+        : error.code === 'not_found'
+          ? 404
+          : error.code === 'forbidden'
+            ? 403
+            : error.code === 'invalid'
+              ? 422
+              : 503;
+    return NextResponse.json(
+      { error: error.message },
+      { status, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
+  if (error instanceof CmsBackendConfigurationError) {
+    console.error('[cms-repository] Invalid backend configuration.');
+    return NextResponse.json(
+      { error: 'Backend CMS belum dikonfigurasi dengan benar.' },
+      { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
+
+  console.error('[cms-repository] Unexpected repository failure.', {
+    name: error instanceof Error ? error.name : 'UnknownError',
+  });
+  return NextResponse.json(
+    { error: 'Repository CMS tidak dapat menyelesaikan permintaan.' },
+    { status: 503, headers: { 'Cache-Control': 'private, no-store' } },
+  );
+}

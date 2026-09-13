@@ -1,8 +1,9 @@
 # Skema Supabase final — Stage 1
 
 Dokumen ini menjelaskan fondasi PostgreSQL, Supabase Auth, dan Supabase Storage
-yang disiapkan untuk arsitektur akhir Next.js + Vercel. Stage 1 belum
-menghubungkan aplikasi ke Supabase dan belum memigrasikan data produksi.
+untuk arsitektur akhir Next.js + Vercel. Migration Stage 1 dan hardening Stage
+1.5 telah diterapkan pada proyek Supabase. Client Stage 2 dan autentikasi admin
+Stage 3 sudah terhubung, tetapi konten produksi belum dimigrasikan.
 
 ## Sumber data migrasi
 
@@ -172,35 +173,29 @@ session Supabase dan pastikan setiap respons yang menulis cookie memakai
 `Cache-Control: private, no-store` sebelum autentikasi dianggap final di
 Vercel.
 
-## Batas Stage 1
+## Stage 4A: repository konten paralel
 
-- Migration belum dijalankan pada proyek Supabase nyata.
-- Runtime masih Vinext + Cloudflare D1/R2.
-- Factory client Supabase tersedia, tetapi belum dihubungkan ke CMS atau Auth.
-- Belum ada data yang dipindahkan.
-- Belum ada bucket atau akun admin produksi yang dibuat.
+Lapisan `lib/cms-repository.ts` memilih repository konten secara server-only
+melalui `CMS_DATA_BACKEND`. Nilai kosong atau `d1` tetap memilih D1; hanya nilai
+`supabase` yang memilih Supabase, sedangkan nilai lain ditolak sebagai salah
+konfigurasi. Variabel ini tidak boleh memakai awalan `NEXT_PUBLIC_`.
 
-### Matriks verifikasi saat ini
+Repository Supabase membaca `cms_records` dan `cms_revisions` melalui RLS.
+Pembacaan publik tetap menambahkan filter `published`, sementara snapshot dan
+revision admin tetap dilindungi `requireCmsAdmin()` pada API. Semua mutasi
+record memakai RPC `cms_create_record`, `cms_update_record`,
+`cms_set_publication`, `cms_delete_record`, atau `cms_reorder_collection`;
+tidak ada direct write ke `cms_records`. Versi record diteruskan sebagai
+optimistic concurrency guard.
 
-| Pemeriksaan | Hasil Stage 1 |
-| --- | --- |
-| Anon tidak dapat menulis CMS | Terverifikasi statis: hanya grant `select`; tidak ada policy tulis. |
-| Anon tidak dapat melihat draft | Terverifikasi statis: policy publik mensyaratkan `published`. |
-| Non-admin tidak dapat menulis | Terverifikasi statis: RPC memanggil `cms_assert_admin`. |
-| Admin bergantung pada allowlist | Terverifikasi statis: `cms_is_admin` membaca `cms_admin_users`. |
-| Singleton tidak dapat diduplikasi | Terverifikasi statis: ID check dan unique partial index. |
-| Slug duplikat ditolak | Terverifikasi statis: unique partial index per koleksi. |
-| Relasi revision valid | Terverifikasi statis: FK ke record dan unique record/version. |
-| Relasi audit valid | Actor memakai FK Auth; record ID sengaja bukan FK agar audit delete tidak hilang. |
-| Relasi media valid | Terverifikasi statis: kedua sisi memakai FK dan field path unik per record. |
-| Staging tidak terekspos | Terverifikasi statis: tidak ada policy anon dan bucket bersifat privat. |
-| Migration berlaku bersih | Belum dieksekusi: membutuhkan Supabase kosong dengan schema Auth/Storage. |
+Pemilihan Supabase bersifat eksplisit dan tidak pernah jatuh kembali ke D1 atau
+data bawaan ketika query gagal. Hasil nol record juga dipertahankan sebagai
+hasil kosong. Ini penting agar kegagalan atau data migrasi yang belum lengkap
+tidak tersamarkan saat cutover.
 
-Pengujian runtime RLS dan penerapan migration masih wajib dilakukan pada
-Supabase lokal/preview. CLI Supabase, PostgreSQL lokal, dan daemon Docker tidak
-tersedia pada lingkungan pengerjaan ini, sehingga hasil eksekusi tidak dibuat-
-buat.
-
-Sebelum Stage 2, migration harus diuji pada database Supabase kosong. Setelah
-itu admin Auth pertama dapat dibuat melalui prosedur tepercaya, lalu user ID-nya
-ditambahkan ke `cms_admin_users` menggunakan Dashboard/server tepercaya.
+Stage 4A belum memindahkan 33 record produksi dan belum mengaktifkan cutover.
+D1 masih backend default. Upload, cleanup, dan penyajian media tetap memakai
+D1/R2; relasi media Supabase yang sudah ada hanya dipertahankan saat teks record
+diubah. `CMS_DATA_BACKEND=supabase` belum boleh dipakai pada produksi sebelum
+impor serta rekonsiliasi data selesai, dan mutasi konten Supabase belum boleh
+diaktifkan sampai pipeline media dimigrasikan.

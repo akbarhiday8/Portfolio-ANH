@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getPortfolioContent } from '@/lib/cms-server';
+import { getPortfolioContent } from '@/lib/cms-repository';
 import { SITE_URL } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -12,4 +12,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...articles.map((article) => ({ url: `${SITE_URL}/artikel/${article.slug}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 })),
   ];
 }
-
