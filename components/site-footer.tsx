@@ -19,23 +19,29 @@ export async function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
-        <div className="site-footer-identity">
-          <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>
-            <BrandIdentity context="public" profile={profile} siteContent={siteContent} />
-          </Link>
+        <div className="site-footer-upper">
+          <div className="site-footer-identity">
+            <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>
+              <BrandIdentity context="public" profile={profile} siteContent={siteContent} />
+            </Link>
+          </div>
+          <nav className="site-footer-nav" aria-label="Navigasi footer">
+            {footerLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
+          </nav>
         </div>
-        <nav className="site-footer-nav" aria-label="Navigasi footer">
-          {footerLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
-        </nav>
-        <p className="site-footer-copyright">© {new Date().getFullYear()} {siteContent.copyrightText}</p>
-        <nav className="site-footer-legal" aria-label="Informasi kebijakan">
-          <Link href="/privasi">Privasi</Link>
-          <span aria-hidden="true" />
-          <Link href="/disclaimer">Disclaimer</Link>
-        </nav>
-        <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
-          <ArrowUp size={22} />
-        </a>
+        <div className="site-footer-lower">
+          <p className="site-footer-copyright">© {new Date().getFullYear()} {siteContent.copyrightText}</p>
+          <div className="site-footer-actions">
+            <nav className="site-footer-legal" aria-label="Informasi kebijakan">
+              <Link href="/privasi">Privasi</Link>
+              <span aria-hidden="true" />
+              <Link href="/disclaimer">Disclaimer</Link>
+            </nav>
+            <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
+              <ArrowUp size={22} />
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );
