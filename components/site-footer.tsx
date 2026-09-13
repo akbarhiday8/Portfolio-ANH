@@ -4,7 +4,9 @@ import { BrandIdentity } from '@/components/brand-identity';
 import { getPortfolioContent } from '@/lib/cms-repository';
 
 const footerLinks = [
+  { href: '/#top', label: 'Beranda' },
   { href: '/#about', label: 'Tentang' },
+  { href: '/#education', label: 'Pendidikan' },
   { href: '/#experience', label: 'Pengalaman' },
   { href: '/#work', label: 'Portfolio' },
   { href: '/#certificates', label: 'Sertifikasi' },
