@@ -129,21 +129,23 @@ constraint PostgreSQL menjaga keadaan yang tidak boleh dilanggar.
 ```dotenv
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_PUBLIC_BUCKET=portfolio-public
 SUPABASE_STAGING_BUCKET=portfolio-staging
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` hanya boleh berada di environment server Vercel dan
-`.env.local` yang diabaikan Git. Jangan menyimpan dump produksi, password,
-session, atau kredensial di repositori.
+Stage 2 menyediakan factory client browser dan server yang keduanya hanya
+memakai publishable key. Tidak ada secret atau service-role key pada repository
+atau konfigurasi runtime saat ini. Client server menerima adapter cookie per
+request; adapter tersebut baru akan dipasang ketika migrasi Supabase Auth
+dikerjakan. Jangan menyimpan dump produksi, password, session, atau
+kredensial di repositori.
 
 ## Batas Stage 1
 
 - Migration belum dijalankan pada proyek Supabase nyata.
 - Runtime masih Vinext + Cloudflare D1/R2.
-- Belum ada adapter Supabase di aplikasi.
+- Factory client Supabase tersedia, tetapi belum dihubungkan ke CMS atau Auth.
 - Belum ada data yang dipindahkan.
 - Belum ada bucket atau akun admin produksi yang dibuat.
 
