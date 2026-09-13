@@ -479,8 +479,8 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
 .social-link.is-disabled { color:#f7f6f2; cursor:not-allowed; opacity:.82; }
 
 .site-footer { position:relative; border-top:1px solid rgba(255,255,255,.28); background:linear-gradient(105deg,#0b0d0e 0%,#0c0e0f 60%,#090b0c 100%); color:#f7f6f2; }
-.site-footer:before { content:''; position:absolute; top:48px; left:max(clamp(32px,3.4vw,66px),calc((100vw - 1780px) / 2)); width:70px; height:5px; background:#e43145; }
-.site-footer-main { width:min(calc(100% - clamp(64px,6.8vw,132px)),1780px); min-height:286px; display:block; padding:86px 0 27px; }
+.site-footer:before { content:''; position:absolute; top:29px; left:max(clamp(32px,3.4vw,66px),calc((100vw - 1780px) / 2)); width:70px; height:4px; background:#e43145; }
+.site-footer-main { width:min(calc(100% - clamp(64px,6.8vw,132px)),1780px); display:block; padding:57px 0 22px; }
 .site-footer-upper { display:grid; grid-template-columns:minmax(300px,410px) minmax(0,1fr); gap:clamp(32px,4vw,78px); align-items:center; }
 .site-footer-identity { display:flex; min-width:0; align-items:center; }
 .site-footer-identity > a { display:block; width:max-content; }
@@ -488,18 +488,20 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
 .site-footer-identity .brand-lockup-subtitle { border-color:#393a3a; color:#858581; }
 .site-footer-identity .brand-lockup-subtitle { max-width:150px; margin-left:30px; padding-left:30px; font-size:12px; line-height:1.55; }
 .site-footer-identity .brand-lockup-image { height:64px; }
-.site-footer-nav { display:flex; min-width:0; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:14px clamp(22px,2.35vw,45px); }
+.site-footer-nav { display:flex; min-width:0; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:11px clamp(20px,2vw,38px); }
 .site-footer-nav a { color:#b8b8b5; font-size:clamp(12px,.86vw,16px); transition:color .2s; }
 .site-footer-nav a:hover { color:#fff; }
-.site-footer-lower { display:flex; align-items:flex-end; justify-content:space-between; gap:40px; margin-top:58px; }
+.site-footer-lower { display:flex; align-items:center; justify-content:space-between; gap:40px; margin-top:30px; }
 .site-footer-copyright { min-width:0; color:#8c8d89; font-size:clamp(11px,.75vw,14px); line-height:1.5; }
-.site-footer-actions { display:flex; flex:0 0 auto; align-items:center; gap:clamp(42px,4.4vw,84px); }
+.site-footer-actions { display:flex; flex:0 0 auto; align-items:center; gap:clamp(34px,3.5vw,66px); }
 .site-footer-legal { display:flex; align-items:center; gap:27px; white-space:nowrap; }
 .site-footer-legal a { color:#b8b8b5; font-size:clamp(11px,.78vw,15px); transition:color .2s; }
-.site-footer-legal span { width:1px; height:28px; background:#545552; }
+.site-footer-legal span { width:1px; height:20px; background:#545552; }
 .site-footer-legal a:hover { color:#fff; }
-.site-footer-top { width:64px; height:64px; display:grid; place-items:center; border:1px solid rgba(247,246,242,.82); border-radius:50%; outline:1px solid rgba(247,246,242,.34); outline-offset:5px; color:#f7f6f2; transition:border-color .2s,background .2s,color .2s,outline-color .2s; }
-.site-footer-top:hover { border-color:#fff; outline-color:rgba(247,246,242,.55); background:#b5202e; color:#fff; }
+.site-footer-top { width:52px; height:52px; display:grid; place-items:center; border:1px solid rgba(247,246,242,.82); border-radius:50%; outline:1px solid rgba(247,246,242,.28); outline-offset:3px; color:#f7f6f2; transition:border-color .2s,background .2s,color .2s,outline-color .2s; }
+.site-footer-top:hover { border-color:#fff; outline-color:rgba(247,246,242,.48); background:rgba(181,32,46,.22); color:#fff; }
+.site-footer-top:hover svg { transform:translateY(-1px); }
+.site-footer-top svg { transition:transform .2s ease; }
 
 [data-reveal] { opacity:0; transform:translateY(7px); transition:opacity .38s ease,transform .38s ease; }
 [data-reveal].is-visible { opacity:1; transform:none; }
@@ -627,12 +629,12 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
   .legal-hero-grid { min-height:0; grid-template-columns:1fr; gap:25px; padding-block:44px 38px; }
   .legal-hero h1 { max-width:700px; }
   .legal-content { padding-block:46px 68px; }
-  .site-footer-main { min-height:300px; padding:78px 0 25px; }
-  .site-footer:before { top:38px; }
+  .site-footer-main { padding:54px 0 22px; }
+  .site-footer:before { top:28px; }
   .site-footer-upper { display:block; }
-  .site-footer-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px 24px; margin-top:34px; }
-  .site-footer-lower { margin-top:38px; }
-  .site-footer-top { width:54px; height:54px; }
+  .site-footer-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 22px; margin-top:25px; }
+  .site-footer-lower { margin-top:27px; }
+  .site-footer-top { width:50px; height:50px; }
   [data-reveal] { opacity:1; transform:none; transition:none; }
 }
 
@@ -681,15 +683,15 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
   .socials a,.social-link { width:52px; height:52px; }
   .contact-art { object-position:72% center; opacity:.46; }
   .contact:after { background:linear-gradient(180deg,rgba(11,13,14,.96) 0%,rgba(11,13,14,.86) 62%,rgba(11,13,14,.7) 100%); }
-  .site-footer-main { min-height:360px; padding:72px 0 24px; }
+  .site-footer-main { padding:52px 0 20px; }
   .site-footer-identity .brand-lockup > strong { font-size:42px; }
   .site-footer-identity .brand-lockup-subtitle { margin-left:20px; padding-left:20px; font-size:10px; }
-  .site-footer-nav { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
-  .site-footer-lower { display:block; margin-top:30px; }
-  .site-footer-actions { justify-content:space-between; margin-top:24px; }
+  .site-footer-nav { display:grid; grid-template-columns:1fr 1fr; gap:9px 24px; margin-top:21px; }
+  .site-footer-lower { display:block; margin-top:20px; }
+  .site-footer-actions { justify-content:space-between; margin-top:16px; }
   .site-footer-legal { gap:18px; }
   .site-footer-legal span { height:20px; }
-  .site-footer-top { width:48px; height:48px; }
+  .site-footer-top { width:46px; height:46px; }
 }
 
 @media (max-width:520px) {

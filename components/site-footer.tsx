@@ -38,7 +38,7 @@ export async function SiteFooter() {
               <Link href="/disclaimer">Disclaimer</Link>
             </nav>
             <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
-              <ArrowUp size={22} />
+              <ArrowUp size={19} />
             </a>
           </div>
         </div>
