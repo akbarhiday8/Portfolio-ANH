@@ -465,7 +465,7 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
 .site-footer-identity .brand-lockup-subtitle { border-color:#393a3a; color:#858581; }
 .site-footer-identity .brand-lockup-image { height:46px; }
 .site-footer-navigation { min-width:0; }
-.site-footer-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px 24px; }
+.site-footer-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 24px; }
 .site-footer-nav a { width:max-content; color:#aaa9a5; font-size:12px; transition:color .2s; }
 .site-footer-nav a:hover { color:#fff; }
 .site-footer-bottom { min-height:48px; display:grid; grid-template-columns:1fr auto; gap:28px; align-items:center; color:#aaa9a5; font-size:11px; letter-spacing:.02em; }
@@ -589,7 +589,7 @@ h1 .hero-surname { margin-top:18px; color:var(--ink); font-family:var(--serif); 
   .contact-note { position:absolute; top:55px; right:0; }
   .site-footer-main { grid-template-columns:1fr; gap:18px; padding-block:21px 17px; }
   .site-footer-navigation { border-top:1px solid #292a2a; padding-top:18px; }
-  .site-footer-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .site-footer-nav { grid-template-columns:repeat(3,minmax(0,1fr)); }
   [data-reveal] { opacity:1; transform:none; transition:none; }
 }
 
