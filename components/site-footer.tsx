@@ -16,6 +16,8 @@ const footerLinks = [
 
 export async function SiteFooter() {
   const { profile, siteContent } = await getPortfolioContent();
+  const primaryLinks = footerLinks.slice(0, 4);
+  const secondaryLinks = footerLinks.slice(4);
   return (
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
@@ -23,22 +25,26 @@ export async function SiteFooter() {
           <Link href="/#top" aria-label={`${profile.monogram} — kembali ke beranda`}>
             <BrandIdentity context="public" profile={profile} siteContent={siteContent} />
           </Link>
+          <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
         </div>
-        <div className="site-footer-navigation">
-          <nav className="site-footer-nav" aria-label="Navigasi footer">
-            {footerLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
-          </nav>
-        </div>
-      </div>
-      <div className="section-wrap site-footer-bottom">
-        <p>© {new Date().getFullYear()} {siteContent.copyrightText}</p>
-        <nav className="site-footer-legal" aria-label="Informasi kebijakan">
-          <Link href="/privasi">Privasi</Link>
-          <Link href="/disclaimer">Disclaimer</Link>
+        <nav className="site-footer-nav-group" aria-label="Navigasi utama footer">
+          {primaryLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
         </nav>
-        <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
-          <ArrowUp size={16} />
-        </a>
+        <div className="site-footer-third-column">
+          <nav className="site-footer-nav-group" aria-label="Navigasi lanjutan footer">
+            {secondaryLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
+          </nav>
+          <div className="site-footer-utility">
+            <nav className="site-footer-legal" aria-label="Informasi kebijakan">
+              <Link href="/privasi">Privasi</Link>
+              <span aria-hidden="true">·</span>
+              <Link href="/disclaimer">Disclaimer</Link>
+            </nav>
+            <a className="site-footer-top" href="#top" aria-label="Kembali ke atas">
+              <ArrowUp size={16} />
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );

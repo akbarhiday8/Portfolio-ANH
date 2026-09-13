@@ -34,6 +34,15 @@ export const brandingFields: CmsField[] = [
   text('branding.label', 'Label merek', { helper: 'Nama identitas yang dipakai sebagai fallback aksesibilitas.' }),
 ];
 
+export const legalFields: CmsField[] = [
+  text('privacyEyebrow', 'Label halaman Privasi', { required: true }), text('privacyTitle', 'Judul halaman Privasi', { required: true }), area('privacyDescription', 'Pengantar halaman Privasi', { required: true }),
+  text('privacyUpdatedAt', 'Tanggal pembaruan Privasi', { required: true, helper: 'Gunakan format YYYY-MM-DD, contoh: 2026-09-14.' }),
+  { key: 'privacySections', label: 'Isi Kebijakan Privasi', type: 'articleSections', required: true, wide: true, helper: 'Awali setiap bagian dengan ## Judul. Pisahkan paragraf dengan satu baris kosong.' },
+  text('disclaimerEyebrow', 'Label halaman Disclaimer', { required: true }), text('disclaimerTitle', 'Judul halaman Disclaimer', { required: true }), area('disclaimerDescription', 'Pengantar halaman Disclaimer', { required: true }),
+  text('disclaimerUpdatedAt', 'Tanggal pembaruan Disclaimer', { required: true, helper: 'Gunakan format YYYY-MM-DD, contoh: 2026-09-14.' }),
+  { key: 'disclaimerSections', label: 'Isi Disclaimer', type: 'articleSections', required: true, wide: true, helper: 'Awali setiap bagian dengan ## Judul. Pisahkan paragraf dengan satu baris kosong.' },
+];
+
 export const brandingModule: CmsModuleDefinition = {
   collection: 'siteContent',
   label: 'Branding',
@@ -41,6 +50,15 @@ export const brandingModule: CmsModuleDefinition = {
   description: 'Logo bersama dan override untuk website, CMS, halaman login, serta favicon.',
   singleton: true,
   fields: brandingFields,
+};
+
+export const legalModule: CmsModuleDefinition = {
+  collection: 'siteContent',
+  label: 'Kebijakan Situs',
+  singular: 'kebijakan situs',
+  description: 'Kelola Kebijakan Privasi dan Disclaimer sebagai dua halaman publik yang terpisah.',
+  singleton: true,
+  fields: legalFields,
 };
 
 export const cmsModules: CmsModuleDefinition[] = [

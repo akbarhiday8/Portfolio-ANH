@@ -16,14 +16,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { brandingModule, cmsModules, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
+import { brandingModule, cmsModules, legalModule, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
 import type { CmsAdmin } from '@/lib/cms-auth';
 import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms/types';
 import { discardTemporaryMedia, prepareMediaFile, uploadPreparedMedia } from '@/lib/media-client';
 import { formatMediaSize, IMAGE_ACCEPT, MEDIA_ACCEPT, type MediaItem } from '@/lib/media-policy';
+import { siteContentDefaults } from '@/lib/site-content-defaults';
 
 type CmsCollections = Record<string, CmsRecord[]>;
-type ActiveView = 'overview' | 'media' | 'branding' | CmsCollection;
+type ActiveView = 'overview' | 'media' | 'branding' | 'legal' | CmsCollection;
 type EditorSection = { title: string; description: string; fields: string[] };
 type CmsIcon = React.ComponentType<{ size?: number }>;
 type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
@@ -57,6 +58,7 @@ const navPrimary: NavItem[] = [
 const navSettings: NavItem[] = [
   { label: 'Branding', view: 'branding', Icon: Sparkles },
   { label: 'Teks Website', view: 'siteContent', Icon: Settings2 },
+  { label: 'Kebijakan Situs', view: 'legal', Icon: FileText },
   { label: 'Statistik', view: 'statistics', Icon: BarChart3 },
   { label: 'Keunggulan', view: 'capabilities', Icon: Sparkles },
   { label: 'Kontak & Sosial', view: 'socials', Icon: Link2 },
@@ -70,6 +72,8 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Judul section', description: 'Nama dan caption setiap bagian portfolio.', fields: ['educationTitle', 'educationCaption', 'educationNote', 'experienceTitle', 'experienceCaption', 'portfolioTitle', 'portfolioCaption', 'certificatesTitle', 'certificatesCaption'] },
     { title: 'Kontak', description: 'Ajakan dan informasi pada bagian kontak.', fields: ['contactTitle', 'contactCaption', 'contactHeading', 'contactDescription', 'contactAvailability', 'contactNote'] },
     { title: 'Halaman artikel', description: 'Pengantar untuk daftar artikel.', fields: ['articleEyebrow', 'articleHeading', 'articleDescription'] },
+    { title: 'Kebijakan Privasi', description: 'Judul, tanggal pembaruan, dan isi halaman privasi.', fields: ['privacyEyebrow', 'privacyTitle', 'privacyDescription', 'privacyUpdatedAt', 'privacySections'] },
+    { title: 'Disclaimer', description: 'Judul, tanggal pembaruan, dan isi halaman disclaimer.', fields: ['disclaimerEyebrow', 'disclaimerTitle', 'disclaimerDescription', 'disclaimerUpdatedAt', 'disclaimerSections'] },
   ],
   profile: [
     { title: 'Identitas', description: 'Nama dan penanda personal.', fields: ['name', 'monogram', 'eyebrow', 'tagline'] },
@@ -281,6 +285,21 @@ function newRecord(module: CmsModuleDefinition): CmsRecord {
   return {
     id: 'new', collection: module.collection, slug: null, sortOrder: 999,
     status: 'draft', data, createdAt: '', updatedAt: '',
+  };
+}
+
+function withEditorDefaults(module: CmsModuleDefinition, record: CmsRecord): CmsRecord {
+  if (module.collection !== 'siteContent') return record;
+  const branding = record.data.branding && typeof record.data.branding === 'object' && !Array.isArray(record.data.branding)
+    ? record.data.branding as Record<string, unknown>
+    : {};
+  return {
+    ...record,
+    data: {
+      ...siteContentDefaults,
+      ...record.data,
+      branding: { ...siteContentDefaults.branding, ...branding },
+    },
   };
 }
 
@@ -708,7 +727,9 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
 
   const activeModule = activeView === 'branding'
     ? brandingModule
-    : cmsModules.find((module) => module.collection === activeView);
+    : activeView === 'legal'
+      ? legalModule
+      : cmsModules.find((module) => module.collection === activeView);
   const records = activeModule ? collections[activeModule.collection] ?? [] : [];
   const siteContentData = (collections.siteContent ?? [])[0]?.data ?? {};
   const profileData = (collections.profile ?? [])[0]?.data ?? {};
@@ -792,7 +813,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
     const moduleDefinition = cmsModules.find((item) => item.collection === record.collection);
     if (!moduleDefinition) return;
     setActiveView(moduleDefinition.collection);
-    setEditor({ module: moduleDefinition, record });
+    setEditor({ module: moduleDefinition, record: withEditorDefaults(moduleDefinition, record) });
     setGlobalQuery('');
   }
   function createIn(collection: CmsCollection) {
@@ -913,7 +934,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
           ) : activeView === 'media' ? <MediaLibrary /> : activeModule ? (
             <section className="cms-module-page">
               <header className="cms-module-header"><div><span>Modul konten</span><h1>{activeModule.label}</h1><p>{activeModule.description}</p></div>{!activeModule.singleton ? <Button className="cms-primary-button" onClick={() => setEditor({ module: activeModule, record: newRecord(activeModule) })}><Plus size={16} />Tambah {activeModule.singular}</Button> : null}</header>
-              {activeModule.singleton ? (() => { const record = records[0] ?? newRecord(activeModule); const Icon = moduleIcons[activeModule.collection]; return <div className="cms-singleton-panel"><div className="cms-singleton-main"><span><Icon size={21} /></span><div><strong>{recordTitle(record, activeModule)}</strong><p>{recordSummary(record, activeModule.description)}</p><small>{records[0] ? `Diperbarui ${new Date(record.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Belum dibuat'}</small></div><Button className="cms-primary-button" onClick={() => setEditor({ module: activeModule, record })}>Sunting Pengaturan</Button></div><div className="cms-singleton-sections">{sectionsForModule(activeModule).map((section) => <article key={section.title}><i aria-hidden="true" /><strong>{section.title}</strong><small>{section.description}</small></article>)}</div></div>; })() : <><div className="cms-module-count"><span>{records.length} konten</span></div>
+              {activeModule.singleton ? (() => { const record = records[0] ?? newRecord(activeModule); const Icon = moduleIcons[activeModule.collection]; return <div className="cms-singleton-panel"><div className="cms-singleton-main"><span><Icon size={21} /></span><div><strong>{recordTitle(record, activeModule)}</strong><p>{recordSummary(record, activeModule.description)}</p><small>{records[0] ? `Diperbarui ${new Date(record.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Belum dibuat'}</small></div><Button className="cms-primary-button" onClick={() => setEditor({ module: activeModule, record: withEditorDefaults(activeModule, record) })}>Sunting Pengaturan</Button></div><div className="cms-singleton-sections">{sectionsForModule(activeModule).map((section) => <article key={section.title}><i aria-hidden="true" /><strong>{section.title}</strong><small>{section.description}</small></article>)}</div></div>; })() : <><div className="cms-module-count"><span>{records.length} konten</span></div>
               <div className="cms-record-list">
                 <div className="cms-record-head"><span>Urutan</span><span>Konten</span><span>Status</span><span>Aksi</span></div>
                 {records.map((record, index) => <article className={draggingId === record.id ? 'is-dragging' : ''} key={record.id}>

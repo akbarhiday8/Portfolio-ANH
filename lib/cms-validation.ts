@@ -6,6 +6,10 @@ const longText = z.string().trim().max(12_000);
 const optionalShortText = shortText.optional().default('');
 const optionalLongText = longText.optional().default('');
 const textList = z.array(z.string().trim().min(1).max(500)).max(100).optional().default([]);
+const legalSections = z.array(z.object({
+  heading: shortText,
+  paragraphs: z.array(longText).min(1).max(30),
+}).loose()).max(30).optional().default([]);
 
 export function isSafeCmsLink(value: string) {
   if (!value) return true;
@@ -21,6 +25,7 @@ export function isSafeCmsLink(value: string) {
 const link = z.string().trim().max(2_048).refine(isSafeCmsLink, 'Tautan harus menggunakan HTTPS, HTTP, mailto, tel, atau path internal.');
 const optionalLink = z.union([link, z.literal(''), z.null()]).optional().default('');
 const slug = z.string().trim().toLowerCase().max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung.');
+const isoDate = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Tanggal harus menggunakan format YYYY-MM-DD.').optional().default('');
 
 const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
   siteContent: z.object({
@@ -59,6 +64,16 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     articleEyebrow: optionalShortText,
     articleHeading: optionalShortText,
     articleDescription: optionalLongText,
+    privacyEyebrow: optionalShortText,
+    privacyTitle: optionalShortText,
+    privacyDescription: optionalLongText,
+    privacyUpdatedAt: isoDate,
+    privacySections: legalSections,
+    disclaimerEyebrow: optionalShortText,
+    disclaimerTitle: optionalShortText,
+    disclaimerDescription: optionalLongText,
+    disclaimerUpdatedAt: isoDate,
+    disclaimerSections: legalSections,
     footerName: optionalShortText,
     footerSubtitle: optionalShortText,
     copyrightText: optionalShortText,
@@ -147,7 +162,13 @@ const hasList = (data: Record<string, unknown>, key: string) => Array.isArray(da
 
 function publishingErrors(collection: CmsCollection, data: Record<string, unknown>) {
   const required: Partial<Record<CmsCollection, Array<[string, string]>>> = {
-    siteContent: [['brandSubtitle', 'Subjudul logo']],
+    siteContent: [
+      ['brandSubtitle', 'Subjudul logo'],
+      ['privacyEyebrow', 'Label halaman Privasi'], ['privacyTitle', 'Judul halaman Privasi'],
+      ['privacyDescription', 'Pengantar halaman Privasi'], ['privacyUpdatedAt', 'Tanggal pembaruan Privasi'],
+      ['disclaimerEyebrow', 'Label halaman Disclaimer'], ['disclaimerTitle', 'Judul halaman Disclaimer'],
+      ['disclaimerDescription', 'Pengantar halaman Disclaimer'], ['disclaimerUpdatedAt', 'Tanggal pembaruan Disclaimer'],
+    ],
     profile: [['name', 'Nama lengkap'], ['monogram', 'Monogram'], ['introduction', 'Perkenalan'], ['artwork', 'Gambar profil']],
     statistics: [['value', 'Nilai'], ['label', 'Keterangan']],
     capabilities: [['title', 'Judul'], ['description', 'Deskripsi']],
@@ -164,6 +185,10 @@ function publishingErrors(collection: CmsCollection, data: Record<string, unknow
   };
 
   const errors = (required[collection] ?? []).filter(([key]) => !hasText(data, key)).map(([, label]) => `${label} wajib diisi sebelum dipublikasikan.`);
+  if (collection === 'siteContent') {
+    if (!hasList(data, 'privacySections')) errors.push('Isi Kebijakan Privasi wajib memiliki minimal satu bagian.');
+    if (!hasList(data, 'disclaimerSections')) errors.push('Isi Disclaimer wajib memiliki minimal satu bagian.');
+  }
   if (collection === 'experience' && !hasList(data, 'responsibilities')) errors.push('Minimal satu tugas dan tanggung jawab wajib diisi.');
   if (collection === 'projects') {
     if (!hasList(data, 'scope')) errors.push('Minimal satu kontribusi utama wajib diisi.');
