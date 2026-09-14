@@ -52,6 +52,14 @@
 .cms-primary-button:disabled,.cms-save-button:disabled { opacity:.48; }
 .cms-auth-form .cms-primary-button { width:100%; justify-content:space-between; margin-top:2px; }
 .cms-form-error { border-left:3px solid var(--red-bright); padding:10px 12px; background:color-mix(in srgb,var(--red) 8%,transparent); color:var(--red-bright); font-size:12px; line-height:1.45; }
+.cms-form-success { display:block; border-left:3px solid #34845f; padding:10px 12px; background:color-mix(in srgb,#34845f 9%,transparent); color:color-mix(in srgb,#34845f 82%,var(--ink)); font-size:12px; line-height:1.5; }
+.cms-auth-link-row { display:flex; justify-content:flex-end; margin-top:-9px; }
+.cms-auth-text-link { width:max-content; color:var(--red); font-size:12px; font-weight:650; line-height:1.5; text-decoration:underline; text-decoration-color:color-mix(in srgb,var(--red) 42%,transparent); text-underline-offset:4px; transition:color .18s,text-decoration-color .18s; }
+.cms-auth-text-link:hover { color:var(--red-bright); text-decoration-color:currentColor; }
+.cms-auth-back-link { display:inline-flex; align-items:center; gap:7px; }
+.cms-auth-state { display:grid; gap:18px; margin-top:28px; }
+.cms-auth-state > p:not(.cms-form-error,.cms-form-success) { color:var(--muted); font-size:12px; line-height:1.6; }
+.cms-auth-loading { display:block; margin-top:28px; border-left:3px solid var(--red); padding:11px 13px; background:var(--cms-surface); color:var(--muted); font-size:12px; line-height:1.5; }
 .cms-auth-footnote { position:relative; z-index:1; width:min(calc(100% - 56px),1320px); margin:0 auto 26px; color:var(--muted); font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
 
 /* Application shell */

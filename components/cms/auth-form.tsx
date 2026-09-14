@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function CmsAuthForm() {
+export function CmsAuthForm({ resetSucceeded = false }: { resetSucceeded?: boolean }) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -50,6 +51,10 @@ export function CmsAuthForm() {
           </button>
         </div>
       </div>
+      <div className="cms-auth-link-row">
+        <Link className="cms-auth-text-link" href="/admin/forgot-password">Lupa Password?</Link>
+      </div>
+      {resetSucceeded ? <output className="cms-form-success">Password berhasil diperbarui. Silakan masuk kembali.</output> : null}
       {error ? <p className="cms-form-error" role="alert">{error}</p> : null}
       <Button className="cms-primary-button" type="submit" disabled={busy}>
         <LockKeyhole size={16} />

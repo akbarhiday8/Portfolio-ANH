@@ -8,8 +8,13 @@ import { getPortfolioContent } from '@/lib/cms-repository';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reset?: string | string[] }>;
+}) {
   if (await getCurrentCmsAdmin()) redirect('/admin');
+  const query = await searchParams;
   let brandSource: { siteContent: Record<string, unknown>; profile: Record<string, unknown> } = {
     siteContent: {},
     profile: {},
@@ -25,7 +30,7 @@ export default async function AdminLoginPage() {
       <header className="cms-auth-header"><Link href="/" className="cms-auth-brand" aria-label="Kembali ke portfolio"><BrandIdentity context="login" profile={brandSource.profile} siteContent={brandSource.siteContent} /></Link><ThemeToggle /></header>
       <section className="cms-auth-panel">
         <div className="cms-auth-intro"><span>Area pengelola</span><h1>Kelola portfolio<br />dengan <em>tenang.</em></h1><p>Masuk untuk memperbarui proyek, pengalaman, sertifikasi, artikel, dan seluruh informasi yang tampil di website.</p></div>
-        <div className="cms-auth-card"><p className="cms-auth-kicker">Akses admin</p><h2>Selamat datang kembali.</h2><p>Gunakan akun admin Supabase yang telah diizinkan.</p><CmsAuthForm /></div>
+        <div className="cms-auth-card"><p className="cms-auth-kicker">Akses admin</p><h2>Selamat datang kembali.</h2><p>Gunakan akun admin Supabase yang telah diizinkan.</p><CmsAuthForm resetSucceeded={query.reset === 'success'} /></div>
       </section>
       <p className="cms-auth-footnote">Panel privat · Akbar Nur Hidayanto</p>
     </main>
