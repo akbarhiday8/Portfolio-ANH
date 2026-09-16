@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { MotionController } from '@/components/motion-controller';
+import { EditorialMedia } from '@/components/editorial-media';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-repository';
@@ -63,7 +63,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
       <main className="project-detail-page" id="top">
         <section className="case-hero">
-          <div className="section-wrap case-hero-grid">
+          <div className="section-wrap case-hero-grid case-hero-grid--editorial">
             <div className="case-intro">
               <p className="case-kicker">{project.category} · {project.year}</p>
               <h1>{project.title}</h1>
@@ -75,10 +75,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               </dl>
               {project.evidence?.href ? <div className="case-proof"><a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label || 'Lihat bukti proyek'}<ArrowUpRight size={16} /></a></div> : null}
             </div>
-            {project.image ? <div className="case-cover">
-              <Image src={project.image} fill priority sizes="(max-width: 850px) 100vw, 52vw" alt={`Dokumentasi visual ${project.title}`} />
-            </div> : null}
           </div>
+          {project.image ? <div className="section-wrap case-media-break"><EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} caption={`${project.title} · ${project.category} · ${project.year}`} /></div> : null}
         </section>
 
         <section className="case-section case-study">

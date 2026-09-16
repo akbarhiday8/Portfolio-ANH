@@ -22,7 +22,7 @@ export function ReadingHeader({
   profile,
   siteContent,
 }: {
-  activePage: 'article' | 'work' | 'legal';
+  activePage: 'article' | 'work' | 'certificates' | 'legal';
   profile: BrandingSource;
   siteContent: BrandingSource;
 }) {
