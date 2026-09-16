@@ -28,8 +28,9 @@ type ActiveView = 'overview' | 'media' | 'branding' | 'legal' | CmsCollection;
 type EditorSection = { title: string; description: string; fields: string[] };
 type CmsIcon = React.ComponentType<{ size?: number }>;
 type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
-type ValidationIssue = { label: string; detail: string; level: 'error' | 'warning' };
+type ValidationIssue = { label: string; detail: string; level: 'error' | 'warning'; field?: string };
 type RevisionSnapshot = { savedAt: string; status: CmsStatus; title: string; data: Record<string, unknown> };
+type ArticleSectionDraft = { heading: string; body: string };
 
 const moduleIcons: Record<CmsCollection, React.ComponentType<{ size?: number }>> = {
   siteContent: Settings2,
@@ -90,7 +91,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Gambaran proyek', description: 'Peran, disiplin, hasil kerja, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'summary'] },
     { title: 'Studi kasus', description: 'Konteks, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'approach', 'scope', 'process'] },
     { title: 'Bukti dan hasil', description: 'Tautan bukti serta dampak akhir proyek.', fields: ['evidence.label', 'evidence.href', 'outcome'] },
-    { title: 'SEO & preview', description: 'Judul, deskripsi, dan gambar saat halaman dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
+    { title: 'Tampilan di pencarian & berbagi', description: 'Judul, deskripsi, dan gambar saat halaman ditemukan atau dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
   certifications: [
     { title: 'Informasi sertifikasi', description: 'Nama, penerbit, tahun, dan kategori.', fields: ['name', 'issuer', 'year', 'category'] },
@@ -101,7 +102,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Pembuka', description: 'Lead dan rangkuman gagasan utama.', fields: ['lead', 'takeaways'] },
     { title: 'Isi artikel', description: 'Bagian utama tulisan.', fields: ['sections', 'quote'] },
     { title: 'Penutup', description: 'Kesimpulan artikel.', fields: ['closingHeading', 'closing'] },
-    { title: 'SEO & preview', description: 'Judul, deskripsi, dan gambar sosial untuk artikel.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
+    { title: 'Tampilan di pencarian & berbagi', description: 'Judul, deskripsi, dan gambar saat artikel ditemukan atau dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
 };
 
@@ -122,13 +123,16 @@ function getPath(data: Record<string, unknown>, path: string): unknown {
 }
 
 function setPath(data: Record<string, unknown>, path: string, value: unknown) {
-  const clone = structuredClone(data);
+  // Keep the typing hot path cheap: clone only the objects along the edited path.
+  const clone: Record<string, unknown> = { ...data };
   const keys = path.split('.');
   let cursor = clone;
   keys.forEach((key, index) => {
     if (index === keys.length - 1) cursor[key] = value;
     else {
-      if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+      cursor[key] = cursor[key] && typeof cursor[key] === 'object' && !Array.isArray(cursor[key])
+        ? { ...(cursor[key] as Record<string, unknown>) }
+        : {};
       cursor = cursor[key] as Record<string, unknown>;
     }
   });
@@ -140,7 +144,7 @@ function fieldText(field: CmsField, value: unknown) {
   if (field.type === 'steps') return Array.isArray(value) ? value.map((item) => {
     const step = item as { title?: string; description?: string };
     return `${step.title ?? ''} | ${step.description ?? ''}`;
-  }).join('\n') : '';
+  }).join('\n') : typeof value === 'string' ? value : '';
   if (field.type === 'articleSections') return Array.isArray(value) ? value.map((item) => {
     const section = item as { heading?: string; paragraphs?: string[] };
     return `## ${section.heading ?? ''}\n${(section.paragraphs ?? []).join('\n\n')}`;
@@ -161,6 +165,69 @@ function parseField(field: CmsField, value: string): unknown {
     });
   }
   return value;
+}
+
+function bufferedFieldValues(module: CmsModuleDefinition, data: Record<string, unknown>) {
+  return Object.fromEntries(
+    module.fields
+      .filter((field) => field.type === 'list')
+      .map((field) => [field.key, fieldText(field, getPath(data, field.key))]),
+  );
+}
+
+function mergeBufferedFields(module: CmsModuleDefinition, data: Record<string, unknown>, values: Record<string, string>) {
+  return module.fields.reduce((next, field) => {
+    if (field.type !== 'list') return next;
+    return setPath(next, field.key, parseField(field, values[field.key] ?? ''));
+  }, data);
+}
+
+function articleSectionDraftValues(module: CmsModuleDefinition, data: Record<string, unknown>) {
+  return Object.fromEntries(module.fields.filter((field) => field.type === 'articleSections').map((field) => {
+    const sections = getPath(data, field.key);
+    const drafts = Array.isArray(sections) ? sections.map((item) => {
+      const section = item as { heading?: string; paragraphs?: string[] };
+      return { heading: section.heading ?? '', body: (section.paragraphs ?? []).join('\n\n') };
+    }) : [];
+    return [field.key, drafts];
+  })) as Record<string, ArticleSectionDraft[]>;
+}
+
+function mergeArticleSectionDrafts(module: CmsModuleDefinition, data: Record<string, unknown>, drafts: Record<string, ArticleSectionDraft[]>) {
+  return module.fields.reduce((next, field) => {
+    if (field.type !== 'articleSections') return next;
+    const sections = (drafts[field.key] ?? []).map((section) => ({
+      heading: section.heading.trim(),
+      paragraphs: section.body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
+    })).filter((section) => section.heading || section.paragraphs.length);
+    return setPath(next, field.key, sections);
+  }, data);
+}
+
+function slugify(value: string) {
+  return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+}
+
+function normalizeEditorData(module: CmsModuleDefinition, source: Record<string, unknown>) {
+  return module.fields.reduce((next, field) => {
+    const value = getPath(next, field.key);
+    if (field.type === 'steps' && typeof value === 'string') return setPath(next, field.key, parseField(field, value));
+    return next;
+  }, structuredClone(source));
+}
+
+function mapServerValidationIssues(module: CmsModuleDefinition, details: string[] = [], fallback = ''): ValidationIssue[] {
+  const issues = details.flatMap((detail) => {
+    const separator = detail.indexOf(':');
+    if (separator < 1) return [];
+    const path = detail.slice(0, separator).trim();
+    const field = module.fields.find((candidate) => path === candidate.key || path.startsWith(`${candidate.key}.`));
+    return field ? [{ field: field.key, level: 'error' as const, label: `${field.label} belum valid`, detail: detail.slice(separator + 1).trim() }] : [];
+  });
+  if (!issues.length && /alamat halaman sudah digunakan/i.test(fallback) && module.fields.some((field) => field.key === 'slug')) {
+    issues.push({ field: 'slug', level: 'error', label: 'Alamat halaman sudah digunakan', detail: 'Gunakan alamat halaman yang berbeda.' });
+  }
+  return issues;
 }
 
 function recordTitle(record: CmsRecord, module: CmsModuleDefinition) {
@@ -206,52 +273,64 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
     const fieldValue = simpleValue(value);
     const empty = Array.isArray(value) ? value.length === 0 : !fieldValue;
     if (field.required && empty) {
-      issues.push({ level: 'error', label: `${field.label} wajib diisi`, detail: 'Konten tidak sebaiknya dipublikasikan sebelum field penting lengkap.' });
+      issues.push({ field: field.key, level: 'error', label: `${field.label} wajib diisi`, detail: `Isi ${field.label.toLowerCase()} sebelum menyimpan.` });
     }
     if ((field.type === 'url' || field.type === 'asset') && !isValidLink(fieldValue)) {
-      issues.push({ level: 'error', label: `${field.label} belum valid`, detail: 'Gunakan https://, mailto:, tel:, atau path internal yang dimulai dengan /.' });
+      issues.push({ field: field.key, level: 'error', label: `${field.label} belum valid`, detail: 'Masukkan alamat website yang valid, misalnya https://contoh.com.' });
+    }
+    if (field.type === 'date' && fieldValue && !/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
+      issues.push({ field: field.key, level: 'error', label: `${field.label} belum valid`, detail: 'Pilih tanggal yang sesuai.' });
     }
   });
 
+  const slug = stringValue(data, 'slug');
+  if ((module.collection === 'projects' || module.collection === 'articles') && slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    issues.push({ field: 'slug', level: 'error', label: 'Alamat halaman belum valid', detail: 'Gunakan huruf kecil, angka, dan tanda penghubung. Contoh: portfolio-byd.' });
+  }
+
+  const year = stringValue(data, 'year');
+  if ((module.collection === 'projects' || module.collection === 'certifications') && year && !/^\d{4}$/.test(year)) {
+    issues.push({ field: 'year', level: 'error', label: 'Tahun belum valid', detail: 'Masukkan tahun menggunakan empat angka, misalnya 2026.' });
+  }
+
   if (module.collection === 'projects') {
-    if (!stringValue(data, 'image')) issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Gambar utama belum ada', detail: 'Tambahkan visual utama sebelum proyek dipublikasikan.' });
-    if (!stringValue(data, 'evidence.href')) issues.push({ level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
-    if (nextStatus === 'published' && !stringValue(data, 'slug')) issues.push({ level: 'error', label: 'Alamat halaman belum ada', detail: 'Slug dibutuhkan agar halaman detail proyek dapat dibuka.' });
+    if (!stringValue(data, 'image')) issues.push({ field: 'image', level: nextStatus === 'published' ? 'error' : 'warning', label: 'Gambar utama belum ada', detail: 'Tambahkan visual utama sebelum proyek dipublikasikan.' });
+    if (!stringValue(data, 'evidence.href')) issues.push({ field: 'evidence.href', level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
     if (nextStatus === 'published') {
       ([['role', 'Peran'], ['discipline', 'Bidang'], ['artifactType', 'Jenis hasil'], ['challenge', 'Konteks'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir']] as const).forEach(([key, label]) => {
-        if (!stringValue(data, key)) issues.push({ level: 'error', label: `${label} belum diisi`, detail: 'Bagian ini tampil pada halaman studi kasus dan wajib dilengkapi sebelum publikasi.' });
+        if (!stringValue(data, key)) issues.push({ field: key, level: 'error', label: `${label} belum diisi`, detail: 'Bagian ini tampil pada halaman studi kasus dan wajib dilengkapi sebelum publikasi.' });
       });
-      if (!listLength(data, 'scope')) issues.push({ level: 'error', label: 'Kontribusi utama masih kosong', detail: 'Tambahkan minimal satu kontribusi sebelum publikasi.' });
-      if (!listLength(data, 'process')) issues.push({ level: 'error', label: 'Proses singkat masih kosong', detail: 'Tambahkan minimal satu tahapan sebelum publikasi.' });
+      if (!listLength(data, 'scope')) issues.push({ field: 'scope', level: 'error', label: 'Kontribusi utama masih kosong', detail: 'Tambahkan minimal satu kontribusi sebelum publikasi.' });
+      if (!listLength(data, 'process')) issues.push({ field: 'process', level: 'error', label: 'Proses singkat masih kosong', detail: 'Tambahkan minimal satu tahapan sebelum publikasi.' });
     }
   }
 
   if (module.collection === 'certifications' && !stringValue(data, 'image')) {
-    issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Bukti sertifikat belum diunggah', detail: 'Unggah bukti visual sebelum sertifikasi dipublikasikan.' });
+    issues.push({ field: 'image', level: nextStatus === 'published' ? 'error' : 'warning', label: 'Bukti sertifikat belum diunggah', detail: 'Unggah bukti visual sebelum sertifikasi dipublikasikan.' });
   }
 
   if (module.collection === 'certifications' && nextStatus === 'published' && !listLength(data, 'topics')) {
-    issues.push({ level: 'error', label: 'Materi sertifikasi masih kosong', detail: 'Tambahkan minimal satu materi yang dipelajari atau diujikan.' });
+    issues.push({ field: 'topics', level: 'error', label: 'Materi sertifikasi masih kosong', detail: 'Tambahkan minimal satu materi yang dipelajari atau diujikan.' });
   }
 
   if (module.collection === 'experience' && nextStatus === 'published') {
-    if (!stringValue(data, 'image')) issues.push({ level: 'error', label: 'Gambar pengalaman belum ada', detail: 'Tambahkan visual sebelum pengalaman dipublikasikan.' });
-    if (!listLength(data, 'responsibilities')) issues.push({ level: 'error', label: 'Tanggung jawab masih kosong', detail: 'Tambahkan minimal satu tugas atau tanggung jawab.' });
+    if (!stringValue(data, 'image')) issues.push({ field: 'image', level: 'error', label: 'Gambar pengalaman belum ada', detail: 'Tambahkan visual sebelum pengalaman dipublikasikan.' });
+    if (!listLength(data, 'responsibilities')) issues.push({ field: 'responsibilities', level: 'error', label: 'Tanggung jawab masih kosong', detail: 'Tambahkan minimal satu tugas atau tanggung jawab.' });
   }
 
   if (module.collection === 'articles') {
-    if (!listLength(data, 'sections')) issues.push({ level: nextStatus === 'published' ? 'error' : 'warning', label: 'Isi artikel masih kosong', detail: 'Tambahkan minimal satu bagian agar artikel siap dibaca.' });
-    if (nextStatus === 'published' && !stringValue(data, 'lead')) issues.push({ level: 'error', label: 'Paragraf pembuka masih kosong', detail: 'Tambahkan pembuka sebelum artikel dipublikasikan.' });
-    if (nextStatus === 'published' && !stringValue(data, 'closing')) issues.push({ level: 'error', label: 'Penutup artikel masih kosong', detail: 'Tambahkan kesimpulan sebelum artikel dipublikasikan.' });
-    if (!stringValue(data, 'seoDescription')) issues.push({ level: 'warning', label: 'SEO description belum diisi', detail: 'Jika kosong, ringkasan kartu akan dipakai sebagai fallback.' });
+    if (!listLength(data, 'sections')) issues.push({ field: 'sections', level: nextStatus === 'published' ? 'error' : 'warning', label: 'Isi artikel masih kosong', detail: 'Tambahkan minimal satu bagian agar artikel siap dibaca.' });
+    if (nextStatus === 'published' && !stringValue(data, 'lead')) issues.push({ field: 'lead', level: 'error', label: 'Paragraf pembuka masih kosong', detail: 'Tambahkan pembuka sebelum artikel dipublikasikan.' });
+    if (nextStatus === 'published' && !stringValue(data, 'closing')) issues.push({ field: 'closing', level: 'error', label: 'Penutup artikel masih kosong', detail: 'Tambahkan kesimpulan sebelum artikel dipublikasikan.' });
+    if (!stringValue(data, 'seoDescription')) issues.push({ field: 'seoDescription', level: 'warning', label: 'Deskripsi pencarian belum diisi', detail: 'Jika kosong, ringkasan artikel akan digunakan.' });
   }
 
   if (module.collection === 'profile' && !stringValue(data, 'artwork')) {
-    issues.push({ level: 'error', label: 'Gambar profil belum ada', detail: 'Visual profil utama wajib tersedia.' });
+    issues.push({ field: 'artwork', level: 'error', label: 'Gambar profil belum ada', detail: 'Visual profil utama wajib tersedia.' });
   }
 
   if (module.collection === 'projects' && !stringValue(data, 'seoDescription')) {
-    issues.push({ level: 'warning', label: 'SEO description belum diisi', detail: 'Jika kosong, ringkasan proyek akan dipakai sebagai fallback.' });
+    issues.push({ field: 'seoDescription', level: 'warning', label: 'Deskripsi pencarian belum diisi', detail: 'Jika kosong, ringkasan proyek akan digunakan.' });
   }
 
   return issues;
@@ -339,27 +418,45 @@ function ContentEditor({
   onClose: () => void;
   onSaved: (record: CmsRecord) => void;
 }) {
-  const [data, setData] = useState<Record<string, unknown>>(() => structuredClone(record.data));
+  const initialEditorData = useMemo(() => normalizeEditorData(module, record.data), [module, record.data]);
+  const initialArticleDrafts = useMemo(() => articleSectionDraftValues(module, record.data), [module, record.data]);
+  const [data, setData] = useState<Record<string, unknown>>(initialEditorData);
+  const [bufferedValues, setBufferedValues] = useState<Record<string, string>>(() => bufferedFieldValues(module, record.data));
+  const [articleDrafts, setArticleDrafts] = useState<Record<string, ArticleSectionDraft[]>>(initialArticleDrafts);
   const [status, setStatus] = useState<CmsStatus>(record.status);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [serverFieldIssues, setServerFieldIssues] = useState<ValidationIssue[]>([]);
   const [uploading, setUploading] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadRequest = useRef<AbortController | null>(null);
-  const [baseline, setBaseline] = useState({ data: structuredClone(record.data), status: record.status });
+  const [baseline, setBaseline] = useState({ data: initialEditorData, status: record.status });
+  const [baselineBufferedValues, setBaselineBufferedValues] = useState<Record<string, string>>(() => bufferedFieldValues(module, record.data));
+  const [baselineArticleDrafts, setBaselineArticleDrafts] = useState<Record<string, ArticleSectionDraft[]>>(initialArticleDrafts);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const temporaryUploads = useRef<Record<string, MediaItem>>({});
   const sections = useMemo(() => sectionsForModule(module), [module]);
   const dirty = useMemo(
-    () => JSON.stringify(data) !== JSON.stringify(baseline.data) || status !== baseline.status,
-    [baseline, data, status],
+    () => data !== baseline.data
+      || Object.keys(bufferedValues).some((key) => bufferedValues[key] !== baselineBufferedValues[key])
+      || articleDrafts !== baselineArticleDrafts
+      || status !== baseline.status,
+    [articleDrafts, baseline, baselineArticleDrafts, baselineBufferedValues, bufferedValues, data, status],
   );
   const [previewOpen, setPreviewOpen] = useState(false);
   const [autosaveState, setAutosaveState] = useState('');
   const [history, setHistory] = useState<RevisionSnapshot[]>([]);
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(() => new Set());
+  const [submitAttempt, setSubmitAttempt] = useState(0);
+  const [attentionField, setAttentionField] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(record.id !== 'new');
   const autosaveKey = useMemo(() => `anh-cms-draft:${module.collection}:${record.id}`, [module.collection, record.id]);
   const historyKey = useMemo(() => `anh-cms-history:${module.collection}:${record.id}`, [module.collection, record.id]);
   const validationIssues = useMemo(() => validateRecord(module, data, module.singleton ? 'published' : status), [data, module, status]);
+  const displayedValidationIssues = useMemo(() => [
+    ...validationIssues.filter((issue) => issue.level === 'warning' || submitAttempt > 0 || Boolean(issue.field && touchedFields.has(issue.field))),
+    ...serverFieldIssues,
+  ], [serverFieldIssues, submitAttempt, touchedFields, validationIssues]);
   const preview = useMemo(() => ({
     title: previewTitle(module, data),
     summary: previewSummary(module, data),
@@ -385,7 +482,9 @@ function ContentEditor({
         if (!draft.data || JSON.stringify(draft.data) === JSON.stringify(record.data)) return;
         const time = draft.updatedAt ? new Date(draft.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
         if (window.confirm(`Ada draft otomatis yang belum disimpan${time ? ` dari ${time}` : ''}. Pulihkan draft ini?`)) {
-          setData(draft.data);
+          setData(normalizeEditorData(module, draft.data));
+          setBufferedValues(bufferedFieldValues(module, draft.data));
+          setArticleDrafts(articleSectionDraftValues(module, draft.data));
           if (draft.status) setStatus(draft.status);
           setMessage('Draft otomatis dipulihkan. Cek kembali lalu simpan.');
         }
@@ -394,7 +493,7 @@ function ContentEditor({
       }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [autosaveKey, record.data]);
+  }, [autosaveKey, module, record.data]);
 
   useEffect(() => {
     let active = true;
@@ -427,12 +526,13 @@ function ContentEditor({
   useEffect(() => {
     if (!dirty) return;
     const timer = window.setTimeout(() => {
-      const draft = { data, status, updatedAt: Date.now() };
+      const bufferedData = mergeBufferedFields(module, data, bufferedValues);
+      const draft = { data: mergeArticleSectionDrafts(module, bufferedData, articleDrafts), status, updatedAt: Date.now() };
       window.localStorage.setItem(autosaveKey, JSON.stringify(draft));
       setAutosaveState(`Autosave ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`);
     }, 800);
     return () => window.clearTimeout(timer);
-  }, [autosaveKey, data, dirty, status]);
+  }, [articleDrafts, autosaveKey, bufferedValues, data, dirty, module, status]);
 
   function closeEditor() {
     if (dirty && !window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) return;
@@ -457,7 +557,9 @@ function ContentEditor({
 
   function restoreRevision(snapshot: RevisionSnapshot) {
     if (!window.confirm('Pulihkan versi ini ke editor? Konten belum berubah di website sampai Anda menekan Simpan.')) return;
-    setData(structuredClone(snapshot.data));
+    setData(normalizeEditorData(module, snapshot.data));
+    setBufferedValues(bufferedFieldValues(module, snapshot.data));
+    setArticleDrafts(articleSectionDraftValues(module, snapshot.data));
     setStatus(snapshot.status);
     setMessage('Versi sebelumnya dimuat ke editor. Simpan untuk menerapkan.');
   }
@@ -494,14 +596,59 @@ function ContentEditor({
       void discardTemporaryMedia(temporary);
     }
     setData((current) => setPath(current, field.key, value));
+    setServerFieldIssues((current) => current.filter((issue) => issue.field !== field.key));
+  }
+
+  function clearServerFieldIssue(fieldKey: string) {
+    setServerFieldIssues((current) => current.filter((issue) => issue.field !== fieldKey));
+  }
+
+  function markTouched(fieldKey: string) {
+    setTouchedFields((current) => current.has(fieldKey) ? current : new Set(current).add(fieldKey));
+  }
+
+  function focusField(fieldKey: string) {
+    const element = document.getElementById(`field-${fieldKey.replace('.', '-')}`);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => (element as HTMLElement | null)?.focus(), 180);
+  }
+
+  function updateTextField(field: CmsField, value: string) {
+    clearServerFieldIssue(field.key);
+    if (field.key === 'slug') {
+      setSlugManuallyEdited(true);
+      setData((current) => setPath(current, field.key, value));
+      return;
+    }
+    setData((current) => {
+      const next = setPath(current, field.key, value);
+      if (record.id === 'new' && field.key === 'title' && !slugManuallyEdited && (module.collection === 'projects' || module.collection === 'articles')) {
+        return setPath(next, 'slug', slugify(value));
+      }
+      return next;
+    });
   }
 
   async function save(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const blockingIssues = validationIssues.filter((issue) => issue.level === 'error');
+    setServerFieldIssues([]);
+    const bufferedData = mergeBufferedFields(module, data, bufferedValues);
+    const normalizedData = mergeArticleSectionDrafts(module, bufferedData, articleDrafts);
+    const currentIssues = validateRecord(module, normalizedData, module.singleton ? 'published' : status);
+    const blockingIssues = currentIssues.filter((issue) => issue.level === 'error');
     if (blockingIssues.length) {
-      setMessage(`Periksa ${blockingIssues.length} error sebelum menyimpan.`);
-      setPreviewOpen(true);
+      setSubmitAttempt((current) => current + 1);
+      setServerFieldIssues(blockingIssues.filter((issue) => !validationIssues.some((current) => current.field === issue.field && current.label === issue.label)));
+      setMessage(`Ada ${blockingIssues.length} bagian yang perlu diperbaiki.`);
+      const first = blockingIssues.find((issue) => issue.field);
+      if (first?.field) {
+        setAttentionField('');
+        window.requestAnimationFrame(() => {
+          setAttentionField(first.field!);
+          focusField(first.field!);
+          window.setTimeout(() => setAttentionField(''), 650);
+        });
+      }
       return;
     }
     setBusy(true);
@@ -513,35 +660,97 @@ function ContentEditor({
       method: record.id === 'new' ? 'POST' : 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        data,
+        data: normalizedData,
         status: module.singleton ? 'published' : status,
         version: record.version,
       }),
     });
     const result = await response.json().catch(() => ({})) as { error?: string; details?: string[]; record?: CmsRecord };
-    if (!response.ok || !result.record) setMessage(result.details?.join(' ') || result.error || 'Perubahan tidak dapat disimpan.');
-    else {
+    if (!response.ok || !result.record) {
+      const mappedIssues = mapServerValidationIssues(module, result.details, result.error);
+      setServerFieldIssues(mappedIssues);
+      setMessage(mappedIssues.length ? `Periksa ${mappedIssues.length} field sebelum menyimpan.` : result.details?.join(' ') || result.error || 'Perubahan tidak dapat disimpan.');
+      if (mappedIssues[0]?.field) {
+        window.requestAnimationFrame(() => {
+          setAttentionField(mappedIssues[0].field!);
+          focusField(mappedIssues[0].field!);
+          window.setTimeout(() => setAttentionField(''), 650);
+        });
+      }
+    } else {
       setMessage('Perubahan tersimpan.');
       saveRevision(result.record);
       window.localStorage.removeItem(autosaveKey);
       temporaryUploads.current = {};
       setAutosaveState('');
-      setBaseline({ data: structuredClone(result.record.data), status: result.record.status });
+      const savedData = normalizeEditorData(module, result.record.data);
+      setBaseline({ data: savedData, status: result.record.status });
+      const savedBufferedValues = bufferedFieldValues(module, result.record.data);
+      const savedArticleDrafts = articleSectionDraftValues(module, result.record.data);
+      setData(savedData);
+      setBufferedValues(savedBufferedValues);
+      setBaselineBufferedValues(savedBufferedValues);
+      setArticleDrafts(savedArticleDrafts);
+      setBaselineArticleDrafts(savedArticleDrafts);
+      setSubmitAttempt(0);
+      setTouchedFields(new Set());
+      setServerFieldIssues([]);
       onSaved(result.record);
     }
     setBusy(false);
   }
 
   function renderField(field: CmsField) {
-    const value = fieldText(field, getPath(data, field.key));
+    const isBuffered = field.type === 'list';
+    const value = field.type === 'steps' || field.type === 'articleSections'
+      ? ''
+      : isBuffered ? bufferedValues[field.key] ?? '' : fieldText(field, getPath(data, field.key));
     const inputId = `field-${field.key.replace('.', '-')}`;
+    const fieldIssue = displayedValidationIssues.find((issue) => issue.level === 'error' && issue.field === field.key);
+    const describedBy = fieldIssue ? `${inputId}-error` : undefined;
+    const fieldControlProps = { 'aria-invalid': Boolean(fieldIssue), 'aria-describedby': describedBy };
     return (
-      <div className={`cms-field${field.wide ? ' is-wide' : ''}`} key={field.key}>
+      <div className={`cms-field${field.wide ? ' is-wide' : ''}${fieldIssue ? ' has-error' : ''}${attentionField === field.key ? ' is-attention' : ''}`} key={field.key}>
         <Label htmlFor={inputId}>{field.label}{field.required ? <span>*</span> : null}</Label>
-        {field.type === 'textarea' || field.type === 'list' || field.type === 'steps' || field.type === 'articleSections' ? (
-          <Textarea id={inputId} value={value} required={field.required} rows={field.type === 'articleSections' ? 14 : field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder} onChange={(event) => setData((current) => setPath(current, field.key, parseField(field, event.target.value)))} />
+        {field.type === 'steps' ? (
+          <div className="cms-steps-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>
+            {(Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as Array<{ title?: string; description?: string }> : []).map((step, index, steps) => (
+              <article className="cms-step-row" key={`${field.key}-${index}`}>
+                <strong>Langkah {index + 1}</strong>
+                <Input aria-label={`Judul langkah ${index + 1}`} placeholder="Judul langkah" value={step.title ?? ''} onChange={(event) => { clearServerFieldIssue(field.key); setData((current) => { const next = [...(getPath(current, field.key) as Array<Record<string, unknown>> ?? [])]; next[index] = { ...next[index], title: event.target.value }; return setPath(current, field.key, next); }); }} />
+                <Textarea aria-label={`Penjelasan langkah ${index + 1}`} placeholder="Penjelasan singkat" rows={3} value={step.description ?? ''} onChange={(event) => { clearServerFieldIssue(field.key); setData((current) => { const next = [...(getPath(current, field.key) as Array<Record<string, unknown>> ?? [])]; next[index] = { ...next[index], description: event.target.value }; return setPath(current, field.key, next); }); }} />
+                <button type="button" className="cms-remove-media" onClick={() => setData((current) => setPath(current, field.key, (getPath(current, field.key) as unknown[] ?? []).filter((_, itemIndex) => itemIndex !== index)))}>Hapus langkah</button>
+                {index < steps.length - 1 ? <hr /> : null}
+              </article>
+            ))}
+            <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(getPath(current, field.key) as unknown[] ?? []), { title: '', description: '' }]))}><Plus size={15} />Tambah langkah</Button>
+          </div>
+        ) : field.type === 'articleSections' ? (
+          <div className="cms-article-sections" id={inputId} tabIndex={-1} onBlur={() => { markTouched(field.key); setData((current) => mergeArticleSectionDrafts(module, current, articleDrafts)); }} {...fieldControlProps}>
+            {(articleDrafts[field.key] ?? []).map((section, index, fieldSections) => (
+              <article className="cms-article-section-row" key={`${field.key}-${index}`}>
+                <strong>Bagian {index + 1}</strong>
+                <Input aria-label={`Judul bagian ${index + 1}`} placeholder="Judul bagian" value={section.heading} onChange={(event) => { clearServerFieldIssue(field.key); setArticleDrafts((current) => ({ ...current, [field.key]: (current[field.key] ?? []).map((item, itemIndex) => itemIndex === index ? { ...item, heading: event.target.value } : item) })); }} />
+                <Textarea aria-label={`Isi bagian ${index + 1}`} placeholder="Tulis isi bagian di sini. Pisahkan paragraf dengan satu baris kosong." rows={8} value={section.body} onChange={(event) => { clearServerFieldIssue(field.key); setArticleDrafts((current) => ({ ...current, [field.key]: (current[field.key] ?? []).map((item, itemIndex) => itemIndex === index ? { ...item, body: event.target.value } : item) })); }} />
+                <button type="button" className="cms-remove-media" onClick={() => setArticleDrafts((current) => ({ ...current, [field.key]: (current[field.key] ?? []).filter((_, itemIndex) => itemIndex !== index) }))}>Hapus bagian</button>
+                {index < fieldSections.length - 1 ? <hr /> : null}
+              </article>
+            ))}
+            <Button type="button" variant="outline" onClick={() => setArticleDrafts((current) => ({ ...current, [field.key]: [...(current[field.key] ?? []), { heading: '', body: '' }] }))}><Plus size={15} />Tambah bagian</Button>
+          </div>
+        ) : field.type === 'textarea' || field.type === 'list' ? (
+          <Textarea id={inputId} {...fieldControlProps} value={value} required={field.required} rows={field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder}
+            onChange={(event) => {
+              clearServerFieldIssue(field.key);
+              if (isBuffered) setBufferedValues((current) => ({ ...current, [field.key]: event.target.value }));
+              else setData((current) => setPath(current, field.key, event.target.value));
+            }}
+            onBlur={() => {
+              markTouched(field.key);
+              if (isBuffered) setData((current) => setPath(current, field.key, parseField(field, bufferedValues[field.key] ?? '')));
+            }} />
         ) : field.type === 'select' ? (
-          <select id={inputId} value={value} onChange={(event) => setData((current) => setPath(current, field.key, event.target.value))}>
+          <select id={inputId} {...fieldControlProps} value={value} onBlur={() => markTouched(field.key)} onChange={(event) => { clearServerFieldIssue(field.key); setData((current) => setPath(current, field.key, event.target.value)); }}>
             <option value="">Pilih opsi</option>
             {field.options?.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
           </select>
@@ -549,23 +758,24 @@ function ContentEditor({
           <div className="cms-media-field">
             {field.type === 'image' && value ? <Image src={value} width={190} height={126} unoptimized alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
             <div>
-              <Input id={inputId} value={value} placeholder={field.type === 'asset' ? 'https://... atau /media/...' : '/media/... atau URL gambar'} onChange={(event) => updateMediaValue(field, event.target.value)} />
+              <Input id={inputId} {...fieldControlProps} value={value} placeholder={field.type === 'asset' ? 'https://contoh.com atau unggah dokumen' : 'Unggah gambar atau masukkan link'} onBlur={() => markTouched(field.key)} onChange={(event) => updateMediaValue(field, event.target.value)} />
               <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
               <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <><a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a><button className="cms-remove-media" type="button" onClick={() => updateMediaValue(field, '')} aria-label={`Hapus ${field.label}`} title={`Hapus ${field.label}`}><Trash2 size={14} />Hapus</button></> : null}</div>
               <small className="cms-upload-policy">Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.</small>
             </div>
           </div>
         ) : (
-          <Input id={inputId} type={field.type === 'url' ? 'url' : 'text'} value={value} required={field.required} placeholder={field.placeholder} onChange={(event) => setData((current) => setPath(current, field.key, event.target.value))} />
+          <Input id={inputId} {...fieldControlProps} type={field.type === 'url' ? 'url' : field.type === 'date' ? 'date' : 'text'} inputMode={field.key === 'year' ? 'numeric' : undefined} value={value} required={field.required} placeholder={field.placeholder} onBlur={() => markTouched(field.key)} onChange={(event) => updateTextField(field, event.target.value)} />
         )}
-        {field.helper ? <small>{field.helper}</small> : null}
+        {field.key === 'slug' ? <div className="cms-slug-helper"><small>{module.collection === 'projects' ? '/portfolio/' : '/artikel/'}{value || 'alamat-halaman'} · Dibuat otomatis dari judul. Ubah hanya jika diperlukan.</small>{fieldIssue ? <button type="button" onClick={() => { const fixed = slugify(value || stringValue(data, 'title')); clearServerFieldIssue('slug'); setData((current) => setPath(current, 'slug', fixed)); markTouched('slug'); }}>Perbaiki otomatis</button> : null}</div> : field.helper ? <small>{field.helper}</small> : null}
+        {fieldIssue ? <small id={`${inputId}-error`} className="cms-field-error" role="alert">{fieldIssue.detail}</small> : null}
       </div>
     );
   }
 
   return (
     <dialog className="cms-editor-layer" open aria-label={`Editor ${module.singular}`}>
-      <form className="cms-editor" onSubmit={save}>
+      <form className="cms-editor" onSubmit={save} noValidate>
         <header className="cms-editor-header">
           <div className="cms-editor-heading"><span className="cms-window-markers" aria-hidden="true"><i /><i /><i /></span><div><span>{record.id === 'new' ? 'Konten baru' : module.label}</span><h2>{record.id === 'new' ? `Tambah ${module.singular}` : recordTitle(record, module)}</h2></div></div>
           <div className="cms-editor-actions">
@@ -594,13 +804,14 @@ function ContentEditor({
 
             <div className="cms-editor-tools">
               <span>{autosaveState || (dirty ? 'Menunggu autosave...' : 'Tidak ada perubahan')}</span>
-              <strong>{validationIssues.filter((issue) => issue.level === 'error').length} error / {validationIssues.filter((issue) => issue.level === 'warning').length} saran</strong>
+              <strong>{displayedValidationIssues.filter((issue) => issue.level === 'error').length} error / {displayedValidationIssues.filter((issue) => issue.level === 'warning').length} saran</strong>
             </div>
+            <p className="cms-required-note"><span>*</span> Wajib diisi</p>
 
-            {validationIssues.length ? (
-              <section className="cms-validation-panel" aria-label="Validasi konten">
-                <header><ListChecks size={17} /><div><strong>Pemeriksaan konten</strong><p>Pastikan konten aman dan rapi sebelum dipublikasikan.</p></div></header>
-                <div>{validationIssues.map((issue) => <article className={issue.level === 'error' ? 'is-error' : ''} key={`${issue.level}-${issue.label}`}><strong>{issue.label}</strong><p>{issue.detail}</p></article>)}</div>
+            {displayedValidationIssues.length ? (
+              <section className="cms-validation-panel" aria-label="Validasi konten" aria-live="polite">
+                <header><ListChecks size={17} /><div><strong>{displayedValidationIssues.filter((issue) => issue.level === 'error').length ? `Periksa ${displayedValidationIssues.filter((issue) => issue.level === 'error').length} bagian berikut sebelum menyimpan` : 'Saran penyempurnaan konten'}</strong><p>Pilih salah satu item untuk menuju bagian yang perlu diperiksa.</p></div></header>
+                <div>{displayedValidationIssues.map((issue) => issue.field ? <button type="button" className={issue.level === 'error' ? 'is-error' : ''} onClick={() => focusField(issue.field!)} key={`${issue.level}-${issue.field}-${issue.label}`}><strong>{issue.label}</strong><p>{issue.detail}</p></button> : <article className={issue.level === 'error' ? 'is-error' : ''} key={`${issue.level}-${issue.label}`}><strong>{issue.label}</strong><p>{issue.detail}</p></article>)}</div>
               </section>
             ) : null}
 
@@ -626,10 +837,11 @@ function ContentEditor({
             <div className="cms-form-sections">
               {sections.map((section, index) => {
                 const fields = section.fields.map((key) => module.fields.find((field) => field.key === key)).filter((field): field is CmsField => Boolean(field));
+                const sectionErrorCount = displayedValidationIssues.filter((issue) => issue.level === 'error' && issue.field && section.fields.includes(issue.field)).length;
                 if (!fields.length) return null;
                 return (
-                  <section className="cms-form-section" id={`editor-section-${index}`} key={section.title}>
-                    <header><i aria-hidden="true" /><div><h3>{section.title}</h3><p>{section.description}</p></div></header>
+                  <section className={`cms-form-section${sectionErrorCount ? ' has-errors' : ''}`} id={`editor-section-${index}`} key={section.title}>
+                    <header><i aria-hidden="true" /><div><h3>{section.title}</h3><p>{section.description}</p></div>{sectionErrorCount ? <span className="cms-section-error-count">{sectionErrorCount} perlu diperbaiki</span> : null}</header>
                     <div className="cms-editor-fields">{fields.map(renderField)}</div>
                   </section>
                 );
@@ -763,7 +975,7 @@ export function CmsDashboard({ admin, initialCollections }: { admin: CmsAdmin; i
       { label: 'Portfolio tanpa bukti', value: projectsMissingEvidence, view: 'projects' as ActiveView },
       { label: 'Sertifikat tanpa gambar', value: certificatesMissingImage, view: 'certifications' as ActiveView },
       { label: 'Artikel belum lengkap', value: articlesMissingBody, view: 'articles' as ActiveView },
-      { label: 'SEO belum lengkap', value: missingSeo, view: 'projects' as ActiveView },
+      { label: 'Tampilan pencarian belum lengkap', value: missingSeo, view: 'projects' as ActiveView },
       { label: 'Judul terlalu panjang', value: longTitles, view: 'overview' as ActiveView },
       { label: 'Media tersimpan', value: mediaCount ?? 0, view: 'media' as ActiveView, positive: true },
     ];

@@ -1,6 +1,6 @@
 import type { CmsCollection } from '@/lib/cms/types';
 
-export type CmsFieldType = 'text' | 'textarea' | 'url' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections';
+export type CmsFieldType = 'text' | 'textarea' | 'url' | 'date' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections';
 export type CmsField = {
   key: string;
   label: string;
@@ -36,11 +36,11 @@ export const brandingFields: CmsField[] = [
 
 export const legalFields: CmsField[] = [
   text('privacyEyebrow', 'Label halaman Privasi', { required: true }), text('privacyTitle', 'Judul halaman Privasi', { required: true }), area('privacyDescription', 'Pengantar halaman Privasi', { required: true }),
-  text('privacyUpdatedAt', 'Tanggal pembaruan Privasi', { required: true, helper: 'Gunakan format YYYY-MM-DD, contoh: 2026-09-14.' }),
-  { key: 'privacySections', label: 'Isi Kebijakan Privasi', type: 'articleSections', required: true, wide: true, helper: 'Awali setiap bagian dengan ## Judul. Pisahkan paragraf dengan satu baris kosong.' },
+  { key: 'privacyUpdatedAt', label: 'Tanggal pembaruan Privasi', type: 'date', required: true },
+  { key: 'privacySections', label: 'Isi Kebijakan Privasi', type: 'articleSections', required: true, wide: true, helper: 'Tambahkan judul dan isi untuk setiap bagian.' },
   text('disclaimerEyebrow', 'Label halaman Disclaimer', { required: true }), text('disclaimerTitle', 'Judul halaman Disclaimer', { required: true }), area('disclaimerDescription', 'Pengantar halaman Disclaimer', { required: true }),
-  text('disclaimerUpdatedAt', 'Tanggal pembaruan Disclaimer', { required: true, helper: 'Gunakan format YYYY-MM-DD, contoh: 2026-09-14.' }),
-  { key: 'disclaimerSections', label: 'Isi Disclaimer', type: 'articleSections', required: true, wide: true, helper: 'Awali setiap bagian dengan ## Judul. Pisahkan paragraf dengan satu baris kosong.' },
+  { key: 'disclaimerUpdatedAt', label: 'Tanggal pembaruan Disclaimer', type: 'date', required: true },
+  { key: 'disclaimerSections', label: 'Isi Disclaimer', type: 'articleSections', required: true, wide: true, helper: 'Tambahkan judul dan isi untuk setiap bagian.' },
 ];
 
 export const brandingModule: CmsModuleDefinition = {
@@ -129,7 +129,7 @@ export const cmsModules: CmsModuleDefinition[] = [
     collection: 'projects', label: 'Portfolio', singular: 'proyek',
     description: 'Studi kasus, proyek digital, dokumen, data, dan hasil pekerjaan lainnya.',
     fields: [
-      text('slug', 'Alamat halaman', { required: true, helper: 'Huruf kecil dan tanda hubung, contoh: sistem-pelaporan.' }),
+      text('slug', 'Alamat halaman', { required: true, placeholder: 'contoh: website-portfolio-anh' }),
       text('title', 'Judul proyek', { required: true }), text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
       { key: 'layout', label: 'Proporsi kartu', type: 'select', options: [
         { value: 'wide', label: 'Lebar' }, { value: 'tall', label: 'Tinggi' }, { value: 'square', label: 'Persegi' },
@@ -137,13 +137,13 @@ export const cmsModules: CmsModuleDefinition[] = [
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true },
       text('role', 'Peran'), text('discipline', 'Bidang'), text('artifactType', 'Jenis hasil'),
       area('summary', 'Ringkasan proyek', { required: true }), area('challenge', 'Konteks / Tantangan'), area('approach', 'Pendekatan / Solusi'),
-      text('evidence.label', 'Label tautan bukti'), { key: 'evidence.href', label: 'Tautan atau dokumen bukti', type: 'asset', wide: true, helper: 'Gunakan satu tautan website atau unggah PDF, Word, Excel, PowerPoint, OpenDocument, TXT, maupun CSV.' },
+      text('evidence.label', 'Teks tombol bukti'), { key: 'evidence.href', label: 'Link proyek atau dokumen', type: 'asset', wide: true, helper: 'Masukkan link website atau unggah dokumen proyek.' },
       { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Satu kontribusi per baris.' },
-      { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Format setiap baris: Judul | Penjelasan.' },
+      { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Tambahkan langkah satu per satu. Data lama dengan format “Judul | Penjelasan” tetap dibaca.' },
       area('outcome', 'Hasil akhir'),
-      text('seoTitle', 'SEO title', { helper: 'Opsional. Jika kosong, judul proyek digunakan.' }),
-      area('seoDescription', 'SEO description', { helper: 'Disarankan 120–160 karakter untuk hasil berbagi yang rapi.' }),
-      { key: 'seoImage', label: 'Gambar social preview', type: 'image', wide: true, helper: 'Opsional. Jika kosong, gambar utama digunakan.' },
+      text('seoTitle', 'Judul untuk mesin pencari', { helper: 'Opsional. Jika kosong, judul proyek digunakan.' }),
+      area('seoDescription', 'Deskripsi untuk mesin pencari', { helper: 'Opsional. Tulis ringkasan singkat sekitar 120–160 karakter.' }),
+      { key: 'seoImage', label: 'Gambar saat dibagikan', type: 'image', wide: true, helper: 'Opsional. Jika kosong, gambar utama digunakan.' },
     ],
   },
   {
@@ -160,14 +160,14 @@ export const cmsModules: CmsModuleDefinition[] = [
     collection: 'articles', label: 'Artikel', singular: 'artikel',
     description: 'Tulisan, ringkasan, struktur isi, dan informasi penerbitan.',
     fields: [
-      text('slug', 'Alamat artikel', { required: true }), text('title', 'Judul artikel', { required: true }), text('category', 'Kategori'),
-      text('publishedAt', 'Tanggal terbit'), text('readTime', 'Estimasi baca'), area('excerpt', 'Ringkasan kartu', { required: true }),
+      text('slug', 'Alamat halaman', { required: true, placeholder: 'contoh: panduan-keamanan-data' }), text('title', 'Judul artikel', { required: true }), text('category', 'Kategori'),
+      { key: 'publishedAt', label: 'Tanggal publikasi', type: 'date' }, text('readTime', 'Estimasi waktu baca'), area('excerpt', 'Ringkasan artikel', { required: true }),
       area('lead', 'Paragraf pembuka'), { key: 'takeaways', label: 'Ringkasan utama', type: 'list', wide: true, helper: 'Satu poin per baris.' },
-      { key: 'sections', label: 'Isi artikel', type: 'articleSections', wide: true, helper: 'Gunakan ## untuk judul bagian. Pisahkan paragraf dengan satu baris kosong.' },
+      { key: 'sections', label: 'Isi artikel', type: 'articleSections', wide: true, helper: 'Tambahkan bagian artikel satu per satu.' },
       area('quote', 'Kutipan penekanan'), text('closingHeading', 'Judul penutup'), area('closing', 'Penutup'),
-      text('seoTitle', 'SEO title', { helper: 'Opsional. Jika kosong, judul artikel digunakan.' }),
-      area('seoDescription', 'SEO description', { helper: 'Disarankan 120–160 karakter untuk hasil berbagi yang rapi.' }),
-      { key: 'seoImage', label: 'Gambar social preview', type: 'image', wide: true, helper: 'Opsional untuk thumbnail saat artikel dibagikan.' },
+      text('seoTitle', 'Judul untuk mesin pencari', { helper: 'Opsional. Jika kosong, judul artikel digunakan.' }),
+      area('seoDescription', 'Deskripsi untuk mesin pencari', { helper: 'Opsional. Tulis ringkasan singkat sekitar 120–160 karakter.' }),
+      { key: 'seoImage', label: 'Gambar saat dibagikan', type: 'image', wide: true, helper: 'Opsional. Digunakan ketika artikel dibagikan.' },
     ],
   },
   {
@@ -187,7 +187,7 @@ export const cmsModules: CmsModuleDefinition[] = [
         { value: 'figma', label: 'Figma' },
       ] },
       { key: 'customIcon', label: 'Ikon kustom', type: 'image', wide: true, helper: 'Opsional. Gunakan PNG/WebP/JPG kecil dengan latar transparan; file akan tersimpan di Media agar mudah dikelola.' },
-      { key: 'href', label: 'Tautan', type: 'url', required: true, helper: 'Untuk email gunakan mailto:, untuk WhatsApp gunakan https://wa.me/...' },
+      { key: 'href', label: 'Link kontak', type: 'url', required: true, placeholder: 'https://contoh.com', helper: 'Untuk email gunakan mailto:, untuk WhatsApp gunakan https://wa.me/...' },
     ],
   },
 ];
