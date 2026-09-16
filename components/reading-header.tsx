@@ -15,6 +15,7 @@ const readingLinks = [
   { id: 'work', href: '/#work', label: 'Portfolio' },
   { id: 'certificates', href: '/#certificates', label: 'Sertifikasi' },
   { id: 'article', href: '/artikel', label: 'Artikel' },
+  { id: 'contact', href: '/#contact', label: 'Kontak' },
 ] as const;
 
 export function ReadingHeader({

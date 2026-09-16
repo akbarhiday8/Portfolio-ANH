@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, FileBadge2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { CertificateViewer } from '@/components/certificate-viewer';
+import { CertificateShowcase } from '@/components/certificate-showcase';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
@@ -13,6 +13,13 @@ import { SITE_URL } from '@/lib/site-url';
 export const dynamic = 'force-dynamic';
 
 type CertificationPageProps = { params: Promise<{ slug: string }> };
+
+const publicPlaceholderPattern = /akan ditambahkan|belum ditambahkan|belum tersedia|segera tersedia|to be added|coming soon/i;
+
+function meaningfulPublicText(value: string | null | undefined) {
+  const text = (value ?? '').trim();
+  return text && !publicPlaceholderPattern.test(text) ? text : '';
+}
 
 export async function generateMetadata({ params }: CertificationPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -44,6 +51,12 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const { certifications, profile, siteContent } = await getPortfolioContent();
   const certification = certifications.find((item) => certificationSlug(item.name) === slug);
   if (!certification) notFound();
+  const issuer = meaningfulPublicText(certification.issuer);
+  const description = meaningfulPublicText(certification.description);
+  const year = meaningfulPublicText(certification.year);
+  const category = meaningfulPublicText(certification.category);
+  const kicker = [category, year].filter(Boolean).join(' · ');
+  const hasMetadata = Boolean(issuer || year);
 
   return (
     <>
@@ -51,26 +64,18 @@ export default async function CertificationDetailPage({ params }: CertificationP
       <ReadingHeader activePage="certificates" profile={profile} siteContent={siteContent} />
       <main className="certification-detail-page" id="top">
         <section className="certification-hero">
-          <div className="section-wrap certification-hero-grid">
+          <div className={`section-wrap certification-hero-grid${certification.image ? '' : ' without-media'}`}>
             <div className="certification-intro">
               <Link className="certification-back" href="/#certificates"><ArrowLeft size={16} />Kembali ke Sertifikasi</Link>
-              <p className="certification-kicker">{certification.category} · {certification.year}</p>
+              {kicker ? <p className="certification-kicker">{kicker}</p> : null}
               <h1>{certification.name}</h1>
-              <p>{certification.description}</p>
-              <dl>
-                <div><dt>Diterbitkan oleh</dt><dd>{certification.issuer}</dd></div>
-                <div><dt>Tahun</dt><dd>{certification.year}</dd></div>
-              </dl>
+              {description ? <p>{description}</p> : null}
+              {hasMetadata ? <dl>
+                {issuer ? <div><dt>Diterbitkan oleh</dt><dd>{issuer}</dd></div> : null}
+                {year ? <div><dt>Tahun</dt><dd>{year}</dd></div> : null}
+              </dl> : null}
             </div>
-          </div>
-        </section>
-
-        <section className="certification-document" aria-labelledby="certificate-document-heading">
-          <div className="section-wrap">
-            <header className="certification-section-heading"><span>Bukti sertifikasi</span><h2 id="certificate-document-heading">Dokumen sertifikat</h2></header>
-            {certification.image ? <CertificateViewer src={certification.image} alt={`Bukti ${certification.name}`} /> : (
-              <div className="certification-document-empty"><FileBadge2 size={54} strokeWidth={1.1} /><strong>Bukti sertifikat belum ditambahkan</strong><p>Dokumen akan tampil di area ini setelah tersedia di CMS.</p></div>
-            )}
+            {certification.image ? <div className="certification-hero-media"><CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} /></div> : null}
           </div>
         </section>
 

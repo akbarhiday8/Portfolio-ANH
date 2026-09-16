@@ -17,13 +17,11 @@ function mediaShape(width: number, height: number): MediaShape {
 export function EditorialMedia({
   src,
   alt,
-  label = 'Project view',
   caption,
   priority = false,
 }: {
   src: string;
   alt: string;
-  label?: string;
   caption?: string;
   priority?: boolean;
 }) {
@@ -31,13 +29,12 @@ export function EditorialMedia({
 
   return (
     <figure className={`editorial-media is-${shape}`}>
-      <div className="editorial-media-heading"><span>{label}</span><i aria-hidden="true" /></div>
       <div className="editorial-media-stage">
         <Image
           src={src}
           fill
-          priority={priority}
-          sizes={shape === 'portrait' || shape === 'tall' ? '(max-width: 640px) 86vw, 520px' : '(max-width: 900px) 92vw, 1180px'}
+          preload={priority}
+          sizes={shape === 'portrait' || shape === 'tall' ? '(max-width: 850px) 76vw, 460px' : '(max-width: 850px) 100vw, 58vw'}
           alt={alt}
           onLoad={(event) => setShape(mediaShape(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
         />

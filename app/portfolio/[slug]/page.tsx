@@ -75,8 +75,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               </dl>
               {project.evidence?.href ? <div className="case-proof"><a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label || 'Lihat bukti proyek'}<ArrowUpRight size={16} /></a></div> : null}
             </div>
+            {project.image ? <div className="case-hero-media"><EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} /></div> : null}
           </div>
-          {project.image ? <div className="section-wrap case-media-break"><EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} caption={`${project.title} · ${project.category} · ${project.year}`} /></div> : null}
         </section>
 
         <section className="case-section case-study">
