@@ -31,6 +31,7 @@ export function CertificateShowcase({ src, alt }: { src: string; alt: string }) 
   return (
     <>
       <figure className={`certificate-showcase is-${orientation}`}>
+        <figcaption className="certificate-showcase-label">Dokumen sertifikat</figcaption>
         <button type="button" onClick={() => setOpen(true)} aria-label={`Perbesar ${alt}`}>
           <span className="certificate-showcase-stage">
             <Image
