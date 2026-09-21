@@ -4,6 +4,7 @@ import { resolveBranding } from '@/lib/branding';
 import { getPortfolioContent } from '@/lib/cms-repository';
 import { SITE_URL } from '@/lib/site-url';
 import './globals.css';
+import './detail-pages.css';
 
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
