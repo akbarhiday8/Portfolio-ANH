@@ -19,7 +19,8 @@
   --ornament-grid-major:rgba(23,21,18,.13);
   --editorial-rail:clamp(260px,18vw,300px);
   --serif:Georgia,'Times New Roman',serif;
-  --sans:var(--font-geist),Arial,sans-serif;
+  --display-serif:Georgia,'Times New Roman',serif;
+  --sans:Arial,sans-serif;
 }
 [data-theme='dark'] {
   color-scheme:dark;
@@ -41,7 +42,7 @@
 }
 * { box-sizing:border-box; }
 html { overflow-x:clip; scroll-behavior:smooth; }
-body { margin:0; overflow-x:hidden; background-color:var(--paper); color:var(--ink); font-family:var(--sans); background-image:radial-gradient(color-mix(in srgb,var(--ink) 6%,transparent) .45px,transparent .6px); background-size:5px 5px; transition:background-color .22s ease,color .22s ease; }
+body { --sans:var(--font-geist),Arial,sans-serif; --display-serif:var(--font-editorial),Georgia,'Times New Roman',serif; margin:0; overflow-x:hidden; background-color:var(--paper); color:var(--ink); font-family:var(--sans); background-image:radial-gradient(color-mix(in srgb,var(--ink) 6%,transparent) .45px,transparent .6px); background-size:5px 5px; transition:background-color .22s ease,color .22s ease; }
 section[id] { scroll-margin-top:86px; }
 a { color:inherit; text-decoration:none; }
 p,h1,h2,h3,h4,dl,dd { margin:0; }

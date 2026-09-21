@@ -16,6 +16,7 @@ const footerLinks = [
 
 export async function SiteFooter() {
   const { profile, siteContent } = await getPortfolioContent();
+  const currentYear = new Date().getUTCFullYear();
   return (
     <footer className="site-footer">
       <div className="section-wrap site-footer-main">
@@ -30,7 +31,7 @@ export async function SiteFooter() {
           </nav>
         </div>
         <div className="site-footer-lower">
-          <p className="site-footer-copyright">© {new Date().getFullYear()} {siteContent.copyrightText}</p>
+          <p className="site-footer-copyright">© {currentYear} {siteContent.copyrightText}</p>
           <div className="site-footer-actions">
             <nav className="site-footer-legal" aria-label="Informasi kebijakan">
               <Link href="/privasi">Privasi</Link>

@@ -94,6 +94,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
   const project = projects[projectIndex];
   const extra = project as typeof project & {
+    displayTitle?: unknown;
     technologies?: unknown;
     technology?: unknown;
     objective?: unknown;
@@ -111,8 +112,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const outcomes = optionalText(project.outcome).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
   const isWebsite = /website|aplikasi web|web app/i.test(project.artifactType);
   const primaryActionLabel = evidenceLabel(project.artifactType);
-  const titleWords = project.title.trim().split(/\s+/);
-  const titleHasLeadingAcronym = titleWords.length >= 3 && /^[A-Z0-9]{2,4}$/.test(titleWords[0]);
+  const displayTitle = optionalText(extra.displayTitle);
+  const titleLines = (displayTitle || project.title).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
@@ -131,11 +132,11 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <main className="project-detail-page" id="top">
         <section className="case-hero">
           <div className="section-wrap case-hero-shell">
-            <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
             <div className={`case-hero-grid${project.image ? '' : ' without-media'}`}>
               <div className="case-intro">
+                <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
                 <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
-                <h1>{titleHasLeadingAcronym ? <><span className="case-title-line">{titleWords[0]}</span><span className="case-title-line">{titleWords.slice(1).join(' ')}</span></> : project.title}</h1>
+                <h1>{titleLines.map((line, index) => <span className="case-title-line" key={`${line}-${index}`}>{line}</span>)}</h1>
                 {project.summary ? <p className="case-summary">{project.summary}</p> : null}
                 {evidenceUrl ? <div className="case-hero-actions">
                   <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{primaryActionLabel}<ArrowUpRight size={16} /></a>
@@ -155,10 +156,14 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
         {challenge || objective || approach || project.scope?.length || outcomes.length ? <section className="case-content">
           <div className="section-wrap case-content-grid">
-            {challenge || approach ? <article><h2>Tentang Proyek</h2>{challenge ? <p>{challenge}</p> : null}{approach ? <><h3>Pendekatan</h3><p>{approach}</p></> : null}</article> : null}
-            {objective ? <article><h2>Tujuan</h2><p>{objective}</p></article> : null}
-            {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
-            {outcomes.length ? <article><h2>Hasil</h2><ul className="case-result-list">{outcomes.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
+            {challenge || approach || project.scope?.length ? <div className="case-content-column">
+              {challenge || approach ? <article><h2>Tentang Proyek</h2>{challenge ? <p>{challenge}</p> : null}{approach ? <><h3>Pendekatan</h3><p>{approach}</p></> : null}</article> : null}
+              {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
+            </div> : null}
+            {objective || outcomes.length ? <div className="case-content-column">
+              {objective ? <article><h2>Tujuan</h2><p>{objective}</p></article> : null}
+              {outcomes.length ? <article><h2>Hasil</h2><ul className="case-result-list">{outcomes.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
+            </div> : null}
           </div>
         </section> : null}
 

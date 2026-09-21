@@ -88,7 +88,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Visual kartu', description: 'Gambar dan aksen tampilan.', fields: ['image', 'tone'] },
   ],
   projects: [
-    { title: 'Ringkasan proyek', description: 'Identitas, gambar utama, pengantar, dan metadata pada bagian teratas halaman detail.', fields: ['slug', 'title', 'category', 'year', 'image', 'summary', 'role', 'discipline', 'artifactType', 'technologies'] },
+    { title: 'Ringkasan proyek', description: 'Identitas, susunan judul, gambar utama, pengantar, dan metadata pada bagian teratas halaman detail.', fields: ['slug', 'title', 'displayTitle', 'category', 'year', 'image', 'summary', 'role', 'discipline', 'artifactType', 'technologies'] },
     { title: 'Cerita proyek', description: 'Konteks, tujuan, pendekatan, kontribusi, hasil, dan proses yang membentuk studi kasus.', fields: ['challenge', 'objective', 'approach', 'scope', 'outcome', 'process'] },
     { title: 'Bukti proyek', description: 'Satu tautan utama dan galeri visual pendukung. Label tombol dipilih otomatis dari jenis hasil.', fields: ['evidence.href', 'gallery'] },
     { title: 'SEO & Bagikan', description: 'Pengaturan opsional untuk hasil pencarian dan pratinjau saat halaman dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'], collapsed: true },
@@ -311,9 +311,13 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
 
   if (module.collection === 'projects') {
     if (!stringValue(data, 'image')) issues.push({ field: 'image', level: nextStatus === 'published' ? 'error' : 'warning', label: 'Gambar utama belum ada', detail: 'Tambahkan visual utama sebelum proyek dipublikasikan.' });
-    if (!stringValue(data, 'evidence.href')) issues.push({ field: 'evidence.href', level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
+    const evidenceHref = stringValue(data, 'evidence.href');
+    if (!evidenceHref) issues.push({ field: 'evidence.href', level: 'warning', label: 'Tautan bukti belum ada', detail: 'Tambahkan satu tautan website atau dokumen agar proyek lebih kredibel.' });
+    if (evidenceHref && /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(evidenceHref)) {
+      issues.push({ field: 'evidence.href', level: 'error', label: 'Link publik mengarah ke gambar', detail: 'Gunakan alamat website, dashboard, atau dokumen publik. Gambar proyek dikelola melalui Gambar utama dan Galeri.' });
+    }
     if (nextStatus === 'published') {
-      ([['role', 'Peran'], ['discipline', 'Bidang'], ['artifactType', 'Jenis hasil'], ['challenge', 'Konteks'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir']] as const).forEach(([key, label]) => {
+      ([['role', 'Peran'], ['discipline', 'Bidang'], ['artifactType', 'Jenis hasil'], ['challenge', 'Konteks'], ['objective', 'Tujuan proyek'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir']] as const).forEach(([key, label]) => {
         if (!stringValue(data, key)) issues.push({ field: key, level: 'error', label: `${label} belum diisi`, detail: 'Bagian ini tampil pada halaman studi kasus dan wajib dilengkapi sebelum publikasi.' });
       });
       if (!listLength(data, 'scope')) issues.push({ field: 'scope', level: 'error', label: 'Kontribusi utama masih kosong', detail: 'Tambahkan minimal satu kontribusi sebelum publikasi.' });

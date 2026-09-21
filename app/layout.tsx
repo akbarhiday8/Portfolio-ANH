@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Cormorant_Garamond, Geist } from 'next/font/google';
+import Script from 'next/script';
 import { resolveBranding } from '@/lib/branding';
 import { getPortfolioContent } from '@/lib/cms-repository';
 import { SITE_URL } from '@/lib/site-url';
@@ -7,6 +8,12 @@ import './globals.css';
 import './detail-pages.css';
 
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
+const editorial = Cormorant_Garamond({
+  variable: '--font-editorial',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+});
 
 const baseMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -45,13 +52,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="id" data-theme="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var saved=localStorage.getItem('anh-theme');var theme=saved==='dark'?'dark':'light';document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme='light';document.documentElement.style.colorScheme='light';}})();`,
-          }}
-        />
+        <Script id="anh-theme" strategy="beforeInteractive">
+          {`(function(){try{var saved=localStorage.getItem('anh-theme');var theme=saved==='dark'?'dark':'light';document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme='light';document.documentElement.style.colorScheme='light';}})();`}
+        </Script>
       </head>
-      <body className={geist.variable}>{children}</body>
+      <body className={`${geist.variable} ${editorial.variable}`}>{children}</body>
     </html>
   );
 }

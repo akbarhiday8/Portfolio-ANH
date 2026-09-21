@@ -106,6 +106,7 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
   projects: z.object({
     slug: slug.optional(),
     title: optionalShortText,
+    displayTitle: optionalShortText,
     category: optionalShortText,
     year: optionalShortText,
     layout: z.union([z.enum(['wide', 'tall', 'square']), z.literal('')]).optional().default(''),
@@ -127,7 +128,16 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     seoTitle: optionalShortText,
     seoDescription: optionalLongText,
     seoImage: optionalLink,
-  }).loose(),
+  }).loose().superRefine((data, context) => {
+    const href = data.evidence?.href || '';
+    if (href && /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(href)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['evidence', 'href'],
+        message: 'Gunakan alamat website atau dokumen publik, bukan URL file gambar.',
+      });
+    }
+  }),
   certifications: z.object({
     name: optionalShortText,
     issuer: optionalShortText,

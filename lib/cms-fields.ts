@@ -130,7 +130,9 @@ export const cmsModules: CmsModuleDefinition[] = [
     description: 'Studi kasus, proyek digital, dokumen, data, dan hasil pekerjaan lainnya.',
     fields: [
       text('slug', 'Alamat halaman', { required: true, placeholder: 'contoh: website-portfolio-anh' }),
-      text('title', 'Judul proyek', { required: true }), text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
+      text('title', 'Judul proyek', { required: true }),
+      area('displayTitle', 'Susunan judul pada halaman detail', { helper: 'Opsional. Gunakan Enter hanya jika judul memang perlu dipisah menjadi beberapa baris. Jika kosong, judul proyek digunakan apa adanya.' }),
+      text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true, helper: 'Visual utama pada kartu dan hero detail. Gunakan gambar paling representatif; portrait dan landscape ditangani otomatis.' },
       text('role', 'Peran'), text('discipline', 'Bidang'),
       { key: 'artifactType', label: 'Jenis hasil', type: 'select', options: [
@@ -147,7 +149,7 @@ export const cmsModules: CmsModuleDefinition[] = [
       area('challenge', 'Konteks / Tantangan', { helper: 'Jelaskan masalah awal atau kebutuhan yang melatarbelakangi proyek.' }),
       area('objective', 'Tujuan proyek', { helper: 'Jelaskan hasil yang ingin dicapai secara singkat dan terukur.' }),
       area('approach', 'Pendekatan / Solusi', { helper: 'Jelaskan strategi, keputusan utama, atau cara masalah diselesaikan.' }),
-      { key: 'evidence.href', label: 'Link proyek atau dokumen', type: 'asset', wide: true, helper: 'Satu tautan utama yang tampil sebagai tombol pada hero detail proyek.' },
+      { key: 'evidence.href', label: 'Link publik proyek atau dokumen', type: 'url', wide: true, placeholder: 'https://alamat-proyek.com', helper: 'Masukkan alamat website, dashboard, atau dokumen publik yang ingin dibuka pengunjung. Jangan isi dengan URL gambar pratinjau.' },
       { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Satu kontribusi per baris. Pilih pekerjaan yang benar-benar Anda lakukan.' },
       { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Disarankan 3–5 langkah. Urutan di CMS sama dengan urutan pada detail proyek.' },
       area('outcome', 'Hasil akhir', { helper: 'Tulis satu hasil atau dampak per baris agar tampil sebagai daftar yang mudah dipindai.' }),
