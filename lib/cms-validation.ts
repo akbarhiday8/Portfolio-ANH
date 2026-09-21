@@ -149,6 +149,7 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     issuedAt: isoDate,
     credentialUrl: optionalLink,
     image: optionalLink,
+    pages: galleryItems,
     description: optionalLongText,
     topics: textList,
   }).loose(),

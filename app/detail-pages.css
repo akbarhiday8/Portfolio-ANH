@@ -317,6 +317,7 @@
 .certificate-showcase-actions a { display: inline-flex; align-items: center; gap: 7px; }
 .certificate-showcase > header > span { color: var(--ink); font-weight: 700; }
 .certificate-showcase-tools { gap: 10px; }
+.certificate-page-count { color: var(--muted); font-size: 9px; font-weight: 600; white-space: nowrap; }
 .certificate-showcase-tools > button { border: 0; padding: 6px; background: transparent; color: var(--gray); font: inherit; cursor: pointer; }
 .certificate-showcase-tools > button:hover { color: var(--red-bright); }
 .certificate-status { border: 1px solid color-mix(in srgb, var(--red) 20%, var(--rule)); border-radius: 999px; padding: 5px 9px; background: color-mix(in srgb, var(--red) 7%, transparent); color: var(--red-bright); font-size: 8px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
@@ -336,6 +337,35 @@
 .certificate-showcase .certificate-viewer-hint { border-color: var(--rule); background: var(--surface-card); color: var(--gray); }
 .certificate-showcase .certificate-viewer-toolbar button { border-color: var(--rule); color: var(--ink); }
 .certificate-showcase .certificate-viewer-toolbar output { color: var(--gray); }
+.certificate-page-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 8px;
+  border-top: 1px solid var(--rule);
+  padding: 10px 3px 0;
+}
+.certificate-page-selector > button {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 6px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease;
+}
+.certificate-page-selector > button:hover,
+.certificate-page-selector > button.is-active { border-color: var(--red); background: color-mix(in srgb, var(--red) 4%, transparent); }
+.certificate-page-thumbnail { position: relative; width: 52px; height: 42px; overflow: hidden; background: var(--surface-quiet); }
+.certificate-page-thumbnail img { object-fit: contain; }
+.certificate-page-selector > button > span:last-child { display: grid; min-width: 0; gap: 2px; }
+.certificate-page-selector small { color: var(--muted); font-size: 8px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.certificate-page-selector strong { overflow: hidden; font-size: 10px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .certificate-showcase-actions { padding: 10px 3px 0; }
 .certificate-showcase-actions a { min-height: 32px; color: var(--ink); font-weight: 650; }
 .certificate-showcase-actions a:hover { color: var(--red-bright); }

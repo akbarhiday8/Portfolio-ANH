@@ -95,7 +95,8 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   ],
   certifications: [
     { title: 'Informasi sertifikasi', description: 'Identitas, status, dan kredensial yang tampil terstruktur pada halaman detail.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
-    { title: 'Bukti dan materi', description: 'Dokumen visual adaptif serta daftar materi yang dapat dibuka jika isinya panjang.', fields: ['image', 'description', 'topics'] },
+    { title: 'Bukti sertifikat', description: 'Halaman utama, sisi belakang, dan lampiran ditampilkan berurutan. Ukuran gambar menyesuaikan otomatis.', fields: ['image', 'pages'] },
+    { title: 'Ringkasan pembelajaran', description: 'Deskripsi singkat serta daftar materi yang dapat dibuka jika isinya panjang.', fields: ['description', 'topics'] },
   ],
   articles: [
     { title: 'Informasi penerbitan', description: 'Judul, kategori, alamat, dan waktu baca.', fields: ['slug', 'title', 'category', 'publishedAt', 'readTime', 'excerpt'] },
@@ -820,17 +821,18 @@ function ContentEditor({
           <div className="cms-gallery-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>
             {(Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as GalleryDraft[] : []).map((item, index) => {
               const uploadKey = `${field.key}-${index}`;
+              const galleryItemLabel = field.key === 'pages' ? `Halaman tambahan ${index + 1}` : `Gambar ${index + 1}`;
               return <article className="cms-gallery-row" key={`${field.key}-${index}`}>
-                {item.src ? <CmsAdaptiveImage src={item.src} alt={`Pratinjau galeri ${index + 1}`} /> : <div className="cms-media-empty"><ImageIcon size={24} /><span>Belum ada gambar</span></div>}
+                {item.src ? <CmsAdaptiveImage src={item.src} alt={`Pratinjau ${galleryItemLabel.toLowerCase()}`} /> : <div className="cms-media-empty"><ImageIcon size={24} /><span>Belum ada gambar</span></div>}
                 <div>
-                  <strong>Gambar {index + 1}</strong>
-                  <Input aria-label={`URL gambar galeri ${index + 1}`} placeholder="Unggah gambar atau masukkan link" value={item.src ?? ''} onChange={(event) => updateGallerySource(field, index, item.src, event.target.value)} />
-                  <Input aria-label={`Judul gambar galeri ${index + 1}`} placeholder="Judul gambar" value={item.caption ?? ''} onChange={(event) => setData((current) => {
+                  <strong>{galleryItemLabel}</strong>
+                  <Input aria-label={`URL ${galleryItemLabel.toLowerCase()}`} placeholder="Unggah gambar atau masukkan link" value={item.src ?? ''} onChange={(event) => updateGallerySource(field, index, item.src, event.target.value)} />
+                  <Input aria-label={`Judul ${galleryItemLabel.toLowerCase()}`} placeholder={field.key === 'pages' ? 'Contoh: Halaman belakang' : 'Judul gambar'} value={item.caption ?? ''} onChange={(event) => setData((current) => {
                     const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
                     items[index] = { ...items[index], caption: event.target.value };
                     return setPath(current, field.key, items);
                   })} />
-                  <Textarea aria-label={`Keterangan gambar galeri ${index + 1}`} placeholder="Keterangan singkat (opsional)" rows={2} value={item.description ?? ''} onChange={(event) => setData((current) => {
+                  <Textarea aria-label={`Keterangan ${galleryItemLabel.toLowerCase()}`} placeholder="Keterangan singkat (opsional)" rows={2} value={item.description ?? ''} onChange={(event) => setData((current) => {
                     const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
                     items[index] = { ...items[index], description: event.target.value };
                     return setPath(current, field.key, items);
@@ -839,12 +841,24 @@ function ContentEditor({
                   <div className="cms-media-field-actions">
                     <Button type="button" variant="outline" onClick={() => fileInputs.current[uploadKey]?.click()} disabled={uploading === uploadKey}><Upload size={15} />{uploading === uploadKey ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : item.src ? 'Ganti gambar' : 'Unggah gambar'}</Button>
                     {uploading === uploadKey ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}
+                    {field.key === 'pages' ? <span className="cms-gallery-order" aria-label={`Urutan ${galleryItemLabel.toLowerCase()}`}>
+                      <button type="button" disabled={index === 0} aria-label={`Pindahkan ${galleryItemLabel.toLowerCase()} ke atas`} title="Pindahkan ke atas" onClick={() => setData((current) => {
+                        const items = [...(getPath(current, field.key) as GalleryDraft[] ?? [])];
+                        [items[index - 1], items[index]] = [items[index], items[index - 1]];
+                        return setPath(current, field.key, items);
+                      })}><ArrowUp size={14} /></button>
+                      <button type="button" disabled={index === (getPath(data, field.key) as GalleryDraft[]).length - 1} aria-label={`Pindahkan ${galleryItemLabel.toLowerCase()} ke bawah`} title="Pindahkan ke bawah" onClick={() => setData((current) => {
+                        const items = [...(getPath(current, field.key) as GalleryDraft[] ?? [])];
+                        [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                        return setPath(current, field.key, items);
+                      })}><ArrowDown size={14} /></button>
+                    </span> : null}
                     <button className="cms-remove-media" type="button" onClick={() => removeGalleryItem(field, index, item.src)}><Trash2 size={14} />Hapus</button>
                   </div>
                 </div>
               </article>;
             })}
-            <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : []), { src: '', caption: '', description: '' }]))}><Plus size={15} />Tambah gambar</Button>
+            <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : []), { src: '', caption: '', description: '' }]))}><Plus size={15} />{field.key === 'pages' ? 'Tambah halaman' : 'Tambah gambar'}</Button>
           </div>
         ) : field.type === 'steps' ? (
           <div className="cms-steps-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>

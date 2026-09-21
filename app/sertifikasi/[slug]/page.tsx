@@ -6,7 +6,7 @@ import {
   FileBadge2, Landmark, Tag,
 } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { CertificateShowcase } from '@/components/certificate-showcase';
+import { CertificateShowcase, type CertificatePage } from '@/components/certificate-showcase';
 import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
@@ -35,11 +35,38 @@ function publicLink(value: unknown) {
   }
 }
 
+function publicMediaSource(value: unknown) {
+  if (typeof value !== 'string') return '';
+  const src = value.trim();
+  return src.startsWith('/') ? src : publicLink(src);
+}
+
 function displayDate(value: string) {
   if (!value) return '';
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}
+
+function certificatePages(primaryImage: unknown, additionalPages: unknown): CertificatePage[] {
+  const pages: CertificatePage[] = [];
+  const seen = new Set<string>();
+  const append = (srcValue: unknown, labelValue: unknown) => {
+    const src = publicMediaSource(srcValue);
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    pages.push({ src, label: meaningfulPublicText(labelValue) || `Halaman ${pages.length + 1}` });
+  };
+
+  append(primaryImage, 'Halaman depan');
+  if (Array.isArray(additionalPages)) {
+    additionalPages.forEach((page) => {
+      if (!page || typeof page !== 'object') return;
+      const item = page as { src?: unknown; caption?: unknown; description?: unknown };
+      append(item.src, item.caption || item.description);
+    });
+  }
+  return pages;
 }
 
 export async function generateMetadata({ params }: CertificationPageProps): Promise<Metadata> {
@@ -76,6 +103,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
     credentialId?: unknown;
     issuedAt?: unknown;
     credentialUrl?: unknown;
+    pages?: unknown;
   };
   const issuer = meaningfulPublicText(certification.issuer);
   const description = meaningfulPublicText(certification.description);
@@ -95,6 +123,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const additionalTopics = topics.slice(6);
   const credentialUrl = publicLink(extra.credentialUrl);
   const related = certifications.filter((item) => item !== certification).slice(0, 3);
+  const pages = certificatePages(certification.image, extra.pages);
 
   return (
     <>
@@ -102,7 +131,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
       <ReadingHeader activePage="certificates" profile={profile} siteContent={siteContent} />
       <main className="certification-detail-page" id="top">
         <section className="certification-hero">
-          <div className={`section-wrap certification-hero-grid${certification.image ? '' : ' without-media'}`}>
+          <div className={`section-wrap certification-hero-grid${pages.length ? '' : ' without-media'}`}>
             <div className="certification-intro">
               <Link className="detail-return" href="/#certificates"><ArrowLeft size={16} />Kembali ke Sertifikasi</Link>
               {category || year ? <p className="certification-kicker">{[category, year].filter(Boolean).join(' · ')}</p> : null}
@@ -110,8 +139,8 @@ export default async function CertificationDetailPage({ params }: CertificationP
               {description ? <p>{description}</p> : null}
             </div>
 
-            {certification.image ? <div className="certification-hero-media">
-              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} status={status} />
+            {pages.length ? <div className="certification-hero-media">
+              <CertificateShowcase pages={pages} alt={`Bukti ${certification.name}`} status={status} />
             </div> : null}
 
             <div className="certification-details">
