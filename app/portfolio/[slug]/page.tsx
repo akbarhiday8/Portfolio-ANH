@@ -149,14 +149,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           </figure>)}</div>
         </section> : null}
 
-        {evidenceUrl || repositoryUrl ? <section className="case-links section-wrap" aria-labelledby="case-links-heading">
-          <h2 id="case-links-heading">Tautan</h2>
-          <div>
-            {evidenceUrl ? <a href={evidenceUrl} target="_blank" rel="noopener noreferrer">{isWebsite ? 'Website' : project.evidence?.label || 'Bukti Proyek'}<ArrowUpRight size={16} /></a> : null}
-            {repositoryUrl ? <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">Repository<ArrowUpRight size={16} /></a> : null}
-          </div>
-        </section> : null}
-
         {projects.length > 1 ? <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
           <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></Link>
           <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></Link>

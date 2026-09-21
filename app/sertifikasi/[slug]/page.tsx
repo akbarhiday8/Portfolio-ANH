@@ -86,7 +86,6 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const topics = certification.topics.map(meaningfulPublicText).filter(Boolean);
   const credentialUrl = publicLink(extra.credentialUrl);
   const related = certifications.filter((item) => item !== certification).slice(0, 3);
-  const caption = `${certification.name}${issuer ? ` dari ${issuer}` : ''}${year ? `, ${year}` : ''}.`;
 
   return (
     <>
@@ -103,7 +102,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
             </div>
 
             {certification.image ? <div className="certification-hero-media">
-              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} caption={caption} />
+              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} />
             </div> : null}
 
             <div className="certification-details">
@@ -113,7 +112,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
 
               {topics.length ? <section className="certification-material" aria-labelledby="certificate-material-heading">
                 <h2 id="certificate-material-heading">Materi yang Dipelajari / Diujikan</h2>
-                <ol>{topics.map((topic, index) => <li key={`${topic}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span><p>{topic}</p></li>)}</ol>
+                <ol>{topics.map((topic, index) => <li key={`${topic}-${index}`}><span>{index + 1}</span><p>{topic}</p></li>)}</ol>
               </section> : null}
 
               {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a> : null}

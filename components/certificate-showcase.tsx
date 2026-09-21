@@ -4,7 +4,7 @@ import { ExternalLink, Expand, FileBadge2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { CertificateViewer } from '@/components/certificate-viewer';
 
-export function CertificateShowcase({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
+export function CertificateShowcase({ src, alt }: { src: string; alt: string }) {
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -38,7 +38,6 @@ export function CertificateShowcase({ src, alt, caption }: { src: string; alt: s
           <span>Gunakan kontrol zoom atau buka dokumen asli.</span>
           <a href={src} target="_blank" rel="noreferrer"><ExternalLink size={15} />Buka di tab baru</a>
         </div>
-        {caption ? <figcaption>{caption}</figcaption> : null}
       </figure>
 
       {open ? (
