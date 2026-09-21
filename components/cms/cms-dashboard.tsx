@@ -25,7 +25,7 @@ import { siteContentDefaults } from '@/lib/site-content-defaults';
 
 type CmsCollections = Record<string, CmsRecord[]>;
 type ActiveView = 'overview' | 'media' | 'branding' | 'legal' | CmsCollection;
-type EditorSection = { title: string; description: string; fields: string[] };
+type EditorSection = { title: string; description: string; fields: string[]; collapsed?: boolean };
 type CmsIcon = React.ComponentType<{ size?: number }>;
 type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
 type ValidationIssue = { label: string; detail: string; level: 'error' | 'warning'; field?: string };
@@ -88,11 +88,10 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Visual kartu', description: 'Gambar dan aksen tampilan.', fields: ['image', 'tone'] },
   ],
   projects: [
-    { title: 'Identitas proyek', description: 'Judul, kategori, tahun, dan alamat halaman.', fields: ['slug', 'title', 'category', 'year', 'layout'] },
-    { title: 'Gambaran proyek', description: 'Informasi ringkas yang tampil pada hero dan baris metadata detail proyek.', fields: ['image', 'role', 'discipline', 'artifactType', 'technologies', 'summary'] },
-    { title: 'Studi kasus', description: 'Narasi utama dan urutan proses yang membantu pengunjung memahami pekerjaan Anda.', fields: ['challenge', 'objective', 'approach', 'scope', 'process'] },
-    { title: 'Bukti dan hasil', description: 'Tautan utama, hasil akhir, dan galeri visual sebagai bukti proyek.', fields: ['evidence.label', 'evidence.href', 'repositoryUrl', 'outcome', 'gallery'] },
-    { title: 'Tampilan di pencarian & berbagi', description: 'Judul, deskripsi, dan gambar saat halaman ditemukan atau dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
+    { title: 'Ringkasan proyek', description: 'Identitas, gambar utama, pengantar, dan metadata pada bagian teratas halaman detail.', fields: ['slug', 'title', 'category', 'year', 'image', 'summary', 'role', 'discipline', 'artifactType', 'technologies'] },
+    { title: 'Cerita proyek', description: 'Konteks, tujuan, pendekatan, kontribusi, hasil, dan proses yang membentuk studi kasus.', fields: ['challenge', 'objective', 'approach', 'scope', 'outcome', 'process'] },
+    { title: 'Bukti proyek', description: 'Satu tautan utama dan galeri visual pendukung. Label tombol dipilih otomatis dari jenis hasil.', fields: ['evidence.href', 'gallery'] },
+    { title: 'SEO & Bagikan', description: 'Pengaturan opsional untuk hasil pencarian dan pratinjau saat halaman dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'], collapsed: true },
   ],
   certifications: [
     { title: 'Informasi sertifikasi', description: 'Identitas, status, dan kredensial yang tampil terstruktur pada halaman detail.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
@@ -708,6 +707,8 @@ function ContentEditor({
 
   function focusField(fieldKey: string) {
     const element = document.getElementById(`field-${fieldKey.replace('.', '-')}`);
+    const collapsedSection = element?.closest('details');
+    if (collapsedSection instanceof HTMLDetailsElement) collapsedSection.open = true;
     element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     window.setTimeout(() => (element as HTMLElement | null)?.focus(), 180);
   }
@@ -968,10 +969,18 @@ function ContentEditor({
                 const fields = section.fields.map((key) => module.fields.find((field) => field.key === key)).filter((field): field is CmsField => Boolean(field));
                 const sectionErrorCount = displayedValidationIssues.filter((issue) => issue.level === 'error' && issue.field && section.fields.includes(issue.field)).length;
                 if (!fields.length) return null;
-                return (
-                  <section className={`cms-form-section${sectionErrorCount ? ' has-errors' : ''}`} id={`editor-section-${index}`} key={section.title}>
-                    <header><i aria-hidden="true" /><div><h3>{section.title}</h3><p>{section.description}</p></div>{sectionErrorCount ? <span className="cms-section-error-count">{sectionErrorCount} perlu diperbaiki</span> : null}</header>
+                const sectionContent = <>
+                  <header><i aria-hidden="true" /><div><h3>{section.title}</h3><p>{section.description}</p></div>{sectionErrorCount ? <span className="cms-section-error-count">{sectionErrorCount} perlu diperbaiki</span> : null}</header>
+                  <div className="cms-editor-fields">{fields.map(renderField)}</div>
+                </>;
+                return section.collapsed ? (
+                  <details className={`cms-form-section cms-form-section--collapsible${sectionErrorCount ? ' has-errors' : ''}`} id={`editor-section-${index}`} key={section.title} open={sectionErrorCount > 0 ? true : undefined}>
+                    <summary><i aria-hidden="true" /><div><h3>{section.title}</h3><p>{section.description}</p></div><ChevronDown size={17} aria-hidden="true" /></summary>
                     <div className="cms-editor-fields">{fields.map(renderField)}</div>
+                  </details>
+                ) : (
+                  <section className={`cms-form-section${sectionErrorCount ? ' has-errors' : ''}`} id={`editor-section-${index}`} key={section.title}>
+                    {sectionContent}
                   </section>
                 );
               })}

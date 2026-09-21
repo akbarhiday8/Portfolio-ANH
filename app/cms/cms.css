@@ -273,6 +273,13 @@
 .cms-form-section > header > i { display:block; width:28px; height:3px; margin-top:9px; border-radius:999px; background:var(--red); box-shadow:0 0 0 7px color-mix(in srgb,var(--red) 8%,transparent); }
 .cms-form-section h3 { font:650 16px/1.3 var(--sans); }
 .cms-form-section header p { margin-top:3px; color:var(--muted); font-size:11px; line-height:1.5; }
+.cms-form-section--collapsible > summary { display:grid; grid-template-columns:34px 1fr auto; gap:10px; align-items:start; cursor:pointer; list-style:none; }
+.cms-form-section--collapsible > summary::-webkit-details-marker { display:none; }
+.cms-form-section--collapsible > summary > i { display:block; width:28px; height:3px; margin-top:9px; border-radius:999px; background:var(--red); box-shadow:0 0 0 7px color-mix(in srgb,var(--red) 8%,transparent); }
+.cms-form-section--collapsible > summary p { margin-top:3px; color:var(--muted); font-size:11px; line-height:1.5; }
+.cms-form-section--collapsible > summary > svg { margin-top:3px; color:var(--muted); transition:transform .2s ease; }
+.cms-form-section--collapsible[open] > summary { border-bottom:1px solid var(--cms-line); padding-bottom:16px; }
+.cms-form-section--collapsible[open] > summary > svg { transform:rotate(180deg); }
 .cms-editor-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px 18px; margin-top:20px; }
 .cms-editor-fields .is-wide { grid-column:1/-1; }
 .cms-media-field { display:grid; grid-template-columns:190px 1fr; gap:16px; border:1px solid var(--cms-line); border-radius:7px; padding:12px; background:var(--paper); }

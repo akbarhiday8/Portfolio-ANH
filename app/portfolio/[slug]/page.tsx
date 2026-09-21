@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Code2, FolderKanban, Layers3, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { EditorialMedia } from '@/components/editorial-media';
 import { MotionController } from '@/components/motion-controller';
@@ -51,11 +51,9 @@ function processSteps(value: unknown): ProcessStep[] {
   });
 }
 
-function evidenceLabel(artifactType: string, configuredLabel: unknown) {
+function evidenceLabel(artifactType: string) {
   const type = artifactType.toLowerCase();
   if (/website|aplikasi web|web app/.test(type)) return 'Lihat Website';
-  const configured = optionalText(configuredLabel);
-  if (configured) return configured;
   if (/pdf|dokumen|laporan|presentasi|spreadsheet|excel|powerpoint/.test(type)) return 'Buka Dokumen';
   if (/dashboard|data/.test(type)) return 'Lihat Dashboard';
   return 'Lihat Bukti Proyek';
@@ -99,7 +97,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     technologies?: unknown;
     technology?: unknown;
     objective?: unknown;
-    repositoryUrl?: unknown;
     gallery?: unknown;
   };
   const challenge = optionalText(project.challenge);
@@ -109,21 +106,21 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     ? extra.technologies.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).join(', ')
     : optionalText(extra.technologies || extra.technology);
   const evidenceUrl = publicLink(project.evidence?.href);
-  const repositoryUrl = publicLink(extra.repositoryUrl);
   const gallery = galleryItems(extra.gallery).filter((item) => item.src !== project.image);
   const process = processSteps(project.process);
+  const outcomes = optionalText(project.outcome).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
   const isWebsite = /website|aplikasi web|web app/i.test(project.artifactType);
-  const primaryActionLabel = evidenceLabel(project.artifactType, project.evidence?.label);
+  const primaryActionLabel = evidenceLabel(project.artifactType);
   const titleWords = project.title.trim().split(/\s+/);
   const titleHasLeadingAcronym = titleWords.length >= 3 && /^[A-Z0-9]{2,4}$/.test(titleWords[0]);
   const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
   const metadata = [
-    { label: 'Peran', value: project.role, Icon: UserRound },
-    { label: 'Bidang', value: project.discipline, Icon: FolderKanban },
-    { label: 'Jenis hasil', value: project.artifactType, Icon: Layers3 },
-    { label: 'Teknologi', value: technologies, Icon: Code2 },
+    { label: 'Peran', value: project.role },
+    { label: 'Bidang', value: project.discipline },
+    { label: 'Jenis hasil', value: project.artifactType },
+    { label: 'Teknologi', value: technologies },
   ].filter(({ value }) => Boolean(value));
 
   return (
@@ -133,53 +130,47 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
       <main className="project-detail-page" id="top">
         <section className="case-hero">
-          <div className={`section-wrap case-hero-grid${project.image ? '' : ' without-media'}`}>
-            <div className="case-intro">
-              <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
-              <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
-              <h1>{titleHasLeadingAcronym ? <><span className="case-title-line">{titleWords[0]}</span><span className="case-title-line">{titleWords.slice(1).join(' ')}</span></> : project.title}</h1>
-              {project.summary ? <p className="case-summary">{project.summary}</p> : null}
-              {evidenceUrl || repositoryUrl ? <div className="case-hero-actions">
-                {evidenceUrl ? <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{primaryActionLabel}<ArrowUpRight size={16} /></a> : null}
-                {repositoryUrl ? <a className="detail-action detail-action-secondary" href={repositoryUrl} target="_blank" rel="noopener noreferrer">Lihat Kode<ArrowUpRight size={16} /></a> : null}
-              </div> : null}
+          <div className="section-wrap case-hero-shell">
+            <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
+            <div className={`case-hero-grid${project.image ? '' : ' without-media'}`}>
+              <div className="case-intro">
+                <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
+                <h1>{titleHasLeadingAcronym ? <><span className="case-title-line">{titleWords[0]}</span><span className="case-title-line">{titleWords.slice(1).join(' ')}</span></> : project.title}</h1>
+                {project.summary ? <p className="case-summary">{project.summary}</p> : null}
+                {evidenceUrl ? <div className="case-hero-actions">
+                  <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{primaryActionLabel}<ArrowUpRight size={16} /></a>
+                </div> : null}
+              </div>
+              {project.image ? <figure className="case-hero-media">
+                <EditorialMedia src={project.image} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
+                <figcaption>{isWebsite ? `Halaman utama ${project.title}` : `Dokumentasi utama ${project.title}`}</figcaption>
+              </figure> : null}
             </div>
-            {project.image ? <div className="case-hero-media">
-              <p className="case-media-label">{isWebsite ? 'Website preview' : 'Pratinjau proyek'}</p>
-              <EditorialMedia src={project.image} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
-            </div> : null}
           </div>
         </section>
 
         {metadata.length ? <section className="case-facts section-wrap" aria-label="Informasi proyek">
-          <dl>{metadata.map(({ label, value, Icon }) => <div key={label}><Icon size={19} aria-hidden="true" /><span><dt>{label}</dt><dd>{value}</dd></span></div>)}</dl>
+          <dl>{metadata.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
         </section> : null}
 
-        {challenge || objective || approach || project.scope?.length || project.outcome ? <section className="case-content">
+        {challenge || objective || approach || project.scope?.length || outcomes.length ? <section className="case-content">
           <div className="section-wrap case-content-grid">
-            {challenge ? <article><h2>Tentang Proyek</h2><p>{challenge}</p></article> : null}
+            {challenge || approach ? <article><h2>Tentang Proyek</h2>{challenge ? <p>{challenge}</p> : null}{approach ? <><h3>Pendekatan</h3><p>{approach}</p></> : null}</article> : null}
             {objective ? <article><h2>Tujuan</h2><p>{objective}</p></article> : null}
-            {approach ? <article><h2>Pendekatan</h2><p>{approach}</p></article> : null}
             {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
-            {project.outcome ? <article><h2>Hasil</h2><p>{project.outcome}</p></article> : null}
+            {outcomes.length ? <article><h2>Hasil</h2><ul className="case-result-list">{outcomes.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
           </div>
         </section> : null}
 
         {process.length ? <section className="case-process section-wrap" aria-labelledby="case-process-heading">
-          <header className="case-section-heading">
-            <div><p>Alur pengerjaan</p><h2 id="case-process-heading">Proses Singkat</h2></div>
-            <p>Tahapan utama yang menjaga pekerjaan tetap terarah dan hasilnya mudah ditinjau.</p>
-          </header>
+          <h2 id="case-process-heading">Proses Singkat</h2>
           <ol>{process.map((step, index) => <li key={`${step.title}-${index}`}>
-            <span>{index + 1}</span><div><h3>{step.title}</h3><p>{step.description}</p></div>
+            <span>{String(index + 1).padStart(2, '0')}</span><div><h3>{step.title}</h3><p>{step.description}</p></div>
           </li>)}</ol>
         </section> : null}
 
         {gallery.length ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
-          <header className="case-section-heading">
-            <div><p>Dokumentasi visual</p><h2 id="case-gallery-heading">Galeri Proyek</h2></div>
-            <p>Cuplikan hasil, fitur, atau dokumen yang membantu menjelaskan proyek secara nyata.</p>
-          </header>
+          <h2 id="case-gallery-heading">Galeri Proyek</h2>
           <div className={`case-gallery-grid count-${Math.min(gallery.length, 3)}`}>{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
             <EditorialMedia src={item.src} expandable alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} />
             {item.caption || item.description ? <figcaption><strong>{item.caption}</strong>{item.description ? <span>{item.description}</span> : null}</figcaption> : null}
@@ -187,8 +178,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </section> : null}
 
         {projects.length > 1 ? <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
-          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small><strong>{previous.title}</strong><em>{[previous.category, previous.year].filter(Boolean).join(' · ')}</em></span></Link>
-          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small><strong>{next.title}</strong><em>{[next.category, next.year].filter(Boolean).join(' · ')}</em></span><ArrowRight size={17} /></Link>
+          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small><strong>{previous.title}</strong></span></Link>
+          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small><strong>{next.title}</strong></span><ArrowRight size={17} /></Link>
         </nav> : null}
 
         <SiteFooter />

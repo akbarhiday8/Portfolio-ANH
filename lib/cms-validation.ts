@@ -190,7 +190,7 @@ function publishingErrors(collection: CmsCollection, data: Record<string, unknow
     projects: [
       ['slug', 'Alamat halaman'], ['title', 'Judul proyek'], ['category', 'Kategori'], ['summary', 'Ringkasan'],
       ['image', 'Gambar utama'], ['role', 'Peran'], ['discipline', 'Bidang'], ['artifactType', 'Jenis hasil'],
-      ['challenge', 'Konteks'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir'],
+      ['challenge', 'Konteks'], ['objective', 'Tujuan proyek'], ['approach', 'Pendekatan'], ['outcome', 'Hasil akhir'],
     ],
     certifications: [['name', 'Nama sertifikasi'], ['issuer', 'Instansi penerbit'], ['image', 'Bukti sertifikat'], ['description', 'Deskripsi']],
     articles: [['slug', 'Alamat artikel'], ['title', 'Judul artikel'], ['excerpt', 'Ringkasan kartu'], ['lead', 'Paragraf pembuka'], ['closing', 'Penutup']],
