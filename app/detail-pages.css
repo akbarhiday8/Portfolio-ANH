@@ -385,7 +385,25 @@
 .certification-credential dl > div { min-width: 0; border-left: 2px solid var(--red); padding-left: 12px; }
 .certification-credential dt { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .certification-credential dd { margin-top: 5px; color: var(--ink); font: 400 14px/1.4 var(--serif); overflow-wrap: anywhere; }
-.certification-verify-link { margin-top: 0; }
+.certification-verify-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 68px;
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--red);
+  padding: 12px 13px 12px 15px;
+  color: var(--ink);
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+.certification-verify-link > span { display: grid; gap: 4px; min-width: 0; }
+.certification-verify-link small { color: var(--red-bright); font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.certification-verify-link strong { font: 500 17px/1.15 var(--display-serif); }
+.certification-verify-link > svg { justify-self: end; color: var(--red-bright); transition: transform .2s ease; }
+.certification-verify-link:hover { border-color: var(--red); background: color-mix(in srgb, var(--red) 4%, transparent); transform: translateY(-1px); }
+.certification-verify-link:hover > svg { transform: translate(2px, -2px); }
 
 .certificate-related { padding-block: clamp(46px, 4vw, 64px); }
 .certificate-related > header { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }

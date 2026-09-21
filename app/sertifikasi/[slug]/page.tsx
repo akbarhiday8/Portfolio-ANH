@@ -163,7 +163,10 @@ export default async function CertificationDetailPage({ params }: CertificationP
                   {credentialId ? <div><dt>ID kredensial</dt><dd>{credentialId}</dd></div> : null}
                   {issuedAt ? <div><dt>Tanggal terbit</dt><dd>{issuedAt}</dd></div> : null}
                 </dl> : null}
-                {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a> : null}
+                {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer" aria-label="Verifikasi kredensial di situs resmi penerbit">
+                  <span><small>Verifikasi resmi</small><strong>Verifikasi kredensial</strong></span>
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </a> : null}
               </section> : null}
             </div>
           </div>
