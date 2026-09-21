@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Eye } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { MotionController } from '@/components/motion-controller';
 import { EditorialMedia } from '@/components/editorial-media';
+import { MotionController } from '@/components/motion-controller';
 import { ReadingHeader } from '@/components/reading-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getPortfolioContent } from '@/lib/cms-repository';
@@ -11,9 +12,33 @@ import { SITE_URL } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
-type ProjectPageProps = {
-  params: Promise<{ slug: string }>;
-};
+type ProjectPageProps = { params: Promise<{ slug: string }> };
+type GalleryItem = { src: string; caption: string; description: string };
+
+function optionalText(value: unknown) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function publicLink(value: unknown) {
+  if (typeof value !== 'string') return '';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
+function galleryItems(value: unknown): GalleryItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const entry = item as Record<string, unknown>;
+    const src = optionalText(entry.src || entry.image);
+    if (!src || !(src.startsWith('/') || publicLink(src))) return [];
+    return [{ src, caption: optionalText(entry.caption), description: optionalText(entry.description) }];
+  });
+}
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -24,7 +49,8 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   const seo = project as typeof project & { seoTitle?: string; seoDescription?: string; seoImage?: string };
   const pageTitle = seo.seoTitle || `${project.title} — Portfolio Akbar Nur Hidayanto`;
   const pageDescription = seo.seoDescription || project.summary;
-  const image = new URL(seo.seoImage || project.image, SITE_URL).toString();
+  const image = seo.seoImage || project.image;
+  const imageUrl = image ? new URL(image, SITE_URL).toString() : undefined;
 
   return {
     title: pageTitle,
@@ -33,14 +59,14 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       title: seo.seoTitle || project.title,
       description: pageDescription,
       type: 'article',
-      images: [{ url: image, alt: `Dokumentasi proyek ${project.title}` }],
+      images: imageUrl ? [{ url: imageUrl, alt: `Dokumentasi proyek ${project.title}` }] : undefined,
     },
-    twitter: {
+    twitter: imageUrl ? {
       card: 'summary_large_image',
       title: seo.seoTitle || project.title,
       description: pageDescription,
-      images: [image],
-    },
+      images: [imageUrl],
+    } : undefined,
   };
 }
 
@@ -51,10 +77,34 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   if (projectIndex < 0) notFound();
 
   const project = projects[projectIndex];
-  const challenge = String(project.challenge ?? '');
-  const approach = String(project.approach ?? '');
+  const extra = project as typeof project & {
+    technologies?: unknown;
+    technology?: unknown;
+    objective?: unknown;
+    repositoryUrl?: unknown;
+    gallery?: unknown;
+  };
+  const challenge = optionalText(project.challenge);
+  const approach = optionalText(project.approach);
+  const objective = optionalText(extra.objective);
+  const technologies = Array.isArray(extra.technologies)
+    ? extra.technologies.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).join(', ')
+    : optionalText(extra.technologies || extra.technology);
+  const evidenceUrl = publicLink(project.evidence?.href);
+  const repositoryUrl = publicLink(extra.repositoryUrl);
+  const gallery = galleryItems(extra.gallery);
+  const isWebsite = /website|aplikasi web|web app/i.test(project.artifactType);
+  const titleWords = project.title.trim().split(/\s+/);
+  const titleHasLeadingAcronym = titleWords.length >= 3 && /^[A-Z0-9]{2,4}$/.test(titleWords[0]);
+  const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
+  const metadata = [
+    { label: 'Peran', value: project.role },
+    { label: 'Bidang', value: project.discipline },
+    { label: 'Jenis hasil', value: project.artifactType },
+    { label: 'Teknologi', value: technologies },
+  ].filter(({ value }) => Boolean(value));
 
   return (
     <>
@@ -63,74 +113,57 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
       <main className="project-detail-page" id="top">
         <section className="case-hero">
-          <div className="section-wrap case-hero-grid case-hero-grid--editorial">
+          <div className={`section-wrap case-hero-grid${project.image ? '' : ' without-media'}`}>
             <div className="case-intro">
-              <p className="case-kicker">{project.category} · {project.year}</p>
-              <h1>{project.title}</h1>
-              <p className="case-summary">{project.summary}</p>
-              <dl className="case-meta case-meta--compact">
-                {project.role ? <div><dt>Peran</dt><dd>{project.role}</dd></div> : null}
-                {project.discipline ? <div><dt>Bidang</dt><dd>{project.discipline}</dd></div> : null}
-                {project.artifactType ? <div><dt>Jenis hasil</dt><dd>{project.artifactType}</dd></div> : null}
-              </dl>
-              {project.evidence?.href ? <div className="case-proof"><a href={project.evidence.href} target="_blank" rel="noreferrer"><Eye size={17} />{project.evidence.label || 'Lihat bukti proyek'}<ArrowUpRight size={16} /></a></div> : null}
+              <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
+              <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
+              <h1>{titleHasLeadingAcronym ? <><span className="case-title-line">{titleWords[0]}</span><span className="case-title-line">{titleWords.slice(1).join(' ')}</span></> : project.title}</h1>
+              {project.summary ? <p className="case-summary">{project.summary}</p> : null}
+              {evidenceUrl || repositoryUrl ? <div className="case-hero-actions">
+                {evidenceUrl ? <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{isWebsite ? 'Lihat Website' : project.evidence?.label || 'Lihat Proyek'}<ArrowUpRight size={16} /></a> : null}
+                {repositoryUrl ? <a className="detail-action detail-action-secondary" href={repositoryUrl} target="_blank" rel="noopener noreferrer">Lihat Kode<ArrowUpRight size={16} /></a> : null}
+              </div> : null}
             </div>
             {project.image ? <div className="case-hero-media">
-              <p className="case-media-label">Pratinjau proyek</p>
-              <EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} />
+              <p className="case-media-label">{isWebsite ? 'Website preview' : 'Pratinjau proyek'}</p>
+              <EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
             </div> : null}
           </div>
         </section>
 
-        <section className="case-section case-study">
-          <div className="section-wrap case-study-shell">
-            <header className="case-study-heading">
-              <div><i /><p className="case-label">Studi kasus</p></div>
-              <h2>Ringkasan proyek</h2>
-            </header>
+        {metadata.length ? <section className="case-facts section-wrap" aria-label="Informasi proyek">
+          <dl>{metadata.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        </section> : null}
 
-            {challenge || approach ? <div className="case-story-grid">
-              {challenge ? <article>
-                <h3>Konteks</h3>
-                <p>{challenge}</p>
-              </article> : null}
-              {approach ? <article>
-                <h3>Solusi</h3>
-                <p>{approach}</p>
-              </article> : null}
-            </div> : null}
-
-            <div className="case-details-grid">
-              {project.scope?.length ? <section>
-                <h3>Kontribusi utama</h3>
-                <ul className="case-scope">
-                  {project.scope.map((item) => <li key={item}>{item}</li>)}
-                </ul>
-              </section> : null}
-              {project.process?.length ? <section>
-                <h3>Proses singkat</h3>
-                <ol className="case-process">
-                  {project.process.map((step) => (
-                    <li key={step.title}>
-                      <strong>{step.title}</strong>
-                      <p>{step.description}</p>
-                    </li>
-                  ))}
-                </ol>
-              </section> : null}
-            </div>
-
-            {project.outcome ? <aside className="case-outcome">
-              <p className="case-label">Hasil</p>
-              <p>{project.outcome}</p>
-            </aside> : null}
+        {challenge || approach || objective || project.scope?.length || project.outcome ? <section className="case-content">
+          <div className="section-wrap case-content-grid">
+            {challenge ? <article><h2>Tentang Proyek</h2><p>{challenge}</p></article> : null}
+            {objective || approach ? <article><h2>{objective ? 'Tujuan' : 'Pendekatan'}</h2><p>{objective || approach}</p></article> : null}
+            {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
+            {project.outcome ? <article><h2>Hasil</h2><p>{project.outcome}</p></article> : null}
           </div>
-        </section>
+        </section> : null}
 
-        <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
+        {gallery.length > 1 ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
+          <h2 id="case-gallery-heading">Galeri Proyek</h2>
+          <div className="case-gallery-grid">{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
+            <div className="case-gallery-image"><Image src={item.src} fill sizes="(max-width: 650px) 100vw, (max-width: 1024px) 50vw, 33vw" alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} /></div>
+            {item.caption || item.description ? <figcaption><strong>{item.caption}</strong>{item.description ? <span>{item.description}</span> : null}</figcaption> : null}
+          </figure>)}</div>
+        </section> : null}
+
+        {evidenceUrl || repositoryUrl ? <section className="case-links section-wrap" aria-labelledby="case-links-heading">
+          <h2 id="case-links-heading">Tautan</h2>
+          <div>
+            {evidenceUrl ? <a href={evidenceUrl} target="_blank" rel="noopener noreferrer">{isWebsite ? 'Website' : project.evidence?.label || 'Bukti Proyek'}<ArrowUpRight size={16} /></a> : null}
+            {repositoryUrl ? <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">Repository<ArrowUpRight size={16} /></a> : null}
+          </div>
+        </section> : null}
+
+        {projects.length > 1 ? <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
           <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></Link>
           <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></Link>
-        </nav>
+        </nav> : null}
 
         <SiteFooter />
       </main>

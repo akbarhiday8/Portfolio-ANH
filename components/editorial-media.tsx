@@ -17,29 +17,37 @@ function mediaShape(width: number, height: number): MediaShape {
 export function EditorialMedia({
   src,
   alt,
-  caption,
   priority = false,
+  browserFrame = false,
+  address = '',
 }: {
   src: string;
   alt: string;
-  caption?: string;
   priority?: boolean;
+  browserFrame?: boolean;
+  address?: string;
 }) {
   const [shape, setShape] = useState<MediaShape>('landscape');
+  const [ratio, setRatio] = useState(16 / 9);
 
   return (
-    <figure className={`editorial-media is-${shape}`}>
-      <div className="editorial-media-stage">
+    <figure className={`editorial-media is-${shape}${browserFrame ? ' has-browser-frame' : ''}`}>
+      {browserFrame ? <div className="editorial-browser-bar" aria-hidden="true"><span className="editorial-browser-dots"><i /><i /><i /></span><span>{address || 'Pratinjau website'}</span></div> : null}
+      <div className="editorial-media-stage" style={{ aspectRatio: ratio }}>
         <Image
           src={src}
           fill
           preload={priority}
-          sizes={shape === 'portrait' || shape === 'tall' ? '(max-width: 850px) 76vw, 460px' : '(max-width: 850px) 100vw, 58vw'}
+          sizes={shape === 'portrait' || shape === 'tall' ? '(max-width: 850px) 85vw, 410px' : '(max-width: 850px) 92vw, 54vw'}
           alt={alt}
-          onLoad={(event) => setShape(mediaShape(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
+          onLoad={(event) => {
+            const { naturalWidth, naturalHeight } = event.currentTarget;
+            if (!naturalWidth || !naturalHeight) return;
+            setShape(mediaShape(naturalWidth, naturalHeight));
+            setRatio(naturalWidth / naturalHeight);
+          }}
         />
       </div>
-      {caption ? <figcaption>{caption}</figcaption> : null}
     </figure>
   );
 }

@@ -8,6 +8,7 @@ import { CertificateViewer } from '@/components/certificate-viewer';
 export function CertificateShowcase({ src, alt }: { src: string; alt: string }) {
   const [open, setOpen] = useState(false);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape');
+  const [ratio, setRatio] = useState(1.4);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -31,20 +32,24 @@ export function CertificateShowcase({ src, alt }: { src: string; alt: string }) 
   return (
     <>
       <figure className={`certificate-showcase is-${orientation}`}>
-        <figcaption className="certificate-showcase-label">Dokumen sertifikat</figcaption>
         <button type="button" onClick={() => setOpen(true)} aria-label={`Perbesar ${alt}`}>
-          <span className="certificate-showcase-stage">
+          <span className="certificate-showcase-stage" style={{ aspectRatio: ratio }}>
             <Image
               src={src}
               fill
               preload
-              sizes={orientation === 'portrait' ? '(max-width: 850px) 74vw, 390px' : '(max-width: 850px) 100vw, 52vw'}
+              sizes={orientation === 'portrait' ? '(max-width: 850px) 74vw, 380px' : '(max-width: 850px) 92vw, 52vw'}
               alt={alt}
-              onLoad={(event) => setOrientation(event.currentTarget.naturalHeight > event.currentTarget.naturalWidth ? 'portrait' : 'landscape')}
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                if (!naturalWidth || !naturalHeight) return;
+                setOrientation(naturalHeight > naturalWidth ? 'portrait' : 'landscape');
+                setRatio(naturalWidth / naturalHeight);
+              }}
             />
           </span>
-          <span className="certificate-showcase-action"><Expand size={14} /> Perbesar</span>
         </button>
+        <figcaption className="certificate-showcase-hint"><Expand size={14} />Klik gambar untuk memperbesar</figcaption>
       </figure>
 
       {open ? (
