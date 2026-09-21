@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import {
+  ArrowLeft, ArrowRight, ArrowUpRight, BadgeCheck, CalendarClock, CalendarDays,
+  FileBadge2, Fingerprint, Landmark, Tag,
+} from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { CertificateShowcase } from '@/components/certificate-showcase';
 import { MotionController } from '@/components/motion-controller';
@@ -49,10 +53,7 @@ export async function generateMetadata({ params }: CertificationPageProps): Prom
       images: image ? [{ url: image, alt: `Bukti ${certification.name}` }] : undefined,
     },
     twitter: image ? {
-      card: 'summary_large_image',
-      title: certification.name,
-      description,
-      images: [image],
+      card: 'summary_large_image', title: certification.name, description, images: [image],
     } : undefined,
   };
 }
@@ -74,15 +75,18 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const year = meaningfulPublicText(certification.year);
   const category = meaningfulPublicText(certification.category);
   const facts = [
-    { label: 'Diterbitkan oleh', value: issuer },
-    { label: 'Tahun', value: year },
-    { label: 'Jenis', value: meaningfulPublicText(extra.type) },
-    { label: 'Status', value: meaningfulPublicText(extra.status) },
-    { label: 'ID kredensial', value: meaningfulPublicText(extra.credentialId) },
-    { label: 'Tanggal terbit', value: meaningfulPublicText(extra.issuedAt) },
+    { label: 'Diterbitkan oleh', value: issuer, Icon: Landmark },
+    { label: 'Tahun', value: year, Icon: CalendarDays },
+    { label: 'Kategori', value: category, Icon: Tag },
+    { label: 'Jenis sertifikat', value: meaningfulPublicText(extra.type), Icon: FileBadge2 },
+    { label: 'Status', value: meaningfulPublicText(extra.status), Icon: BadgeCheck },
+    { label: 'ID kredensial', value: meaningfulPublicText(extra.credentialId), Icon: Fingerprint },
+    { label: 'Tanggal terbit', value: meaningfulPublicText(extra.issuedAt), Icon: CalendarClock },
   ].filter(({ value }) => Boolean(value));
   const topics = certification.topics.map(meaningfulPublicText).filter(Boolean);
   const credentialUrl = publicLink(extra.credentialUrl);
+  const related = certifications.filter((item) => item !== certification).slice(0, 3);
+  const caption = `${certification.name}${issuer ? ` dari ${issuer}` : ''}${year ? `, ${year}` : ''}.`;
 
   return (
     <>
@@ -95,24 +99,35 @@ export default async function CertificationDetailPage({ params }: CertificationP
               <Link className="detail-return" href="/#certificates"><ArrowLeft size={16} />Kembali ke Sertifikasi</Link>
               {category || year ? <p className="certification-kicker">{[category, year].filter(Boolean).join(' · ')}</p> : null}
               <h1>{certification.name}</h1>
-              {issuer ? <p className="certification-issuer">{issuer}</p> : null}
               {description ? <p>{description}</p> : null}
             </div>
-            {certification.image ? <div className="certification-hero-media"><CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} /></div> : null}
-            {facts.length ? <dl className="certification-facts">{facts.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl> : null}
+
+            {certification.image ? <div className="certification-hero-media">
+              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} caption={caption} />
+            </div> : null}
+
+            <div className="certification-details">
+              {facts.length ? <dl className="certification-facts">{facts.map(({ label, value, Icon }) => <div key={label}>
+                <Icon size={20} aria-hidden="true" /><span><dt>{label}</dt><dd>{value}</dd></span>
+              </div>)}</dl> : null}
+
+              {topics.length ? <section className="certification-material" aria-labelledby="certificate-material-heading">
+                <h2 id="certificate-material-heading">Materi yang Dipelajari / Diujikan</h2>
+                <ol>{topics.map((topic, index) => <li key={`${topic}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span><p>{topic}</p></li>)}</ol>
+              </section> : null}
+
+              {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a> : null}
+            </div>
           </div>
         </section>
 
-        {topics.length ? <section className="certification-material" aria-labelledby="certificate-material-heading">
-          <div className="section-wrap">
-            <h2 id="certificate-material-heading">Materi yang Dipelajari / Diujikan</h2>
-            <ul>{topics.map((topic) => <li key={topic}>{topic}</li>)}</ul>
-          </div>
-        </section> : null}
-
-        {credentialUrl ? <section className="certification-credential section-wrap">
-          <h2>Informasi kredensial</h2>
-          <a href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a>
+        {related.length ? <section className="certificate-related section-wrap" aria-labelledby="certificate-related-heading">
+          <header><h2 id="certificate-related-heading">Sertifikat Lainnya</h2><Link href="/#certificates">Lihat semua sertifikat<ArrowRight size={16} /></Link></header>
+          <div>{related.map((item) => <Link href={`/sertifikasi/${certificationSlug(item.name)}`} key={item.name}>
+            <span className="certificate-related-media">{item.image ? <Image src={item.image} fill sizes="160px" alt="" /> : <FileBadge2 size={28} />}</span>
+            <span><small>{[item.category, item.year].filter(Boolean).join(' · ')}</small><strong>{item.name}</strong><p>{meaningfulPublicText(item.issuer)}</p></span>
+            <ArrowRight size={17} />
+          </Link>)}</div>
         </section> : null}
 
         <SiteFooter />

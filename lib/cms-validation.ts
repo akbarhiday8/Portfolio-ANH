@@ -24,6 +24,11 @@ export function isSafeCmsLink(value: string) {
 
 const link = z.string().trim().max(2_048).refine(isSafeCmsLink, 'Tautan harus menggunakan HTTPS, HTTP, mailto, tel, atau path internal.');
 const optionalLink = z.union([link, z.literal(''), z.null()]).optional().default('');
+const galleryItems = z.array(z.object({
+  src: link,
+  caption: optionalShortText,
+  description: optionalLongText,
+}).loose()).max(24).optional().default([]);
 const slug = z.string().trim().toLowerCase().max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung.');
 const isoDate = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Tanggal harus menggunakan format YYYY-MM-DD.').optional().default('');
 
@@ -108,13 +113,17 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     role: optionalShortText,
     discipline: optionalShortText,
     artifactType: optionalShortText,
+    technologies: textList,
     summary: optionalLongText,
     challenge: optionalLongText,
+    objective: optionalLongText,
     approach: optionalLongText,
     evidence: z.object({ label: optionalShortText, href: optionalLink }).loose().optional().default({ label: '', href: '' }),
+    repositoryUrl: optionalLink,
     scope: textList,
     process: z.array(z.object({ title: shortText, description: longText }).loose()).max(30).optional().default([]),
     outcome: optionalLongText,
+    gallery: galleryItems,
     seoTitle: optionalShortText,
     seoDescription: optionalLongText,
     seoImage: optionalLink,
@@ -124,6 +133,11 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     issuer: optionalShortText,
     year: optionalShortText,
     category: optionalShortText,
+    type: optionalShortText,
+    status: optionalShortText,
+    credentialId: optionalShortText,
+    issuedAt: isoDate,
+    credentialUrl: optionalLink,
     image: optionalLink,
     description: optionalLongText,
     topics: textList,

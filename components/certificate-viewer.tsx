@@ -9,7 +9,15 @@ type ZoomMode = 'in' | 'out' | null;
 
 const clampScale = (value: number) => Math.min(4, Math.max(1, Number(value.toFixed(2))));
 
-export function CertificateViewer({ src, alt }: { src: string; alt: string }) {
+export function CertificateViewer({
+  src,
+  alt,
+  label = 'sertifikat',
+}: {
+  src: string;
+  alt: string;
+  label?: string;
+}) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [zoomMode, setZoomMode] = useState<ZoomMode>(null);
@@ -86,11 +94,11 @@ export function CertificateViewer({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="certificate-viewer-shell">
-      <button type="button" className={viewerClassName} onClick={handleClick} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label="Pratinjau sertifikat. Klik untuk memperbesar, Ctrl dan klik untuk memperkecil, lalu seret untuk menggeser.">
+      <button type="button" className={viewerClassName} onClick={handleClick} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={`Pratinjau ${label}. Klik untuk memperbesar, Ctrl dan klik untuk memperkecil, lalu seret untuk menggeser.`}>
         <Image className="certificate-viewer-backdrop" src={src} fill sizes="90vw" alt="" aria-hidden="true" />
         <Image className="certificate-viewer-image" src={src} fill sizes="90vw" alt={alt} draggable={false} onLoad={(event) => setOrientation(event.currentTarget.naturalHeight > event.currentTarget.naturalWidth ? 'portrait' : 'landscape')} style={{ transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})` }} />
       </button>
-      <div className="certificate-viewer-toolbar" aria-label="Kontrol gambar sertifikat">
+      <div className="certificate-viewer-toolbar" aria-label={`Kontrol gambar ${label}`}>
         <button type="button" onClick={() => setZoom(scale - 0.25)} disabled={scale === 1} aria-label="Perkecil gambar"><Minus size={17} /></button>
         <output aria-label="Tingkat pembesaran">{Math.round(scale * 100)}%</output>
         <button type="button" onClick={() => setZoom(scale + 0.25)} disabled={scale === 4} aria-label="Perbesar gambar"><Plus size={17} /></button>

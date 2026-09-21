@@ -1,14 +1,11 @@
 'use client';
 
-import Image from 'next/image';
-import { Expand, X } from 'lucide-react';
+import { ExternalLink, Expand, FileBadge2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { CertificateViewer } from '@/components/certificate-viewer';
 
-export function CertificateShowcase({ src, alt }: { src: string; alt: string }) {
+export function CertificateShowcase({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
   const [open, setOpen] = useState(false);
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape');
-  const [ratio, setRatio] = useState(1.4);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -31,25 +28,17 @@ export function CertificateShowcase({ src, alt }: { src: string; alt: string }) 
 
   return (
     <>
-      <figure className={`certificate-showcase is-${orientation}`}>
-        <button type="button" onClick={() => setOpen(true)} aria-label={`Perbesar ${alt}`}>
-          <span className="certificate-showcase-stage" style={{ aspectRatio: ratio }}>
-            <Image
-              src={src}
-              fill
-              preload
-              sizes={orientation === 'portrait' ? '(max-width: 850px) 74vw, 380px' : '(max-width: 850px) 92vw, 52vw'}
-              alt={alt}
-              onLoad={(event) => {
-                const { naturalWidth, naturalHeight } = event.currentTarget;
-                if (!naturalWidth || !naturalHeight) return;
-                setOrientation(naturalHeight > naturalWidth ? 'portrait' : 'landscape');
-                setRatio(naturalWidth / naturalHeight);
-              }}
-            />
-          </span>
-        </button>
-        <figcaption className="certificate-showcase-hint"><Expand size={14} />Klik gambar untuk memperbesar</figcaption>
+      <figure className="certificate-showcase">
+        <header>
+          <span><FileBadge2 size={16} /> Sertifikat</span>
+          <button type="button" onClick={() => setOpen(true)} aria-label={`Buka ${alt} dalam layar penuh`}><Expand size={15} /> Layar penuh</button>
+        </header>
+        <CertificateViewer src={src} alt={alt} />
+        <div className="certificate-showcase-actions">
+          <span>Gunakan kontrol zoom atau buka dokumen asli.</span>
+          <a href={src} target="_blank" rel="noreferrer"><ExternalLink size={15} />Buka di tab baru</a>
+        </div>
+        {caption ? <figcaption>{caption}</figcaption> : null}
       </figure>
 
       {open ? (

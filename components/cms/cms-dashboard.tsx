@@ -31,6 +31,7 @@ type NavItem = { label: string; view: ActiveView; Icon: CmsIcon };
 type ValidationIssue = { label: string; detail: string; level: 'error' | 'warning'; field?: string };
 type RevisionSnapshot = { savedAt: string; status: CmsStatus; title: string; data: Record<string, unknown> };
 type ArticleSectionDraft = { heading: string; body: string };
+type GalleryDraft = { src: string; caption: string; description: string };
 
 const moduleIcons: Record<CmsCollection, React.ComponentType<{ size?: number }>> = {
   siteContent: Settings2,
@@ -88,13 +89,13 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   ],
   projects: [
     { title: 'Identitas proyek', description: 'Judul, kategori, tahun, dan alamat halaman.', fields: ['slug', 'title', 'category', 'year', 'layout'] },
-    { title: 'Gambaran proyek', description: 'Peran, disiplin, hasil kerja, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'summary'] },
-    { title: 'Studi kasus', description: 'Konteks, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'approach', 'scope', 'process'] },
-    { title: 'Bukti dan hasil', description: 'Tautan bukti serta dampak akhir proyek.', fields: ['evidence.label', 'evidence.href', 'outcome'] },
+    { title: 'Gambaran proyek', description: 'Peran, bidang, hasil kerja, teknologi, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'technologies', 'summary'] },
+    { title: 'Studi kasus', description: 'Konteks, tujuan, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'objective', 'approach', 'scope', 'process'] },
+    { title: 'Bukti dan hasil', description: 'Tautan bukti, repository, dampak akhir, dan dokumentasi proyek.', fields: ['evidence.label', 'evidence.href', 'repositoryUrl', 'outcome', 'gallery'] },
     { title: 'Tampilan di pencarian & berbagi', description: 'Judul, deskripsi, dan gambar saat halaman ditemukan atau dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
   certifications: [
-    { title: 'Informasi sertifikasi', description: 'Nama, penerbit, tahun, dan kategori.', fields: ['name', 'issuer', 'year', 'category'] },
+    { title: 'Informasi sertifikasi', description: 'Nama, penerbit, tahun, kategori, jenis, dan status.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
     { title: 'Bukti dan materi', description: 'Dokumen visual serta kompetensi yang dipelajari.', fields: ['image', 'description', 'topics'] },
   ],
   articles: [
@@ -212,6 +213,14 @@ function normalizeEditorData(module: CmsModuleDefinition, source: Record<string,
   return module.fields.reduce((next, field) => {
     const value = getPath(next, field.key);
     if (field.type === 'steps' && typeof value === 'string') return setPath(next, field.key, parseField(field, value));
+    if (field.type === 'gallery' && Array.isArray(value)) return setPath(next, field.key, value.map((item) => {
+      const entry = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+      return {
+        src: typeof entry.src === 'string' ? entry.src : typeof entry.image === 'string' ? entry.image : '',
+        caption: typeof entry.caption === 'string' ? entry.caption : '',
+        description: typeof entry.description === 'string' ? entry.description : '',
+      };
+    }));
     return next;
   }, structuredClone(source));
 }
@@ -280,6 +289,14 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
     }
     if (field.type === 'date' && fieldValue && !/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
       issues.push({ field: field.key, level: 'error', label: `${field.label} belum valid`, detail: 'Pilih tanggal yang sesuai.' });
+    }
+    if (field.type === 'gallery' && Array.isArray(value) && value.some((item) => {
+      const src = item && typeof item === 'object' && typeof (item as Record<string, unknown>).src === 'string'
+        ? String((item as Record<string, unknown>).src).trim()
+        : '';
+      return !src || !isValidLink(src);
+    })) {
+      issues.push({ field: field.key, level: 'error', label: `${field.label} belum lengkap`, detail: 'Setiap item galeri harus memiliki gambar atau tautan gambar yang valid.' });
     }
   });
 
@@ -359,7 +376,7 @@ function formatUpdatedAt(value: string) {
 
 function newRecord(module: CmsModuleDefinition): CmsRecord {
   const data = module.fields.reduce<Record<string, unknown>>((result, field) => {
-    return setPath(result, field.key, ['list', 'steps', 'articleSections'].includes(field.type) ? [] : '');
+    return setPath(result, field.key, ['list', 'steps', 'articleSections', 'gallery'].includes(field.type) ? [] : '');
   }, {});
   return {
     id: 'new', collection: module.collection, slug: null, sortOrder: 999,
@@ -406,6 +423,28 @@ function BrandingPreview({ data, profile }: { data: Record<string, unknown>; pro
         </article>
       </div>
     </section>
+  );
+}
+
+function CmsAdaptiveImage({ src, alt }: { src: string; alt: string }) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const ratio = dimensions.width && dimensions.height ? dimensions.width / dimensions.height : 16 / 9;
+  const shape = ratio < .86 ? 'portrait' : ratio > 1.15 ? 'landscape' : 'square';
+
+  return (
+    <div className={`cms-adaptive-image is-${shape}`}>
+      <div style={{ aspectRatio: ratio }}>
+        <Image
+          src={src}
+          fill
+          unoptimized
+          sizes="(max-width: 560px) 100vw, 240px"
+          alt={alt}
+          onLoad={(event) => setDimensions({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
+        />
+      </div>
+      {dimensions.width && dimensions.height ? <span>{shape === 'portrait' ? 'Portrait' : shape === 'landscape' ? 'Landscape' : 'Persegi'} · {dimensions.width}×{dimensions.height}</span> : null}
+    </div>
   );
 }
 
@@ -589,6 +628,66 @@ function ContentEditor({
     }
   }
 
+  async function uploadGalleryImage(field: CmsField, index: number, file?: File) {
+    if (!file) return;
+    const uploadKey = `${field.key}-${index}`;
+    setUploading(uploadKey);
+    setUploadProgress(0);
+    setMessage('Mengoptimalkan gambar galeri sebelum diunggah...');
+    try {
+      const prepared = await prepareMediaFile(file, 'content');
+      const controller = new AbortController();
+      uploadRequest.current = controller;
+      const uploaded = await uploadPreparedMedia(prepared, { signal: controller.signal, onProgress: setUploadProgress });
+      const existingItems = Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as GalleryDraft[] : [];
+      const previousTemporary = Object.entries(temporaryUploads.current).find(([, item]) => item.url === existingItems[index]?.src);
+      if (previousTemporary) {
+        delete temporaryUploads.current[previousTemporary[0]];
+        void discardTemporaryMedia(previousTemporary[1]);
+      }
+      temporaryUploads.current[`gallery:${uploaded.id}`] = uploaded;
+      setData((current) => {
+        const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
+        items[index] = { ...items[index], src: uploaded.url, caption: items[index]?.caption ?? '', description: items[index]?.description ?? '' };
+        return setPath(current, field.key, items);
+      });
+      clearServerFieldIssue(field.key);
+      setMessage(prepared.message);
+    } catch (error) {
+      setMessage(error instanceof DOMException && error.name === 'AbortError' ? 'Unggahan dibatalkan.' : error instanceof Error ? error.message : 'Gambar galeri tidak dapat diunggah.');
+    } finally {
+      uploadRequest.current = null;
+      setUploading('');
+      setUploadProgress(0);
+    }
+  }
+
+  function removeGalleryItem(field: CmsField, index: number, src: string) {
+    const temporary = Object.entries(temporaryUploads.current).find(([, item]) => item.url === src);
+    if (temporary) {
+      delete temporaryUploads.current[temporary[0]];
+      void discardTemporaryMedia(temporary[1]);
+    }
+    setData((current) => {
+      const items = Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : [];
+      return setPath(current, field.key, items.filter((_, itemIndex) => itemIndex !== index));
+    });
+  }
+
+  function updateGallerySource(field: CmsField, index: number, currentSrc: string, nextSrc: string) {
+    const temporary = Object.entries(temporaryUploads.current).find(([, item]) => item.url === currentSrc);
+    if (temporary && currentSrc !== nextSrc) {
+      delete temporaryUploads.current[temporary[0]];
+      void discardTemporaryMedia(temporary[1]);
+    }
+    clearServerFieldIssue(field.key);
+    setData((current) => {
+      const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
+      items[index] = { ...items[index], src: nextSrc };
+      return setPath(current, field.key, items);
+    });
+  }
+
   function updateMediaValue(field: CmsField, value: string) {
     const temporary = temporaryUploads.current[field.key];
     if (temporary && temporary.url !== value) {
@@ -712,7 +811,37 @@ function ContentEditor({
     return (
       <div className={`cms-field${field.wide ? ' is-wide' : ''}${fieldIssue ? ' has-error' : ''}${attentionField === field.key ? ' is-attention' : ''}`} key={field.key}>
         <Label htmlFor={inputId}>{field.label}{field.required ? <span>*</span> : null}</Label>
-        {field.type === 'steps' ? (
+        {field.type === 'gallery' ? (
+          <div className="cms-gallery-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>
+            {(Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as GalleryDraft[] : []).map((item, index) => {
+              const uploadKey = `${field.key}-${index}`;
+              return <article className="cms-gallery-row" key={`${field.key}-${index}`}>
+                {item.src ? <CmsAdaptiveImage src={item.src} alt={`Pratinjau galeri ${index + 1}`} /> : <div className="cms-media-empty"><ImageIcon size={24} /><span>Belum ada gambar</span></div>}
+                <div>
+                  <strong>Gambar {index + 1}</strong>
+                  <Input aria-label={`URL gambar galeri ${index + 1}`} placeholder="Unggah gambar atau masukkan link" value={item.src ?? ''} onChange={(event) => updateGallerySource(field, index, item.src, event.target.value)} />
+                  <Input aria-label={`Judul gambar galeri ${index + 1}`} placeholder="Judul gambar" value={item.caption ?? ''} onChange={(event) => setData((current) => {
+                    const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
+                    items[index] = { ...items[index], caption: event.target.value };
+                    return setPath(current, field.key, items);
+                  })} />
+                  <Textarea aria-label={`Keterangan gambar galeri ${index + 1}`} placeholder="Keterangan singkat (opsional)" rows={2} value={item.description ?? ''} onChange={(event) => setData((current) => {
+                    const items = Array.isArray(getPath(current, field.key)) ? [...getPath(current, field.key) as GalleryDraft[]] : [];
+                    items[index] = { ...items[index], description: event.target.value };
+                    return setPath(current, field.key, items);
+                  })} />
+                  <input ref={(element) => { fileInputs.current[uploadKey] = element; }} type="file" accept={IMAGE_ACCEPT} hidden onChange={(event) => { void uploadGalleryImage(field, index, event.target.files?.[0]); event.currentTarget.value = ''; }} />
+                  <div className="cms-media-field-actions">
+                    <Button type="button" variant="outline" onClick={() => fileInputs.current[uploadKey]?.click()} disabled={uploading === uploadKey}><Upload size={15} />{uploading === uploadKey ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : item.src ? 'Ganti gambar' : 'Unggah gambar'}</Button>
+                    {uploading === uploadKey ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}
+                    <button className="cms-remove-media" type="button" onClick={() => removeGalleryItem(field, index, item.src)}><Trash2 size={14} />Hapus</button>
+                  </div>
+                </div>
+              </article>;
+            })}
+            <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : []), { src: '', caption: '', description: '' }]))}><Plus size={15} />Tambah gambar</Button>
+          </div>
+        ) : field.type === 'steps' ? (
           <div className="cms-steps-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>
             {(Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as Array<{ title?: string; description?: string }> : []).map((step, index, steps) => (
               <article className="cms-step-row" key={`${field.key}-${index}`}>
@@ -756,7 +885,7 @@ function ContentEditor({
           </select>
         ) : field.type === 'image' || field.type === 'asset' ? (
           <div className="cms-media-field">
-            {field.type === 'image' && value ? <Image src={value} width={190} height={126} unoptimized alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
+            {field.type === 'image' && value ? <CmsAdaptiveImage src={value} alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
             <div>
               <Input id={inputId} {...fieldControlProps} value={value} placeholder={field.type === 'asset' ? 'https://contoh.com atau unggah dokumen' : 'Unggah gambar atau masukkan link'} onBlur={() => markTouched(field.key)} onChange={(event) => updateMediaValue(field, event.target.value)} />
               <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />

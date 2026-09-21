@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Code2, FolderKanban, Layers3, UserRound } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { EditorialMedia } from '@/components/editorial-media';
 import { MotionController } from '@/components/motion-controller';
@@ -62,10 +61,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       images: imageUrl ? [{ url: imageUrl, alt: `Dokumentasi proyek ${project.title}` }] : undefined,
     },
     twitter: imageUrl ? {
-      card: 'summary_large_image',
-      title: seo.seoTitle || project.title,
-      description: pageDescription,
-      images: [imageUrl],
+      card: 'summary_large_image', title: seo.seoTitle || project.title, description: pageDescription, images: [imageUrl],
     } : undefined,
   };
 }
@@ -100,10 +96,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
   const metadata = [
-    { label: 'Peran', value: project.role },
-    { label: 'Bidang', value: project.discipline },
-    { label: 'Jenis hasil', value: project.artifactType },
-    { label: 'Teknologi', value: technologies },
+    { label: 'Peran', value: project.role, Icon: UserRound },
+    { label: 'Bidang', value: project.discipline, Icon: FolderKanban },
+    { label: 'Jenis hasil', value: project.artifactType, Icon: Layers3 },
+    { label: 'Teknologi', value: technologies, Icon: Code2 },
   ].filter(({ value }) => Boolean(value));
 
   return (
@@ -126,28 +122,29 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             </div>
             {project.image ? <div className="case-hero-media">
               <p className="case-media-label">{isWebsite ? 'Website preview' : 'Pratinjau proyek'}</p>
-              <EditorialMedia src={project.image} priority alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
+              <EditorialMedia src={project.image} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
             </div> : null}
           </div>
         </section>
 
         {metadata.length ? <section className="case-facts section-wrap" aria-label="Informasi proyek">
-          <dl>{metadata.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+          <dl>{metadata.map(({ label, value, Icon }) => <div key={label}><Icon size={19} aria-hidden="true" /><span><dt>{label}</dt><dd>{value}</dd></span></div>)}</dl>
         </section> : null}
 
-        {challenge || approach || objective || project.scope?.length || project.outcome ? <section className="case-content">
+        {challenge || objective || approach || project.scope?.length || project.outcome ? <section className="case-content">
           <div className="section-wrap case-content-grid">
             {challenge ? <article><h2>Tentang Proyek</h2><p>{challenge}</p></article> : null}
-            {objective || approach ? <article><h2>{objective ? 'Tujuan' : 'Pendekatan'}</h2><p>{objective || approach}</p></article> : null}
+            {objective ? <article><h2>Tujuan</h2><p>{objective}</p></article> : null}
+            {approach ? <article><h2>Pendekatan</h2><p>{approach}</p></article> : null}
             {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
             {project.outcome ? <article><h2>Hasil</h2><p>{project.outcome}</p></article> : null}
           </div>
         </section> : null}
 
-        {gallery.length > 1 ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
+        {gallery.length ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
           <h2 id="case-gallery-heading">Galeri Proyek</h2>
           <div className="case-gallery-grid">{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
-            <div className="case-gallery-image"><Image src={item.src} fill sizes="(max-width: 650px) 100vw, (max-width: 1024px) 50vw, 33vw" alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} /></div>
+            <EditorialMedia src={item.src} expandable alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} />
             {item.caption || item.description ? <figcaption><strong>{item.caption}</strong>{item.description ? <span>{item.description}</span> : null}</figcaption> : null}
           </figure>)}</div>
         </section> : null}

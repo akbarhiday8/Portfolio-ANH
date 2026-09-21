@@ -1,6 +1,6 @@
 import type { CmsCollection } from '@/lib/cms/types';
 
-export type CmsFieldType = 'text' | 'textarea' | 'url' | 'date' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections';
+export type CmsFieldType = 'text' | 'textarea' | 'url' | 'date' | 'image' | 'asset' | 'list' | 'select' | 'steps' | 'articleSections' | 'gallery';
 export type CmsField = {
   key: string;
   label: string;
@@ -136,11 +136,14 @@ export const cmsModules: CmsModuleDefinition[] = [
       ] },
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true },
       text('role', 'Peran'), text('discipline', 'Bidang'), text('artifactType', 'Jenis hasil'),
-      area('summary', 'Ringkasan proyek', { required: true }), area('challenge', 'Konteks / Tantangan'), area('approach', 'Pendekatan / Solusi'),
+      { key: 'technologies', label: 'Teknologi / alat', type: 'list', wide: true, helper: 'Satu teknologi atau alat per baris.' },
+      area('summary', 'Ringkasan proyek', { required: true }), area('challenge', 'Konteks / Tantangan'), area('objective', 'Tujuan proyek'), area('approach', 'Pendekatan / Solusi'),
       text('evidence.label', 'Teks tombol bukti'), { key: 'evidence.href', label: 'Link proyek atau dokumen', type: 'asset', wide: true, helper: 'Masukkan link website atau unggah dokumen proyek.' },
+      { key: 'repositoryUrl', label: 'Link repository', type: 'url', wide: true, helper: 'Opsional. Isi jika kode proyek dapat dilihat publik.' },
       { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Satu kontribusi per baris.' },
       { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Tambahkan langkah satu per satu. Data lama dengan format “Judul | Penjelasan” tetap dibaca.' },
       area('outcome', 'Hasil akhir'),
+      { key: 'gallery', label: 'Galeri proyek', type: 'gallery', wide: true, helper: 'Tambahkan dokumentasi portrait atau landscape. Rasio asli dipertahankan dan gambar dapat diperbesar.' },
       text('seoTitle', 'Judul untuk mesin pencari', { helper: 'Opsional. Jika kosong, judul proyek digunakan.' }),
       area('seoDescription', 'Deskripsi untuk mesin pencari', { helper: 'Opsional. Tulis ringkasan singkat sekitar 120–160 karakter.' }),
       { key: 'seoImage', label: 'Gambar saat dibagikan', type: 'image', wide: true, helper: 'Opsional. Jika kosong, gambar utama digunakan.' },
@@ -151,6 +154,9 @@ export const cmsModules: CmsModuleDefinition[] = [
     description: 'Bukti sertifikat, instansi penerbit, dan materi yang dipelajari atau diujikan.',
     fields: [
       text('name', 'Nama sertifikasi', { required: true }), text('issuer', 'Instansi penerbit', { required: true }), text('year', 'Tahun'), text('category', 'Kategori'),
+      text('type', 'Jenis sertifikat', { placeholder: 'Contoh: Sertifikat Pelatihan' }), text('status', 'Status', { placeholder: 'Contoh: Sertifikat Resmi' }),
+      text('credentialId', 'ID kredensial'), { key: 'issuedAt', label: 'Tanggal terbit', type: 'date' },
+      { key: 'credentialUrl', label: 'Link verifikasi kredensial', type: 'url', wide: true },
       { key: 'image', label: 'Bukti sertifikat', type: 'image', wide: true, helper: 'Portrait dan landscape didukung otomatis pada viewer publik.' },
       area('description', 'Deskripsi'),
       { key: 'topics', label: 'Materi dipelajari / diujikan', type: 'list', wide: true, helper: 'Satu materi per baris. Daftar panjang akan diringkas otomatis pada website.' },
