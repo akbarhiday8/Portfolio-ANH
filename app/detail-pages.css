@@ -196,8 +196,10 @@
 .case-content article:nth-last-child(-n + 2) { border-bottom: 0; padding-top: 30px; }
 .case-content article:nth-child(n + 3) { padding-top: 30px; }
 .case-content h2,
+.case-process h2,
 .case-gallery h2,
 .certification-material h2,
+.certification-credential h2,
 .certificate-related h2 {
   margin-bottom: 15px;
   font: 400 clamp(25px, 2.3vw, 32px)/1.2 var(--serif);
@@ -209,8 +211,23 @@
 .case-content ul { display: grid; gap: 7px; margin: 0; padding-left: 20px; }
 .case-content li::marker { color: var(--red-bright); }
 
+.case-process,
 .case-gallery { border-bottom: 1px solid var(--rule); padding-block: clamp(50px, 5vw, 72px); }
+.case-section-heading { display: grid; grid-template-columns: minmax(220px, .42fr) minmax(0, .58fr); gap: 34px; align-items: end; }
+.case-section-heading > div > p { margin-bottom: 9px; color: var(--red-bright); font-size: 9px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+.case-section-heading h2 { margin: 0; }
+.case-section-heading > p { max-width: 560px; justify-self: end; color: var(--gray); font-size: 13px; line-height: 1.65; }
+.case-process ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin: 30px 0 0; padding: 0; list-style: none; counter-reset: none; }
+.case-process li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 13px; min-width: 0; border-top: 1px solid var(--rule); padding: 22px 24px 0 0; }
+.case-process li + li { border-left: 1px solid var(--rule); padding-left: 24px; }
+.case-process li > span { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid color-mix(in srgb, var(--red) 25%, var(--rule)); border-radius: 50%; color: var(--red-bright); font-size: 10px; font-weight: 750; }
+.case-process h3 { font: 400 18px/1.3 var(--serif); }
+.case-process li p { margin-top: 7px; color: var(--gray); font-size: 12px; line-height: 1.65; }
+
 .case-gallery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+.case-gallery-grid.count-1 { grid-template-columns: minmax(0, 1fr); }
+.case-gallery-grid.count-1 > figure { width: min(920px, 100%); }
+.case-gallery-grid.count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .case-gallery figure { min-width: 0; margin: 0; }
 .case-gallery .editorial-media { box-shadow: none; }
 .case-gallery figcaption { display: grid; gap: 4px; padding-top: 11px; color: var(--gray); font-size: 12px; line-height: 1.55; }
@@ -233,7 +250,9 @@
 .case-pagination > a { min-height: 116px; display: flex; align-items: center; gap: 18px; padding: 25px 30px; transition: background .2s, color .2s; }
 .case-pagination > a + a { justify-content: flex-end; border-left: 1px solid var(--rule); text-align: right; }
 .case-pagination small { display: block; margin-bottom: 6px; color: var(--muted); font-family: var(--sans); font-size: 9px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
-.case-pagination span { font: 400 19px/1.2 var(--serif); }
+.case-pagination span { display: grid; gap: 4px; min-width: 0; }
+.case-pagination strong { font: 400 19px/1.2 var(--serif); }
+.case-pagination em { color: var(--muted); font-size: 9px; font-style: normal; letter-spacing: .08em; text-transform: uppercase; }
 .case-pagination svg { color: var(--red-bright); }
 .case-pagination a:hover { background: color-mix(in srgb, var(--red) 6%, transparent); color: var(--red-bright); }
 
@@ -295,11 +314,14 @@
   font-size: 10px;
 }
 .certificate-showcase > header > span,
-.certificate-showcase > header > button,
+.certificate-showcase-tools,
+.certificate-showcase-tools > button,
 .certificate-showcase-actions a { display: inline-flex; align-items: center; gap: 7px; }
 .certificate-showcase > header > span { color: var(--ink); font-weight: 700; }
-.certificate-showcase > header > button { border: 0; padding: 6px; background: transparent; color: var(--gray); font: inherit; cursor: pointer; }
-.certificate-showcase > header > button:hover { color: var(--red-bright); }
+.certificate-showcase-tools { gap: 10px; }
+.certificate-showcase-tools > button { border: 0; padding: 6px; background: transparent; color: var(--gray); font: inherit; cursor: pointer; }
+.certificate-showcase-tools > button:hover { color: var(--red-bright); }
+.certificate-status { border: 1px solid color-mix(in srgb, var(--red) 20%, var(--rule)); border-radius: 999px; padding: 5px 9px; background: color-mix(in srgb, var(--red) 7%, transparent); color: var(--red-bright); font-size: 8px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
 
 .certificate-showcase .certificate-viewer-shell {
   height: clamp(440px, 58vw, 650px);
@@ -325,7 +347,17 @@
 .certification-material li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; border-bottom: 1px solid var(--rule); padding: 10px 0; }
 .certification-material li > span { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--red) 8%, transparent); color: var(--red-bright); font-size: 9px; font-weight: 750; }
 .certification-material li p { padding-top: 3px; color: var(--gray); font-size: 13px; line-height: 1.55; }
-.certification-verify-link { margin-top: 20px; }
+.certification-material-more summary { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--rule); color: var(--red-bright); font-size: 11px; font-weight: 700; cursor: pointer; list-style: none; }
+.certification-material-more summary::-webkit-details-marker { display: none; }
+.certification-material-more summary svg { transition: transform .2s ease; }
+.certification-material-more[open] summary svg { transform: rotate(180deg); }
+.certification-credential { margin-top: 30px; border-top: 1px solid var(--rule); padding-top: 28px; }
+.certification-credential h2 { margin-bottom: 16px; }
+.certification-credential dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 18px; }
+.certification-credential dl > div { min-width: 0; border-left: 2px solid var(--red); padding-left: 12px; }
+.certification-credential dt { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.certification-credential dd { margin-top: 5px; color: var(--ink); font: 400 14px/1.4 var(--serif); overflow-wrap: anywhere; }
+.certification-verify-link { margin-top: 0; }
 
 .certificate-related { padding-block: clamp(46px, 4vw, 64px); }
 .certificate-related > header { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
@@ -381,6 +413,7 @@
   .editorial-media.is-portrait { max-width: 410px; }
   .editorial-media.is-tall { max-width: 340px; }
   .case-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .case-gallery-grid.count-1 { grid-template-columns: 1fr; }
   .certification-hero-grid,
   .certification-hero-grid.without-media { grid-template-areas: 'intro' 'media' 'details'; grid-template-columns: 1fr; gap: 31px; padding-block: 44px 55px; }
   .certification-hero-grid.without-media { grid-template-areas: 'intro' 'details'; }
@@ -396,6 +429,12 @@
   .case-content article:nth-child(n + 3) { border-bottom: 1px solid var(--rule); padding: 26px 0; }
   .case-content article:first-child { padding-top: 0; }
   .case-content article:last-child { border-bottom: 0; padding-bottom: 0; }
+  .case-section-heading { grid-template-columns: 1fr; gap: 12px; align-items: start; }
+  .case-section-heading > p { justify-self: start; }
+  .case-process ol { grid-template-columns: 1fr; }
+  .case-process li { padding: 19px 0; }
+  .case-process li + li { border-left: 0; }
+  .case-process li:last-child { padding-bottom: 0; }
   .case-pagination { grid-template-columns: 1fr; }
   .case-pagination > a + a { border-top: 1px solid var(--rule); border-left: 0; }
   .certification-intro h1 { font-size: clamp(42px, 10vw, 58px); }
@@ -427,6 +466,9 @@
   .certificate-showcase .certificate-viewer-image,
   .certificate-showcase .certificate-viewer.is-portrait .certificate-viewer-image { padding: 14px; }
   .certificate-showcase .certificate-viewer-hint { display: none; }
+  .certificate-showcase-tools { gap: 5px; }
+  .certificate-status { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .certification-credential dl { grid-template-columns: 1fr; gap: 14px; }
   .certificate-related > header { align-items: flex-start; flex-direction: column; gap: 8px; }
   .certificate-related > div > a { grid-template-columns: 74px minmax(0, 1fr) auto; }
   .certificate-related-media { width: 74px; height: 62px; }

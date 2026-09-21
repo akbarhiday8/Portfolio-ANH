@@ -89,14 +89,14 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   ],
   projects: [
     { title: 'Identitas proyek', description: 'Judul, kategori, tahun, dan alamat halaman.', fields: ['slug', 'title', 'category', 'year', 'layout'] },
-    { title: 'Gambaran proyek', description: 'Peran, bidang, hasil kerja, teknologi, dan visual utama.', fields: ['image', 'role', 'discipline', 'artifactType', 'technologies', 'summary'] },
-    { title: 'Studi kasus', description: 'Konteks, tujuan, pendekatan, kontribusi, dan proses.', fields: ['challenge', 'objective', 'approach', 'scope', 'process'] },
-    { title: 'Bukti dan hasil', description: 'Tautan bukti, repository, dampak akhir, dan dokumentasi proyek.', fields: ['evidence.label', 'evidence.href', 'repositoryUrl', 'outcome', 'gallery'] },
+    { title: 'Gambaran proyek', description: 'Informasi ringkas yang tampil pada hero dan baris metadata detail proyek.', fields: ['image', 'role', 'discipline', 'artifactType', 'technologies', 'summary'] },
+    { title: 'Studi kasus', description: 'Narasi utama dan urutan proses yang membantu pengunjung memahami pekerjaan Anda.', fields: ['challenge', 'objective', 'approach', 'scope', 'process'] },
+    { title: 'Bukti dan hasil', description: 'Tautan utama, hasil akhir, dan galeri visual sebagai bukti proyek.', fields: ['evidence.label', 'evidence.href', 'repositoryUrl', 'outcome', 'gallery'] },
     { title: 'Tampilan di pencarian & berbagi', description: 'Judul, deskripsi, dan gambar saat halaman ditemukan atau dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'] },
   ],
   certifications: [
-    { title: 'Informasi sertifikasi', description: 'Nama, penerbit, tahun, kategori, jenis, dan status.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
-    { title: 'Bukti dan materi', description: 'Dokumen visual serta kompetensi yang dipelajari.', fields: ['image', 'description', 'topics'] },
+    { title: 'Informasi sertifikasi', description: 'Identitas, status, dan kredensial yang tampil terstruktur pada halaman detail.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
+    { title: 'Bukti dan materi', description: 'Dokumen visual adaptif serta daftar materi yang dapat dibuka jika isinya panjang.', fields: ['image', 'description', 'topics'] },
   ],
   articles: [
     { title: 'Informasi penerbitan', description: 'Judul, kategori, alamat, dan waktu baca.', fields: ['slug', 'title', 'category', 'publishedAt', 'readTime', 'excerpt'] },

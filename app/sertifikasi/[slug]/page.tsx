@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  ArrowLeft, ArrowRight, ArrowUpRight, BadgeCheck, CalendarClock, CalendarDays,
-  FileBadge2, Fingerprint, Landmark, Tag,
+  ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChevronDown,
+  FileBadge2, Landmark, Tag,
 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { CertificateShowcase } from '@/components/certificate-showcase';
@@ -33,6 +33,13 @@ function publicLink(value: unknown) {
   } catch {
     return '';
   }
+}
+
+function displayDate(value: string) {
+  if (!value) return '';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 }
 
 export async function generateMetadata({ params }: CertificationPageProps): Promise<Metadata> {
@@ -74,16 +81,18 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const description = meaningfulPublicText(certification.description);
   const year = meaningfulPublicText(certification.year);
   const category = meaningfulPublicText(certification.category);
+  const status = meaningfulPublicText(extra.status);
+  const credentialId = meaningfulPublicText(extra.credentialId);
+  const issuedAt = displayDate(meaningfulPublicText(extra.issuedAt));
   const facts = [
     { label: 'Diterbitkan oleh', value: issuer, Icon: Landmark },
     { label: 'Tahun', value: year, Icon: CalendarDays },
     { label: 'Kategori', value: category, Icon: Tag },
     { label: 'Jenis sertifikat', value: meaningfulPublicText(extra.type), Icon: FileBadge2 },
-    { label: 'Status', value: meaningfulPublicText(extra.status), Icon: BadgeCheck },
-    { label: 'ID kredensial', value: meaningfulPublicText(extra.credentialId), Icon: Fingerprint },
-    { label: 'Tanggal terbit', value: meaningfulPublicText(extra.issuedAt), Icon: CalendarClock },
   ].filter(({ value }) => Boolean(value));
   const topics = certification.topics.map(meaningfulPublicText).filter(Boolean);
+  const visibleTopics = topics.slice(0, 6);
+  const additionalTopics = topics.slice(6);
   const credentialUrl = publicLink(extra.credentialUrl);
   const related = certifications.filter((item) => item !== certification).slice(0, 3);
 
@@ -102,7 +111,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
             </div>
 
             {certification.image ? <div className="certification-hero-media">
-              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} />
+              <CertificateShowcase src={certification.image} alt={`Bukti ${certification.name}`} status={status} />
             </div> : null}
 
             <div className="certification-details">
@@ -112,10 +121,21 @@ export default async function CertificationDetailPage({ params }: CertificationP
 
               {topics.length ? <section className="certification-material" aria-labelledby="certificate-material-heading">
                 <h2 id="certificate-material-heading">Materi yang Dipelajari / Diujikan</h2>
-                <ol>{topics.map((topic, index) => <li key={`${topic}-${index}`}><span>{index + 1}</span><p>{topic}</p></li>)}</ol>
+                <ol>{visibleTopics.map((topic, index) => <li key={`${topic}-${index}`}><span>{index + 1}</span><p>{topic}</p></li>)}</ol>
+                {additionalTopics.length ? <details className="certification-material-more">
+                  <summary>Lihat {additionalTopics.length} materi lainnya <ChevronDown size={16} /></summary>
+                  <ol>{additionalTopics.map((topic, index) => <li key={`${topic}-${index + 6}`}><span>{index + 7}</span><p>{topic}</p></li>)}</ol>
+                </details> : null}
               </section> : null}
 
-              {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a> : null}
+              {credentialId || issuedAt || credentialUrl ? <section className="certification-credential" aria-labelledby="credential-heading">
+                <h2 id="credential-heading">Informasi Kredensial</h2>
+                {credentialId || issuedAt ? <dl>
+                  {credentialId ? <div><dt>ID kredensial</dt><dd>{credentialId}</dd></div> : null}
+                  {issuedAt ? <div><dt>Tanggal terbit</dt><dd>{issuedAt}</dd></div> : null}
+                </dl> : null}
+                {credentialUrl ? <a className="certification-verify-link" href={credentialUrl} target="_blank" rel="noopener noreferrer">Verifikasi kredensial<ArrowUpRight size={16} /></a> : null}
+              </section> : null}
             </div>
           </div>
         </section>

@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic';
 
 type ProjectPageProps = { params: Promise<{ slug: string }> };
 type GalleryItem = { src: string; caption: string; description: string };
+type ProcessStep = { title: string; description: string };
 
 function optionalText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -37,6 +38,27 @@ function galleryItems(value: unknown): GalleryItem[] {
     if (!src || !(src.startsWith('/') || publicLink(src))) return [];
     return [{ src, caption: optionalText(entry.caption), description: optionalText(entry.description) }];
   });
+}
+
+function processSteps(value: unknown): ProcessStep[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const entry = item as Record<string, unknown>;
+    const title = optionalText(entry.title);
+    const description = optionalText(entry.description);
+    return title && description ? [{ title, description }] : [];
+  });
+}
+
+function evidenceLabel(artifactType: string, configuredLabel: unknown) {
+  const type = artifactType.toLowerCase();
+  if (/website|aplikasi web|web app/.test(type)) return 'Lihat Website';
+  const configured = optionalText(configuredLabel);
+  if (configured) return configured;
+  if (/pdf|dokumen|laporan|presentasi|spreadsheet|excel|powerpoint/.test(type)) return 'Buka Dokumen';
+  if (/dashboard|data/.test(type)) return 'Lihat Dashboard';
+  return 'Lihat Bukti Proyek';
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
@@ -88,8 +110,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     : optionalText(extra.technologies || extra.technology);
   const evidenceUrl = publicLink(project.evidence?.href);
   const repositoryUrl = publicLink(extra.repositoryUrl);
-  const gallery = galleryItems(extra.gallery);
+  const gallery = galleryItems(extra.gallery).filter((item) => item.src !== project.image);
+  const process = processSteps(project.process);
   const isWebsite = /website|aplikasi web|web app/i.test(project.artifactType);
+  const primaryActionLabel = evidenceLabel(project.artifactType, project.evidence?.label);
   const titleWords = project.title.trim().split(/\s+/);
   const titleHasLeadingAcronym = titleWords.length >= 3 && /^[A-Z0-9]{2,4}$/.test(titleWords[0]);
   const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
@@ -116,7 +140,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               <h1>{titleHasLeadingAcronym ? <><span className="case-title-line">{titleWords[0]}</span><span className="case-title-line">{titleWords.slice(1).join(' ')}</span></> : project.title}</h1>
               {project.summary ? <p className="case-summary">{project.summary}</p> : null}
               {evidenceUrl || repositoryUrl ? <div className="case-hero-actions">
-                {evidenceUrl ? <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{isWebsite ? 'Lihat Website' : project.evidence?.label || 'Lihat Proyek'}<ArrowUpRight size={16} /></a> : null}
+                {evidenceUrl ? <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{primaryActionLabel}<ArrowUpRight size={16} /></a> : null}
                 {repositoryUrl ? <a className="detail-action detail-action-secondary" href={repositoryUrl} target="_blank" rel="noopener noreferrer">Lihat Kode<ArrowUpRight size={16} /></a> : null}
               </div> : null}
             </div>
@@ -141,17 +165,30 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           </div>
         </section> : null}
 
+        {process.length ? <section className="case-process section-wrap" aria-labelledby="case-process-heading">
+          <header className="case-section-heading">
+            <div><p>Alur pengerjaan</p><h2 id="case-process-heading">Proses Singkat</h2></div>
+            <p>Tahapan utama yang menjaga pekerjaan tetap terarah dan hasilnya mudah ditinjau.</p>
+          </header>
+          <ol>{process.map((step, index) => <li key={`${step.title}-${index}`}>
+            <span>{index + 1}</span><div><h3>{step.title}</h3><p>{step.description}</p></div>
+          </li>)}</ol>
+        </section> : null}
+
         {gallery.length ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
-          <h2 id="case-gallery-heading">Galeri Proyek</h2>
-          <div className="case-gallery-grid">{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
+          <header className="case-section-heading">
+            <div><p>Dokumentasi visual</p><h2 id="case-gallery-heading">Galeri Proyek</h2></div>
+            <p>Cuplikan hasil, fitur, atau dokumen yang membantu menjelaskan proyek secara nyata.</p>
+          </header>
+          <div className={`case-gallery-grid count-${Math.min(gallery.length, 3)}`}>{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
             <EditorialMedia src={item.src} expandable alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} />
             {item.caption || item.description ? <figcaption><strong>{item.caption}</strong>{item.description ? <span>{item.description}</span> : null}</figcaption> : null}
           </figure>)}</div>
         </section> : null}
 
         {projects.length > 1 ? <nav className="section-wrap case-pagination" aria-label="Navigasi proyek">
-          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small>{previous.title}</span></Link>
-          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small>{next.title}</span><ArrowRight size={17} /></Link>
+          <Link href={`/portfolio/${previous.slug}`}><ArrowLeft size={17} /><span><small>Proyek sebelumnya</small><strong>{previous.title}</strong><em>{[previous.category, previous.year].filter(Boolean).join(' · ')}</em></span></Link>
+          <Link href={`/portfolio/${next.slug}`}><span><small>Proyek berikutnya</small><strong>{next.title}</strong><em>{[next.category, next.year].filter(Boolean).join(' · ')}</em></span><ArrowRight size={17} /></Link>
         </nav> : null}
 
         <SiteFooter />

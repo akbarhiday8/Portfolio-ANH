@@ -4,7 +4,7 @@ import { ExternalLink, Expand, FileBadge2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { CertificateViewer } from '@/components/certificate-viewer';
 
-export function CertificateShowcase({ src, alt }: { src: string; alt: string }) {
+export function CertificateShowcase({ src, alt, status = '' }: { src: string; alt: string; status?: string }) {
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -31,7 +31,10 @@ export function CertificateShowcase({ src, alt }: { src: string; alt: string }) 
       <figure className="certificate-showcase">
         <header>
           <span><FileBadge2 size={16} /> Sertifikat</span>
-          <button type="button" onClick={() => setOpen(true)} aria-label={`Buka ${alt} dalam layar penuh`}><Expand size={15} /> Layar penuh</button>
+          <span className="certificate-showcase-tools">
+            {status ? <span className="certificate-status">{status}</span> : null}
+            <button type="button" onClick={() => setOpen(true)} aria-label={`Buka ${alt} dalam layar penuh`}><Expand size={15} /> Layar penuh</button>
+          </span>
         </header>
         <CertificateViewer src={src} alt={alt} />
         <div className="certificate-showcase-actions">
