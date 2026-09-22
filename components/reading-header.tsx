@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { BrandIdentity } from '@/components/brand-identity';
+import { MobileNavigation } from '@/components/site-navigation';
 import type { BrandingSource } from '@/lib/branding';
 
 const readingLinks = [
@@ -37,6 +38,7 @@ export function ReadingHeader({
           {readingLinks.map((link) => <Link className={activePage === link.id ? 'active' : ''} href={link.href} key={link.id}>{link.label}</Link>)}
         </nav>
         <ThemeToggle />
+        <MobileNavigation links={[...readingLinks]} currentActive={activePage} className="reading-mobile-nav" />
       </div>
       <button
         className="reading-header-handle"

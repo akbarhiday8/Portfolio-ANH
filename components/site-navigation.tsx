@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
-type NavigationLink = { id: string; href: string; label: string; external?: boolean };
+export type NavigationLink = { id: string; href: string; label: string; external?: boolean };
 
 const primaryLinks: NavigationLink[] = [
   { id: 'top', href: '#top', label: 'Beranda' },
@@ -25,10 +24,116 @@ type SiteNavigationProps = {
   activePage?: 'article' | 'work';
 };
 
+type MobileNavigationProps = {
+  links: NavigationLink[];
+  currentActive: string;
+  onNavigate?: (id: string) => void;
+  className?: string;
+};
+
+export function MobileNavigation({ links, currentActive, onNavigate, className = '' }: MobileNavigationProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  const restoreFocusRef = useRef(false);
+  const navigationId = useId();
+
+  const closeNavigation = useCallback(() => {
+    restoreFocusRef.current = true;
+    setMobileOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      if (restoreFocusRef.current) {
+        restoreFocusRef.current = false;
+        window.requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
+      }
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeNavigation();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = Array.from(sheetRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? []);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    closeButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeNavigation, mobileOpen]);
+
+  return (
+    <div className={`mobile-nav${className ? ` ${className}` : ''}`}>
+      <button
+        ref={triggerRef}
+        className={`menu-trigger${mobileOpen ? ' is-open' : ''}`}
+        type="button"
+        aria-label="Buka navigasi"
+        aria-controls={navigationId}
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen(true)}
+      >
+        <span className="menu-trigger-glyph" aria-hidden="true"><i /><i /></span>
+      </button>
+      <dialog id={navigationId} className={`mobile-nav-overlay${mobileOpen ? ' is-open' : ''}`} open={mobileOpen} aria-label="Navigasi seluler">
+        <button className="mobile-nav-dismiss" type="button" aria-label="Tutup navigasi" onClick={closeNavigation} />
+        <aside ref={sheetRef} className="mobile-sheet">
+          <header className="mobile-sheet-header">
+            <div className="mobile-sheet-brand"><strong>ANH</strong><span>Portofolio<br />Pribadi</span></div>
+            <button ref={closeButtonRef} className="mobile-nav-close" type="button" onClick={closeNavigation} aria-label="Tutup navigasi">
+              <span aria-hidden="true"><i /><i /></span>
+            </button>
+          </header>
+          <p className="sheet-title">Jelajahi halaman</p>
+          <nav aria-label="Navigasi mobile">
+            {links.map((link) => {
+              const selected = currentActive === link.id;
+              return (
+                <a
+                  className={selected ? 'active' : ''}
+                  href={link.href}
+                  key={link.href}
+                  aria-current={selected ? 'page' : undefined}
+                  onClick={() => {
+                    onNavigate?.(link.id);
+                    closeNavigation();
+                  }}
+                >
+                  <span>{link.label}</span><i aria-hidden="true" />
+                </a>
+              );
+            })}
+          </nav>
+          <footer><span>Akbar Nur Hidayanto</span><span>© 2026</span></footer>
+        </aside>
+      </dialog>
+    </div>
+  );
+}
+
 export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationProps = {}) {
   const [active, setActive] = useState('top');
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (activePage) return;
@@ -61,23 +166,8 @@ export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationPr
     };
   }, [activePage]);
 
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileOpen(false);
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-    closeButtonRef.current?.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [mobileOpen]);
-
-  const closeMobileNavigation = () => setMobileOpen(false);
   const currentActive = activePage ?? active;
+  const resolvedMobileLinks = mobileLinks.map((link) => ({ ...link, href: link.external ? link.href : `${homePrefix}${link.href}` }));
 
   return (
     <>
@@ -88,22 +178,7 @@ export function SiteNavigation({ homePrefix = '', activePage }: SiteNavigationPr
         })}
       </nav>
 
-      <div className="mobile-nav">
-        <button className="menu-trigger" type="button" aria-label="Buka navigasi" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><Menu size={19} /></button>
-        <dialog className={`mobile-nav-overlay${mobileOpen ? ' is-open' : ''}`} open={mobileOpen} aria-label="Navigasi seluler">
-          <button className="mobile-nav-dismiss" type="button" aria-label="Tutup navigasi" onClick={closeMobileNavigation} />
-          <aside className="mobile-sheet">
-            <p className="sheet-title">Navigasi / 2026</p>
-            <button ref={closeButtonRef} className="mobile-nav-close" type="button" onClick={closeMobileNavigation} aria-label="Tutup navigasi"><X size={19} /></button>
-            <nav>
-              {mobileLinks.map((link) => {
-                const href = link.external ? link.href : `${homePrefix}${link.href}`;
-                return <a href={href} key={link.href} onClick={() => { setActive(link.id); closeMobileNavigation(); }}>{link.label}</a>;
-              })}
-            </nav>
-          </aside>
-        </dialog>
-      </div>
+      <MobileNavigation links={resolvedMobileLinks} currentActive={currentActive} onNavigate={setActive} />
     </>
   );
 }
