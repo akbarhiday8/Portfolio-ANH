@@ -129,7 +129,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const primaryActionLabel = evidenceLabel(project.artifactType);
   const displayTitle = optionalText(extra.displayTitle);
   const titleLines = (displayTitle || project.title).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const projectImage = publicMediaSource(project.image);
   const heroImage = publicMediaSource(extra.heroImage) || publicMediaSource(project.image);
+  const showcaseBackdrop = heroImage && heroImage !== projectImage ? heroImage : '';
   const heroPosition = heroObjectPosition(extra.heroPosition);
   const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
@@ -147,12 +149,9 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <ReadingHeader activePage="work" profile={profile} siteContent={siteContent} />
 
       <main className="project-detail-page" id="top">
-        <section className={`case-hero${heroImage ? ' has-media' : ''}`}>
-          {heroImage ? <div className="case-hero-backdrop" aria-hidden="true">
-            <Image src={heroImage} alt="" fill preload quality={38} sizes="100vw" style={{ objectPosition: heroPosition }} />
-          </div> : null}
+        <section className="case-hero">
           <div className="section-wrap case-hero-shell">
-            <div className={`case-hero-grid${project.image ? '' : ' without-media'}`}>
+            <div className={`case-hero-grid${projectImage ? '' : ' without-media'}`}>
               <div className="case-intro">
                 <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
                 <h1>{titleLines.map((line, index) => <span className="case-title-line" key={`${line}-${index}`}>{line}</span>)}</h1>
@@ -161,9 +160,21 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                   <a className="detail-action detail-action-primary" href={evidenceUrl} target="_blank" rel="noopener noreferrer">{primaryActionLabel}<ArrowUpRight size={16} /></a>
                 </div> : null}
               </div>
-              {project.image ? <figure className="case-hero-media">
-                <EditorialMedia src={project.image} expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
-              </figure> : null}
+              {projectImage ? <div className="case-hero-media">
+                <div className="case-showcase">
+                  {showcaseBackdrop ? <div className="case-showcase-atmosphere" aria-hidden="true">
+                    <Image src={showcaseBackdrop} alt="" fill quality={34} sizes="(max-width: 850px) 92vw, 54vw" style={{ objectPosition: heroPosition }} />
+                  </div> : null}
+                  <div className="case-showcase-card">
+                    <div className="case-showcase-label"><span><i aria-hidden="true" />Project preview</span><small>Selected work</small></div>
+                    <EditorialMedia src={projectImage} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
+                    <div className="case-showcase-footer">
+                      <span><small>{project.artifactType || 'Dokumentasi proyek'}</small><strong>{project.title}</strong></span>
+                      <span>{previewAddress || 'Visual utama'}<ArrowUpRight size={14} /></span>
+                    </div>
+                  </div>
+                </div>
+              </div> : null}
             </div>
           </div>
         </section>

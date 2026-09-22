@@ -9,37 +9,21 @@
   isolation: isolate;
   overflow: hidden;
   border-bottom: 1px solid var(--rule);
-  background: var(--paper);
+  background:
+    radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--red) 5%, transparent), transparent 25%),
+    linear-gradient(90deg, transparent 0 49.95%, color-mix(in srgb, var(--rule) 48%, transparent) 50%, transparent 50.05%),
+    var(--paper);
 }
 
-.case-hero.has-media {
-  border-color: rgba(255, 255, 255, .14);
-  background: #0d0d0c;
-  color: #f7f3eb;
-}
-
-.case-hero-backdrop {
-  position: absolute;
-  z-index: -2;
-  inset: -42px;
-  overflow: hidden;
-  background: #0d0d0c;
-}
-
-.case-hero-backdrop img {
-  object-fit: cover;
-  filter: grayscale(.12) saturate(.78) contrast(1.06) brightness(.72) blur(2px);
-  transform: scale(1.025);
-}
-
-.case-hero.has-media::after {
+.case-hero::after {
   position: absolute;
   z-index: -1;
-  inset: 0;
-  background-color: rgba(8, 8, 7, .14);
-  background-image:
-    linear-gradient(90deg, rgba(8, 8, 7, .96) 0%, rgba(8, 8, 7, .9) 34%, rgba(8, 8, 7, .5) 65%, rgba(8, 8, 7, .2) 100%),
-    linear-gradient(180deg, rgba(8, 8, 7, .08), rgba(8, 8, 7, .55));
+  right: -7vw;
+  bottom: -42%;
+  width: min(42vw, 620px);
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+  border-radius: 50%;
   content: '';
 }
 
@@ -77,15 +61,15 @@
 /* Portfolio detail */
 .case-hero-shell {
   display: flex;
-  min-height: clamp(420px, 51vh, 520px);
+  min-height: clamp(520px, 66vh, 680px);
   align-items: center;
-  padding-block: clamp(34px, 3.8vw, 52px);
+  padding-block: clamp(48px, 5.2vw, 76px);
 }
 .case-hero-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, .42fr) minmax(0, .58fr);
-  gap: clamp(44px, 5.2vw, 78px);
+  grid-template-columns: minmax(0, .4fr) minmax(0, .6fr);
+  gap: clamp(48px, 6vw, 92px);
   align-items: center;
 }
 
@@ -95,9 +79,9 @@
 
 .case-intro h1 {
   max-width: 660px;
-  margin-top: 12px;
+  margin-top: 14px;
   font-family: var(--serif);
-  font-size: clamp(50px, 4.45vw, 66px);
+  font-size: clamp(52px, 4.7vw, 72px);
   font-weight: 400;
   line-height: .96;
   letter-spacing: -.045em;
@@ -109,7 +93,7 @@
 
 .case-summary {
   max-width: 560px;
-  margin-top: 18px;
+  margin-top: 22px;
   color: var(--gray);
   font-size: clamp(16px, 1.3vw, 17px);
   line-height: 1.66;
@@ -119,7 +103,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 11px;
-  margin-top: 22px;
+  margin-top: 28px;
 }
 
 .detail-action {
@@ -138,23 +122,74 @@
 
 .detail-action-primary { background: var(--red); color: #fff; }
 .detail-action-primary:hover { border-color: var(--red-bright); background: var(--red-bright); }
-.case-hero-media { min-width: 0; margin: 0; }
-
-.case-hero.has-media .case-intro h1 { color: #fff; text-shadow: 0 2px 28px rgba(0, 0, 0, .24); }
-.case-hero.has-media .case-summary { color: rgba(247, 243, 235, .76); }
-.case-hero.has-media .case-hero-media { align-self: center; }
-.case-hero.has-media .case-hero-media > .editorial-media {
-  border-color: rgba(255, 255, 255, .22);
-  border-radius: 0;
-  background: rgba(16, 16, 15, .76);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, .32);
+.case-hero-media { min-width: 0; }
+.case-showcase { position: relative; padding: 24px 18px 22px 28px; }
+.case-showcase::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 74%;
+  height: 76%;
+  border-top: 1px solid color-mix(in srgb, var(--red) 72%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--red) 38%, transparent);
+  content: '';
 }
-.case-hero.has-media .case-hero-media .editorial-browser-bar {
-  border-color: rgba(255, 255, 255, .12);
-  background: rgba(15, 15, 14, .92);
-  color: rgba(247, 243, 235, .58);
+.case-showcase::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 76px;
+  height: 76px;
+  background-image: radial-gradient(color-mix(in srgb, var(--red) 48%, transparent) .8px, transparent .8px);
+  background-size: 8px 8px;
+  content: '';
 }
-.case-hero.has-media .case-hero-media .editorial-media-stage { background: rgba(16, 16, 15, .82); }
+.case-showcase-atmosphere {
+  position: absolute;
+  inset: 9% 5% 4% 11%;
+  overflow: hidden;
+  opacity: .2;
+  filter: grayscale(.35) saturate(.7) blur(18px);
+  transform: scale(1.05);
+}
+.case-showcase-atmosphere img { object-fit: cover; }
+.case-showcase-card {
+  position: relative;
+  z-index: 1;
+  padding: 11px;
+  background: #151514;
+  color: #f7f3eb;
+  box-shadow: 0 34px 74px rgba(14, 13, 11, .22), 0 10px 22px rgba(14, 13, 11, .13);
+}
+.case-showcase-label,
+.case-showcase-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.case-showcase-label { min-height: 34px; padding: 0 4px 10px; color: rgba(247, 243, 235, .63); font-size: 8px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+.case-showcase-label span { display: flex; align-items: center; gap: 8px; }
+.case-showcase-label i { width: 22px; height: 2px; background: var(--red); }
+.case-showcase-label small { font: inherit; color: rgba(247, 243, 235, .36); }
+.case-showcase-card > .editorial-media {
+  max-width: none;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 1px;
+  background: #ece9e2;
+  box-shadow: none;
+}
+.case-showcase-card .editorial-browser-bar {
+  height: 38px;
+  border-color: rgba(20, 19, 18, .12);
+  background: #f3f0e9;
+  color: #6d6b66;
+}
+.case-showcase-card .editorial-browser-dots i { opacity: 1; }
+.case-showcase-card .editorial-browser-dots i:first-child { background: #b32335; }
+.case-showcase-card .editorial-browser-dots i:nth-child(2) { background: #a89873; }
+.case-showcase-card .editorial-browser-dots i:last-child { background: #787d78; }
+.case-showcase-card .editorial-media-stage { background: #e9e6df; }
+.case-showcase-footer { min-height: 62px; padding: 11px 5px 0; }
+.case-showcase-footer > span:first-child { display: grid; min-width: 0; gap: 3px; }
+.case-showcase-footer small { color: rgba(247, 243, 235, .45); font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.case-showcase-footer strong { overflow: hidden; font: 400 17px/1.2 var(--serif); text-overflow: ellipsis; white-space: nowrap; }
+.case-showcase-footer > span:last-child { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; color: rgba(247, 243, 235, .62); font-size: 9px; }
 
 .editorial-media {
   width: 100%;
