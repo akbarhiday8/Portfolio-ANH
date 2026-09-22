@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
@@ -130,7 +131,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <ReadingHeader activePage="work" profile={profile} siteContent={siteContent} />
 
       <main className="project-detail-page" id="top">
-        <section className="case-hero">
+        <section className={`case-hero${project.image ? ' has-media' : ''}`}>
+          {project.image ? <div className="case-hero-backdrop" aria-hidden="true">
+            <Image src={project.image} alt="" fill preload quality={38} sizes="100vw" />
+          </div> : null}
           <div className="section-wrap case-hero-shell">
             <div className={`case-hero-grid${project.image ? '' : ' without-media'}`}>
               <div className="case-intro">
@@ -143,7 +147,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 </div> : null}
               </div>
               {project.image ? <figure className="case-hero-media">
-                <EditorialMedia src={project.image} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
+                <EditorialMedia src={project.image} expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
                 <figcaption>{isWebsite ? `Halaman utama ${project.title}` : `Dokumentasi utama ${project.title}`}</figcaption>
               </figure> : null}
             </div>
