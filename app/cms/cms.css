@@ -39,16 +39,18 @@
 .cms-field label span { margin-left:4px; color:var(--red-bright); }
 .cms-field input,.cms-field textarea,.cms-field select { width:100%; height:46px; border:1px solid var(--cms-line); border-radius:6px; padding:0 14px; background:var(--cms-surface); color:var(--ink); font-family:var(--sans); font-size:14px; outline:none; transition:border-color .18s,box-shadow .18s,background .18s; }
 .cms-field textarea { min-height:132px; height:auto; padding:13px 14px; resize:vertical; line-height:1.65; }
-.cms-field textarea.cms-list-textarea.has-list-lines {
-  padding-left:40px;
-  background-image:radial-gradient(circle,var(--red-bright) 0 2.3px,transparent 2.7px);
-  background-position:9px 13px;
-  background-size:23px 23.1px;
-  background-repeat:repeat-y;
-}
-.cms-field textarea.cms-list-textarea.has-list-lines.is-outcome {
-  background-image:radial-gradient(circle,var(--green,#287d5c) 0 2.3px,transparent 2.7px);
-}
+.cms-bullet-editor { display:grid; gap:10px; }
+.cms-bullet-editor-list { display:grid; gap:7px; }
+.cms-bullet-editor-row { display:grid; grid-template-columns:20px minmax(0,1fr) 34px; gap:8px; align-items:start; border:1px solid var(--cms-line); border-radius:6px; padding:7px 7px 7px 10px; background:var(--cms-surface); transition:border-color .18s,box-shadow .18s,background .18s; }
+.cms-bullet-editor-row:focus-within { border-color:var(--red); background:var(--paper); box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 11%,transparent); }
+.cms-bullet-editor-row > span { padding-top:4px; color:var(--red-bright); font:700 20px/1 var(--sans); text-align:center; }
+.cms-field .cms-bullet-editor-row textarea { min-height:34px; border:0; padding:4px; background:transparent; box-shadow:none; resize:none; line-height:1.55; }
+.cms-field .cms-bullet-editor-row textarea:hover,.cms-field .cms-bullet-editor-row textarea:focus { border:0; background:transparent; box-shadow:none; }
+.cms-bullet-editor-row > button { display:grid; width:32px; height:32px; place-items:center; border:0; border-radius:5px; background:transparent; color:var(--muted); cursor:pointer; }
+.cms-bullet-editor-row > button:hover { background:var(--cms-surface-hover); color:var(--red-bright); }
+.cms-bullet-editor-add { width:max-content; display:inline-flex; align-items:center; gap:7px; border:0; border-bottom:1px solid color-mix(in srgb,var(--red) 45%,transparent); padding:4px 0; background:transparent; color:var(--red); font:650 12px/1.4 var(--sans); cursor:pointer; }
+.cms-bullet-editor-add:hover { border-color:currentColor; color:var(--red-bright); }
+.cms-bullet-editor.has-error .cms-bullet-editor-row { border-color:var(--red-bright); }
 .cms-field select { appearance:auto; }
 .cms-field input:hover,.cms-field textarea:hover,.cms-field select:hover { border-color:color-mix(in srgb,var(--ink) 28%,transparent); }
 .cms-field input:focus,.cms-field textarea:focus,.cms-field select:focus { border-color:var(--red); background:var(--paper); box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 11%,transparent); }

@@ -122,7 +122,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     ? extra.technologies.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).join(', ')
     : optionalText(extra.technologies || extra.technology);
   const evidenceUrl = publicLink(project.evidence?.href);
-  const gallery = galleryItems(extra.gallery).filter((item) => item.src !== project.image);
+  const gallery = galleryItems(extra.gallery);
   const process = processSteps(project.process);
   const outcomes = optionalText(project.outcome).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
   const isWebsite = /website|aplikasi web|web app/i.test(project.artifactType);

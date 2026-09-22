@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { CmsBulletListEditor } from '@/components/cms/cms-bullet-list-editor';
 import { brandingModule, cmsModules, legalModule, type CmsField, type CmsModuleDefinition } from '@/lib/cms-fields';
 import type { CmsAdmin } from '@/lib/cms-auth';
 import type { CmsCollection, CmsRecord, CmsStatus } from '@/lib/cms/types';
@@ -281,6 +282,35 @@ function mergeBufferedFields(module: CmsModuleDefinition, data: Record<string, u
     if (field.type !== 'list') return next;
     return setPath(next, field.key, parseField(field, values[field.key] ?? ''));
   }, data);
+}
+
+type ProjectBulletDrafts = Record<string, string[]>;
+
+function projectBulletDraftValues(module: CmsModuleDefinition, data: Record<string, unknown>): ProjectBulletDrafts {
+  if (module.collection !== 'projects') return {};
+  const scopeValue = getPath(data, 'scope');
+  const outcomeValue = getPath(data, 'outcome');
+  const scope = Array.isArray(scopeValue)
+    ? scopeValue.filter((item): item is string => typeof item === 'string')
+    : [];
+  const outcome = typeof outcomeValue === 'string'
+    ? outcomeValue.split(/\r?\n/).filter(Boolean)
+    : [];
+  return {
+    scope: scope.length ? scope : [''],
+    outcome: outcome.length ? outcome : [''],
+  };
+}
+
+function mergeProjectBulletDrafts(
+  module: CmsModuleDefinition,
+  data: Record<string, unknown>,
+  drafts: ProjectBulletDrafts,
+) {
+  if (module.collection !== 'projects') return data;
+  const scope = (drafts.scope ?? ['']).map((item) => item.trim()).filter(Boolean);
+  const outcome = (drafts.outcome ?? ['']).map((item) => item.trim()).filter(Boolean).join('\n');
+  return setPath(setPath(data, 'scope', scope), 'outcome', outcome);
 }
 
 function articleSectionDraftValues(module: CmsModuleDefinition, data: Record<string, unknown>) {
@@ -564,9 +594,11 @@ function ContentEditor({
 }) {
   const initialEditorData = useMemo(() => normalizeEditorData(module, record.data), [module, record.data]);
   const initialArticleDrafts = useMemo(() => articleSectionDraftValues(module, record.data), [module, record.data]);
+  const initialProjectBulletDrafts = useMemo(() => projectBulletDraftValues(module, record.data), [module, record.data]);
   const [data, setData] = useState<Record<string, unknown>>(initialEditorData);
   const [bufferedValues, setBufferedValues] = useState<Record<string, string>>(() => bufferedFieldValues(module, record.data));
   const [articleDrafts, setArticleDrafts] = useState<Record<string, ArticleSectionDraft[]>>(initialArticleDrafts);
+  const [projectBulletDrafts, setProjectBulletDrafts] = useState<ProjectBulletDrafts>(initialProjectBulletDrafts);
   const [status, setStatus] = useState<CmsStatus>(record.status);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -577,6 +609,7 @@ function ContentEditor({
   const [baseline, setBaseline] = useState({ data: initialEditorData, status: record.status });
   const [baselineBufferedValues, setBaselineBufferedValues] = useState<Record<string, string>>(() => bufferedFieldValues(module, record.data));
   const [baselineArticleDrafts, setBaselineArticleDrafts] = useState<Record<string, ArticleSectionDraft[]>>(initialArticleDrafts);
+  const [baselineProjectBulletDrafts, setBaselineProjectBulletDrafts] = useState<ProjectBulletDrafts>(initialProjectBulletDrafts);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const temporaryUploads = useRef<Record<string, MediaItem>>({});
   const sections = useMemo(() => sectionsForModule(module), [module]);
@@ -584,8 +617,9 @@ function ContentEditor({
     () => data !== baseline.data
       || Object.keys(bufferedValues).some((key) => bufferedValues[key] !== baselineBufferedValues[key])
       || articleDrafts !== baselineArticleDrafts
+      || projectBulletDrafts !== baselineProjectBulletDrafts
       || status !== baseline.status,
-    [articleDrafts, baseline, baselineArticleDrafts, baselineBufferedValues, bufferedValues, data, status],
+    [articleDrafts, baseline, baselineArticleDrafts, baselineBufferedValues, baselineProjectBulletDrafts, bufferedValues, data, projectBulletDrafts, status],
   );
   const [previewOpen, setPreviewOpen] = useState(false);
   const [autosaveState, setAutosaveState] = useState('');
@@ -596,7 +630,11 @@ function ContentEditor({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(record.id !== 'new');
   const autosaveKey = useMemo(() => `anh-cms-draft:${module.collection}:${record.id}`, [module.collection, record.id]);
   const historyKey = useMemo(() => `anh-cms-history:${module.collection}:${record.id}`, [module.collection, record.id]);
-  const validationIssues = useMemo(() => validateRecord(module, data, module.singleton ? 'published' : status), [data, module, status]);
+  const validationData = useMemo(
+    () => mergeProjectBulletDrafts(module, data, projectBulletDrafts),
+    [data, module, projectBulletDrafts],
+  );
+  const validationIssues = useMemo(() => validateRecord(module, validationData, module.singleton ? 'published' : status), [module, status, validationData]);
   const displayedValidationIssues = useMemo(() => [
     ...validationIssues.filter((issue) => issue.level === 'warning' || submitAttempt > 0 || Boolean(issue.field && touchedFields.has(issue.field))),
     ...serverFieldIssues,
@@ -632,6 +670,7 @@ function ContentEditor({
           setData(normalizeEditorData(module, draft.data));
           setBufferedValues(bufferedFieldValues(module, draft.data));
           setArticleDrafts(articleSectionDraftValues(module, draft.data));
+          setProjectBulletDrafts(projectBulletDraftValues(module, draft.data));
           if (draft.status) setStatus(draft.status);
           setMessage('Draft otomatis dipulihkan. Cek kembali lalu simpan.');
         }
@@ -674,12 +713,13 @@ function ContentEditor({
     if (!dirty) return;
     const timer = window.setTimeout(() => {
       const bufferedData = mergeBufferedFields(module, data, bufferedValues);
-      const draft = { data: mergeArticleSectionDrafts(module, bufferedData, articleDrafts), status, updatedAt: Date.now() };
+      const bulletData = mergeProjectBulletDrafts(module, bufferedData, projectBulletDrafts);
+      const draft = { data: mergeArticleSectionDrafts(module, bulletData, articleDrafts), status, updatedAt: Date.now() };
       window.localStorage.setItem(autosaveKey, JSON.stringify(draft));
       setAutosaveState(`Autosave ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`);
     }, 800);
     return () => window.clearTimeout(timer);
-  }, [articleDrafts, autosaveKey, bufferedValues, data, dirty, module, status]);
+  }, [articleDrafts, autosaveKey, bufferedValues, data, dirty, module, projectBulletDrafts, status]);
 
   function closeEditor() {
     if (dirty && !window.confirm('Tutup editor dan abaikan perubahan yang belum disimpan?')) return;
@@ -707,6 +747,7 @@ function ContentEditor({
     setData(normalizeEditorData(module, snapshot.data));
     setBufferedValues(bufferedFieldValues(module, snapshot.data));
     setArticleDrafts(articleSectionDraftValues(module, snapshot.data));
+    setProjectBulletDrafts(projectBulletDraftValues(module, snapshot.data));
     setStatus(snapshot.status);
     setMessage('Versi sebelumnya dimuat ke editor. Simpan untuk menerapkan.');
   }
@@ -888,7 +929,8 @@ function ContentEditor({
     event.preventDefault();
     setServerFieldIssues([]);
     const bufferedData = mergeBufferedFields(module, data, bufferedValues);
-    const normalizedData = mergeArticleSectionDrafts(module, bufferedData, articleDrafts);
+    const bulletData = mergeProjectBulletDrafts(module, bufferedData, projectBulletDrafts);
+    const normalizedData = mergeArticleSectionDrafts(module, bulletData, articleDrafts);
     const currentIssues = validateRecord(module, normalizedData, module.singleton ? 'published' : status);
     const blockingIssues = currentIssues.filter((issue) => issue.level === 'error');
     if (blockingIssues.length) {
@@ -942,11 +984,14 @@ function ContentEditor({
       setBaseline({ data: savedData, status: result.record.status });
       const savedBufferedValues = bufferedFieldValues(module, result.record.data);
       const savedArticleDrafts = articleSectionDraftValues(module, result.record.data);
+      const savedProjectBulletDrafts = projectBulletDraftValues(module, result.record.data);
       setData(savedData);
       setBufferedValues(savedBufferedValues);
       setBaselineBufferedValues(savedBufferedValues);
       setArticleDrafts(savedArticleDrafts);
       setBaselineArticleDrafts(savedArticleDrafts);
+      setProjectBulletDrafts(savedProjectBulletDrafts);
+      setBaselineProjectBulletDrafts(savedProjectBulletDrafts);
       setSubmitAttempt(0);
       setTouchedFields(new Set());
       setServerFieldIssues([]);
@@ -957,7 +1002,7 @@ function ContentEditor({
 
   function renderField(field: CmsField) {
     const isBuffered = field.type === 'list';
-    const isProjectList = module.collection === 'projects' && (field.key === 'scope' || field.key === 'outcome');
+    const isProjectBulletList = module.collection === 'projects' && (field.key === 'scope' || field.key === 'outcome');
     const value = field.type === 'steps' || field.type === 'articleSections'
       ? ''
       : isBuffered ? bufferedValues[field.key] ?? '' : fieldText(field, getPath(data, field.key));
@@ -1059,8 +1104,21 @@ function ContentEditor({
             ))}
             <Button type="button" variant="outline" onClick={() => setArticleDrafts((current) => ({ ...current, [field.key]: [...(current[field.key] ?? []), { heading: '', body: '' }] }))}><Plus size={15} />Tambah bagian</Button>
           </div>
+        ) : isProjectBulletList ? (
+          <CmsBulletListEditor
+            id={inputId}
+            items={projectBulletDrafts[field.key] ?? ['']}
+            label={field.label}
+            ariaInvalid={Boolean(fieldIssue)}
+            ariaDescribedBy={describedBy}
+            onBlur={() => markTouched(field.key)}
+            onChange={(items) => {
+              clearServerFieldIssue(field.key);
+              setProjectBulletDrafts((current) => ({ ...current, [field.key]: items }));
+            }}
+          />
         ) : field.type === 'textarea' || field.type === 'list' ? (
-          <Textarea id={inputId} {...fieldControlProps} className={isProjectList ? `cms-list-textarea is-${field.key}${value.includes('\n') ? ' has-list-lines' : ''}` : undefined} value={value} required={field.required} rows={field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder}
+          <Textarea id={inputId} {...fieldControlProps} value={value} required={field.required} rows={field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder}
             onChange={(event) => {
               clearServerFieldIssue(field.key);
               if (isBuffered) setBufferedValues((current) => ({ ...current, [field.key]: event.target.value }));
