@@ -166,11 +166,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                     <Image src={showcaseBackdrop} alt="" fill quality={34} sizes="(max-width: 850px) 92vw, 54vw" style={{ objectPosition: heroPosition }} />
                   </div> : null}
                   <div className="case-showcase-card">
-                    <div className="case-showcase-label"><span><i aria-hidden="true" />Project preview</span><small>Selected work</small></div>
                     <EditorialMedia src={projectImage} priority expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
                     <div className="case-showcase-footer">
-                      <span><small>{project.artifactType || 'Dokumentasi proyek'}</small><strong>{project.title}</strong></span>
-                      <span>{previewAddress || 'Visual utama'}<ArrowUpRight size={14} /></span>
+                      <span><strong>{project.title}</strong><small>{project.artifactType || 'Dokumentasi proyek'}</small></span>
+                      <span>{previewAddress || 'Visual utama'}</span>
                     </div>
                   </div>
                 </div>
