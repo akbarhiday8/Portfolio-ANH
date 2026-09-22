@@ -30,6 +30,18 @@ function publicLink(value: unknown) {
   }
 }
 
+function publicMediaSource(value: unknown) {
+  if (typeof value !== 'string') return '';
+  const source = value.trim();
+  return source.startsWith('/') ? source : publicLink(source);
+}
+
+function heroObjectPosition(value: unknown) {
+  if (value === 'left') return 'left center';
+  if (value === 'right') return 'right center';
+  return 'center center';
+}
+
 function galleryItems(value: unknown): GalleryItem[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -66,10 +78,10 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   const project = projects.find((item) => item.slug === slug);
   if (!project) return {};
 
-  const seo = project as typeof project & { seoTitle?: string; seoDescription?: string; seoImage?: string };
+  const seo = project as typeof project & { seoTitle?: string; seoDescription?: string; seoImage?: string; heroImage?: string };
   const pageTitle = seo.seoTitle || `${project.title} — Portfolio Akbar Nur Hidayanto`;
   const pageDescription = seo.seoDescription || project.summary;
-  const image = seo.seoImage || project.image;
+  const image = seo.seoImage || seo.heroImage || project.image;
   const imageUrl = image ? new URL(image, SITE_URL).toString() : undefined;
 
   return {
@@ -100,6 +112,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     technology?: unknown;
     objective?: unknown;
     gallery?: unknown;
+    heroImage?: unknown;
+    heroPosition?: unknown;
   };
   const challenge = optionalText(project.challenge);
   const approach = optionalText(project.approach);
@@ -115,6 +129,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const primaryActionLabel = evidenceLabel(project.artifactType);
   const displayTitle = optionalText(extra.displayTitle);
   const titleLines = (displayTitle || project.title).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const heroImage = publicMediaSource(extra.heroImage) || publicMediaSource(project.image);
+  const heroPosition = heroObjectPosition(extra.heroPosition);
   const previewAddress = isWebsite && evidenceUrl ? new URL(evidenceUrl).host.replace(/^www\./, '') : '';
   const previous = projects[(projectIndex - 1 + projects.length) % projects.length];
   const next = projects[(projectIndex + 1) % projects.length];
@@ -131,14 +147,13 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
       <ReadingHeader activePage="work" profile={profile} siteContent={siteContent} />
 
       <main className="project-detail-page" id="top">
-        <section className={`case-hero${project.image ? ' has-media' : ''}`}>
-          {project.image ? <div className="case-hero-backdrop" aria-hidden="true">
-            <Image src={project.image} alt="" fill preload quality={38} sizes="100vw" />
+        <section className={`case-hero${heroImage ? ' has-media' : ''}`}>
+          {heroImage ? <div className="case-hero-backdrop" aria-hidden="true">
+            <Image src={heroImage} alt="" fill preload quality={38} sizes="100vw" style={{ objectPosition: heroPosition }} />
           </div> : null}
           <div className="section-wrap case-hero-shell">
             <div className={`case-hero-grid${project.image ? '' : ' without-media'}`}>
               <div className="case-intro">
-                <Link className="detail-return" href="/#work"><ArrowLeft size={16} />Kembali ke Portfolio</Link>
                 <p className="case-kicker">{[project.category, project.year].filter(Boolean).join(' · ')}</p>
                 <h1>{titleLines.map((line, index) => <span className="case-title-line" key={`${line}-${index}`}>{line}</span>)}</h1>
                 {project.summary ? <p className="case-summary">{project.summary}</p> : null}
@@ -148,7 +163,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               </div>
               {project.image ? <figure className="case-hero-media">
                 <EditorialMedia src={project.image} expandable alt={`Dokumentasi visual proyek ${project.title}`} address={previewAddress} browserFrame={isWebsite} />
-                <figcaption>{isWebsite ? `Halaman utama ${project.title}` : `Dokumentasi utama ${project.title}`}</figcaption>
               </figure> : null}
             </div>
           </div>
@@ -160,14 +174,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
         {challenge || objective || approach || project.scope?.length || outcomes.length ? <section className="case-content">
           <div className="section-wrap case-content-grid">
-            {challenge || approach || project.scope?.length ? <div className="case-content-column">
-              {challenge || approach ? <article><h2>Tentang Proyek</h2>{challenge ? <p>{challenge}</p> : null}{approach ? <><h3>Pendekatan</h3><p>{approach}</p></> : null}</article> : null}
-              {project.scope?.length ? <article><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
-            </div> : null}
-            {objective || outcomes.length ? <div className="case-content-column">
-              {objective ? <article><h2>Tujuan</h2><p>{objective}</p></article> : null}
-              {outcomes.length ? <article><h2>Hasil</h2><ul className="case-result-list">{outcomes.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
-            </div> : null}
+            {challenge || approach ? <article className="case-story-about"><h2>Tentang Proyek</h2>{challenge ? <p>{challenge}</p> : null}{approach ? <><h3>Pendekatan</h3><p>{approach}</p></> : null}</article> : null}
+            {objective ? <article className="case-story-objective"><h2>Tujuan</h2><p>{objective}</p></article> : null}
+            {project.scope?.length ? <article className="case-story-contribution"><h2>Kontribusi</h2><ul>{project.scope.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
+            {outcomes.length ? <article className="case-story-outcome"><h2>Hasil</h2><ul className="case-result-list">{outcomes.map((item) => <li key={item}>{item}</li>)}</ul></article> : null}
           </div>
         </section> : null}
 
@@ -179,7 +189,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </section> : null}
 
         {gallery.length ? <section className="case-gallery section-wrap" aria-labelledby="case-gallery-heading">
-          <h2 id="case-gallery-heading">Galeri Proyek</h2>
+          <h2 id="case-gallery-heading">Galeri Tampilan</h2>
           <div className={`case-gallery-grid count-${Math.min(gallery.length, 3)}`}>{gallery.map((item, index) => <figure key={`${item.src}-${index}`}>
             <EditorialMedia src={item.src} expandable alt={item.caption || `Dokumentasi ${project.title} ${index + 1}`} />
             {item.caption || item.description ? <figcaption><strong>{item.caption}</strong>{item.description ? <span>{item.description}</span> : null}</figcaption> : null}

@@ -88,7 +88,8 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
     { title: 'Visual kartu', description: 'Gambar dan aksen tampilan.', fields: ['image', 'tone'] },
   ],
   projects: [
-    { title: 'Ringkasan proyek', description: 'Identitas, susunan judul, gambar utama, pengantar, dan metadata pada bagian teratas halaman detail.', fields: ['slug', 'title', 'displayTitle', 'category', 'year', 'image', 'summary', 'role', 'discipline', 'artifactType', 'technologies'] },
+    { title: 'Ringkasan proyek', description: 'Identitas, susunan judul, pengantar, dan metadata utama studi kasus.', fields: ['slug', 'title', 'displayTitle', 'category', 'year', 'summary', 'role', 'discipline', 'artifactType', 'technologies'] },
+    { title: 'Visual hero', description: 'Gambar utama menjadi pratinjau proyek. Latar hero bersifat opsional dan dapat memiliki titik fokus berbeda.', fields: ['image', 'heroImage', 'heroPosition'] },
     { title: 'Cerita proyek', description: 'Konteks, tujuan, pendekatan, kontribusi, hasil, dan proses yang membentuk studi kasus.', fields: ['challenge', 'objective', 'approach', 'scope', 'outcome', 'process'] },
     { title: 'Bukti proyek', description: 'Satu tautan utama dan galeri visual pendukung. Label tombol dipilih otomatis dari jenis hasil.', fields: ['evidence.href', 'gallery'] },
     { title: 'SEO & Bagikan', description: 'Pengaturan opsional untuk hasil pencarian dan pratinjau saat halaman dibagikan.', fields: ['seoTitle', 'seoDescription', 'seoImage'], collapsed: true },

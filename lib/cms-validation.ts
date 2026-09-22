@@ -111,6 +111,8 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     year: optionalShortText,
     layout: z.union([z.enum(['wide', 'tall', 'square']), z.literal('')]).optional().default(''),
     image: optionalLink,
+    heroImage: optionalLink,
+    heroPosition: z.enum(['', 'left', 'center', 'right']).optional().default(''),
     role: optionalShortText,
     discipline: optionalShortText,
     artifactType: optionalShortText,

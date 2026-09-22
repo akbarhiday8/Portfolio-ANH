@@ -134,6 +134,10 @@ export const cmsModules: CmsModuleDefinition[] = [
       area('displayTitle', 'Susunan judul pada halaman detail', { helper: 'Opsional. Gunakan Enter hanya jika judul memang perlu dipisah menjadi beberapa baris. Jika kosong, judul proyek digunakan apa adanya.' }),
       text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true, helper: 'Visual utama pada kartu dan hero detail. Gunakan gambar paling representatif; portrait dan landscape ditangani otomatis.' },
+      { key: 'heroImage', label: 'Latar hero detail', type: 'image', wide: true, helper: 'Opsional. Gunakan foto atau visual atmosferik landscape minimal 1600×900 px. Jika kosong, Gambar utama dipakai dengan efek latar otomatis.' },
+      { key: 'heroPosition', label: 'Fokus latar hero', type: 'select', helper: 'Atur titik fokus agar objek utama tetap terlihat saat gambar dipotong responsif.', options: [
+        { value: '', label: 'Tengah (otomatis)' }, { value: 'left', label: 'Kiri' }, { value: 'center', label: 'Tengah' }, { value: 'right', label: 'Kanan' },
+      ] },
       text('role', 'Peran'), text('discipline', 'Bidang'),
       { key: 'artifactType', label: 'Jenis hasil', type: 'select', options: [
         { value: 'Website / aplikasi web', label: 'Website / aplikasi web' },
