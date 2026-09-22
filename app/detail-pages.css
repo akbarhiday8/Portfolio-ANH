@@ -600,7 +600,7 @@
   .case-section-heading > p { justify-self: start; }
   .case-process ol { grid-template-columns: 1fr; }
   .case-process li { padding: 19px 0; }
-  .case-process li + li { border-left: 0; }
+  .case-process li + li { border-left: 0; padding-left: 0; }
   .case-process li:last-child { padding-bottom: 0; }
   .case-pagination { grid-template-columns: 1fr; }
   .case-pagination > a + a { border-top: 1px solid var(--rule); border-left: 0; }
