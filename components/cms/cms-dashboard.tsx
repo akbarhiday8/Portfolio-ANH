@@ -33,6 +33,104 @@ type RevisionSnapshot = { savedAt: string; status: CmsStatus; title: string; dat
 type ArticleSectionDraft = { heading: string; body: string };
 type GalleryDraft = { src: string; caption: string; description: string };
 
+function acceptsFile(file: File, accept: string) {
+  return accept.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean).some((rule) => {
+    if (rule.startsWith('.')) return file.name.toLowerCase().endsWith(rule);
+    if (rule.endsWith('/*')) return file.type.toLowerCase().startsWith(rule.slice(0, -1));
+    return file.type.toLowerCase() === rule;
+  });
+}
+
+function CmsFileDropZone({
+  accept,
+  children,
+  className = '',
+  disabled = false,
+  element = 'div',
+  label,
+  onFile,
+  onRejected,
+}: {
+  accept: string;
+  children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+  element?: 'article' | 'div';
+  label: string;
+  onFile: (file: File) => void;
+  onRejected?: (message: string) => void;
+}) {
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepth = useRef(0);
+  const Element = element;
+
+  function isFileDrag(event: React.DragEvent<HTMLElement>) {
+    return Array.from(event.dataTransfer.types).includes('Files');
+  }
+
+  function enter(event: React.DragEvent<HTMLElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (disabled) return;
+    dragDepth.current += 1;
+    setDragActive(true);
+  }
+
+  function over(event: React.DragEvent<HTMLElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = disabled ? 'none' : 'copy';
+  }
+
+  function leave(event: React.DragEvent<HTMLElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragActive(false);
+  }
+
+  function drop(event: React.DragEvent<HTMLElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepth.current = 0;
+    setDragActive(false);
+    if (disabled) {
+      onRejected?.('Tunggu proses unggah saat ini selesai sebelum menambahkan file lain.');
+      return;
+    }
+    const files = Array.from(event.dataTransfer.files);
+    const file = files[0];
+    if (!file) return;
+    if (files.length > 1) {
+      onRejected?.('Jatuhkan satu file pada satu form agar file masuk ke tujuan yang tepat.');
+      return;
+    }
+    if (!acceptsFile(file, accept)) {
+      onRejected?.(`Format ${file.name} tidak sesuai untuk ${label.toLowerCase()}.`);
+      return;
+    }
+    onFile(file);
+  }
+
+  return (
+    <Element
+      className={`${className} cms-file-drop-zone${dragActive ? ' is-drag-active' : ''}`.trim()}
+      data-drop-zone={label}
+      onDragEnter={enter}
+      onDragOver={over}
+      onDragLeave={leave}
+      onDrop={drop}
+    >
+      {children}
+      {dragActive ? <span className="cms-file-drop-overlay" aria-hidden="true"><Upload size={22} />Lepaskan untuk mengunggah ke <strong>{label}</strong></span> : null}
+    </Element>
+  );
+}
+
 const moduleIcons: Record<CmsCollection, React.ComponentType<{ size?: number }>> = {
   siteContent: Settings2,
   profile: UserRound,
@@ -875,7 +973,16 @@ function ContentEditor({
             {(Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as GalleryDraft[] : []).map((item, index) => {
               const uploadKey = `${field.key}-${index}`;
               const galleryItemLabel = field.key === 'pages' ? `Halaman tambahan ${index + 1}` : `Gambar ${index + 1}`;
-              return <article className="cms-gallery-row" key={`${field.key}-${index}`}>
+              return <CmsFileDropZone
+                accept={IMAGE_ACCEPT}
+                className="cms-gallery-row"
+                disabled={uploading === uploadKey}
+                element="article"
+                key={`${field.key}-${index}`}
+                label={galleryItemLabel}
+                onFile={(file) => { void uploadGalleryImage(field, index, file); }}
+                onRejected={setMessage}
+              >
                 {item.src ? <CmsAdaptiveImage src={item.src} alt={`Pratinjau ${galleryItemLabel.toLowerCase()}`} /> : <div className="cms-media-empty"><ImageIcon size={24} /><span>Belum ada gambar</span></div>}
                 <div>
                   <strong>{galleryItemLabel}</strong>
@@ -909,9 +1016,22 @@ function ContentEditor({
                     <button className="cms-remove-media" type="button" onClick={() => removeGalleryItem(field, index, item.src)}><Trash2 size={14} />Hapus</button>
                   </div>
                 </div>
-              </article>;
+              </CmsFileDropZone>;
             })}
-            <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : []), { src: '', caption: '', description: '' }]))}><Plus size={15} />{field.key === 'pages' ? 'Tambah halaman' : 'Tambah gambar'}</Button>
+            <CmsFileDropZone
+              accept={IMAGE_ACCEPT}
+              className="cms-gallery-add-drop"
+              disabled={Boolean(uploading)}
+              label={field.key === 'pages' ? 'halaman tambahan baru' : 'gambar galeri baru'}
+              onFile={(file) => {
+                const items = Array.isArray(getPath(data, field.key)) ? getPath(data, field.key) as GalleryDraft[] : [];
+                void uploadGalleryImage(field, items.length, file);
+              }}
+              onRejected={setMessage}
+            >
+              <Button type="button" variant="outline" onClick={() => setData((current) => setPath(current, field.key, [...(Array.isArray(getPath(current, field.key)) ? getPath(current, field.key) as GalleryDraft[] : []), { src: '', caption: '', description: '' }]))}><Plus size={15} />{field.key === 'pages' ? 'Tambah halaman' : 'Tambah gambar'}</Button>
+              <small>atau tarik gambar ke area ini untuk langsung menambahkannya</small>
+            </CmsFileDropZone>
           </div>
         ) : field.type === 'steps' ? (
           <div className="cms-steps-repeater" id={inputId} tabIndex={-1} onBlur={() => markTouched(field.key)} {...fieldControlProps}>
@@ -956,15 +1076,22 @@ function ContentEditor({
             {field.options?.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
           </select>
         ) : field.type === 'image' || field.type === 'asset' ? (
-          <div className="cms-media-field">
+          <CmsFileDropZone
+            accept={field.accept ?? (field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT)}
+            className="cms-media-field"
+            disabled={uploading === field.key}
+            label={field.label}
+            onFile={(file) => { void upload(field, file); }}
+            onRejected={setMessage}
+          >
             {field.type === 'image' && value ? <CmsAdaptiveImage src={value} alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
             <div>
               <Input id={inputId} {...fieldControlProps} value={value} placeholder={field.type === 'asset' ? 'https://contoh.com atau unggah dokumen' : 'Unggah gambar atau masukkan link'} onBlur={() => markTouched(field.key)} onChange={(event) => updateMediaValue(field, event.target.value)} />
               <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.accept ?? (field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT)} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
               <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <><a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a><button className="cms-remove-media" type="button" onClick={() => updateMediaValue(field, '')} aria-label={`Hapus ${field.label}`} title={`Hapus ${field.label}`}><Trash2 size={14} />Hapus</button></> : null}</div>
-              <small className="cms-upload-policy">{module.collection === 'certifications' && field.key === 'documentUrl' ? 'PDF maksimal 24 MB. Halaman pertama otomatis menjadi preview WebP; PDF asli tetap disimpan.' : 'Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.'}</small>
+              <small className="cms-upload-policy">{module.collection === 'certifications' && field.key === 'documentUrl' ? 'Tarik PDF ke form ini atau pilih file. Halaman pertama otomatis menjadi preview WebP; PDF asli tetap disimpan.' : `Tarik ${field.type === 'asset' ? 'dokumen' : 'gambar'} ke form ini atau pilih file. Gambar otomatis menjadi WebP; dokumen maksimal 24 MB.`}</small>
             </div>
-          </div>
+          </CmsFileDropZone>
         ) : (
           <Input id={inputId} {...fieldControlProps} type={field.type === 'url' ? 'url' : field.type === 'date' ? 'date' : 'text'} inputMode={field.key === 'year' ? 'numeric' : undefined} value={value} required={field.required} placeholder={field.placeholder} onBlur={() => markTouched(field.key)} onChange={(event) => updateTextField(field, event.target.value)} />
         )}
@@ -1072,6 +1199,7 @@ function MediaLibrary() {
   const [message, setMessage] = useState('');
   const [mediaQuery, setMediaQuery] = useState('');
   const [mediaFilter, setMediaFilter] = useState<'all' | 'image' | 'document'>('all');
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const filteredMedia = useMemo(() => {
     const term = mediaQuery.trim().toLowerCase();
@@ -1093,6 +1221,7 @@ function MediaLibrary() {
 
   async function upload(file?: File) {
     if (!file) return;
+    setUploading(true);
     setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar...' : 'Memeriksa dokumen...');
     try {
       const prepared = await prepareMediaFile(file);
@@ -1102,6 +1231,8 @@ function MediaLibrary() {
       setMessage(prepared.message);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -1115,6 +1246,18 @@ function MediaLibrary() {
     <section className="cms-module-page">
       <header className="cms-module-header"><div><span>Pustaka aset</span><h1>Media</h1><p>Gambar otomatis dikonversi ke WebP dan diperkecil secara proporsional. PDF serta dokumen kerja disimpan dalam format asli yang aman agar isi tidak berubah. Aset yang tidak lagi dipakai dibersihkan otomatis.</p></div><Button className="cms-primary-button" onClick={() => fileRef.current?.click()}><Upload size={16} />Unggah media</Button></header>
       <input ref={fileRef} type="file" accept={MEDIA_ACCEPT} hidden onChange={(event) => { void upload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+      <CmsFileDropZone
+        accept={MEDIA_ACCEPT}
+        className="cms-media-library-drop"
+        disabled={uploading}
+        label="pustaka Media"
+        onFile={(file) => { void upload(file); }}
+        onRejected={setMessage}
+      >
+        <Upload size={22} />
+        <div><strong>{uploading ? 'Media sedang diproses...' : 'Tarik gambar atau dokumen ke sini'}</strong><span>Satu file per unggahan. Gambar akan dioptimalkan sebelum disimpan.</span></div>
+        <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>Pilih file</Button>
+      </CmsFileDropZone>
       {message ? <p className="cms-inline-message">{message}</p> : null}
       <div className="cms-media-controls">
         <label><Search size={15} /><input value={mediaQuery} onChange={(event) => setMediaQuery(event.target.value)} placeholder="Cari media..." /></label>
