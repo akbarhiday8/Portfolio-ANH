@@ -160,6 +160,8 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     publishedAt: optionalShortText,
     readTime: optionalShortText,
     excerpt: optionalLongText,
+    heroImage: optionalLink,
+    heroPosition: z.enum(['', 'left', 'center', 'right']).optional().default(''),
     lead: optionalLongText,
     takeaways: textList,
     sections: z.array(z.object({

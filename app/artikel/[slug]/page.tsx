@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { notFound } from 'next/navigation';
@@ -12,16 +13,35 @@ export const dynamic = 'force-dynamic';
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 
+function publicMediaSource(value: unknown) {
+  if (typeof value !== 'string') return '';
+  const src = value.trim();
+  if (src.startsWith('/')) return src;
+  try {
+    const url = new URL(src);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
+function heroObjectPosition(value: unknown) {
+  if (value === 'left') return 'left center';
+  if (value === 'right') return 'right center';
+  return 'center center';
+}
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const { articles } = await getPortfolioContent();
   const article = articles.find((item) => item.slug === slug);
   if (!article) return {};
 
-  const seo = article as typeof article & { seoTitle?: string; seoDescription?: string; seoImage?: string };
+  const seo = article as typeof article & { seoTitle?: string; seoDescription?: string; seoImage?: string; heroImage?: string };
   const title = seo.seoTitle || `${article.title} — Akbar Nur Hidayanto`;
   const description = seo.seoDescription || article.excerpt;
-  const image = seo.seoImage ? new URL(seo.seoImage, SITE_URL).toString() : null;
+  const sourceImage = publicMediaSource(seo.seoImage) || publicMediaSource(seo.heroImage);
+  const image = sourceImage ? new URL(sourceImage, SITE_URL).toString() : null;
 
   return {
     title,
@@ -39,6 +59,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const article = articles[articleIndex];
   const next = articles[(articleIndex + 1) % articles.length];
+  const visual = article as typeof article & { heroImage?: unknown; heroPosition?: unknown; seoImage?: unknown };
+  const heroImage = publicMediaSource(visual.heroImage) || publicMediaSource(visual.seoImage);
+  const imagePosition = heroObjectPosition(visual.heroPosition);
 
   return (
     <>
@@ -47,7 +70,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
       <main className="article-page" id="top">
         <article>
-          <header className="article-hero">
+          <header className={`article-hero${heroImage ? ' has-media' : ''}`}>
+            {heroImage ? <div className="article-hero-media" aria-hidden="true">
+              <Image src={heroImage} alt="" fill sizes="100vw" priority style={{ objectPosition: imagePosition }} />
+            </div> : null}
+            {heroImage ? <div className="article-hero-overlay" aria-hidden="true" /> : null}
             <div className="section-wrap article-hero-inner">
               <p className="article-kicker"><Link href="/artikel">Artikel</Link> / {article.category}</p>
               <h1>{article.title}</h1>

@@ -100,6 +100,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   ],
   articles: [
     { title: 'Informasi penerbitan', description: 'Judul, kategori, alamat, dan waktu baca.', fields: ['slug', 'title', 'category', 'publishedAt', 'readTime', 'excerpt'] },
+    { title: 'Visual pembuka', description: 'Gambar hero full-width dan titik fokusnya. Jika gambar kosong, halaman memakai pembuka editorial terang.', fields: ['heroImage', 'heroPosition'] },
     { title: 'Pembuka', description: 'Lead dan rangkuman gagasan utama.', fields: ['lead', 'takeaways'] },
     { title: 'Isi artikel', description: 'Bagian utama tulisan.', fields: ['sections', 'quote'] },
     { title: 'Penutup', description: 'Kesimpulan artikel.', fields: ['closingHeading', 'closing'] },
@@ -343,6 +344,7 @@ function validateRecord(module: CmsModuleDefinition, data: Record<string, unknow
     if (!listLength(data, 'sections')) issues.push({ field: 'sections', level: nextStatus === 'published' ? 'error' : 'warning', label: 'Isi artikel masih kosong', detail: 'Tambahkan minimal satu bagian agar artikel siap dibaca.' });
     if (nextStatus === 'published' && !stringValue(data, 'lead')) issues.push({ field: 'lead', level: 'error', label: 'Paragraf pembuka masih kosong', detail: 'Tambahkan pembuka sebelum artikel dipublikasikan.' });
     if (nextStatus === 'published' && !stringValue(data, 'closing')) issues.push({ field: 'closing', level: 'error', label: 'Penutup artikel masih kosong', detail: 'Tambahkan kesimpulan sebelum artikel dipublikasikan.' });
+    if (!stringValue(data, 'heroImage') && !stringValue(data, 'seoImage')) issues.push({ field: 'heroImage', level: 'warning', label: 'Gambar hero belum diunggah', detail: 'Artikel tetap dapat diterbitkan dengan hero terang, tetapi gambar landscape disarankan untuk tampilan full hero.' });
     if (!stringValue(data, 'seoDescription')) issues.push({ field: 'seoDescription', level: 'warning', label: 'Deskripsi pencarian belum diisi', detail: 'Jika kosong, ringkasan artikel akan digunakan.' });
   }
 
@@ -366,7 +368,7 @@ function previewSummary(module: CmsModuleDefinition, data: Record<string, unknow
 }
 
 function previewImage(data: Record<string, unknown>) {
-  return stringValue(data, 'seoImage') || stringValue(data, 'image') || stringValue(data, 'artwork');
+  return stringValue(data, 'heroImage') || stringValue(data, 'seoImage') || stringValue(data, 'image') || stringValue(data, 'artwork');
 }
 
 function formatUpdatedAt(value: string) {

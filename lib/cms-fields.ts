@@ -181,12 +181,16 @@ export const cmsModules: CmsModuleDefinition[] = [
     fields: [
       text('slug', 'Alamat halaman', { required: true, placeholder: 'contoh: panduan-keamanan-data' }), text('title', 'Judul artikel', { required: true }), text('category', 'Kategori'),
       { key: 'publishedAt', label: 'Tanggal publikasi', type: 'date' }, text('readTime', 'Estimasi waktu baca'), area('excerpt', 'Ringkasan artikel', { required: true }),
+      { key: 'heroImage', label: 'Gambar hero artikel', type: 'image', wide: true, helper: 'Opsional. Gambar otomatis dikompres ke WebP dan dipakai sebagai background full hero. Disarankan landscape minimal 1600×900 px.' },
+      { key: 'heroPosition', label: 'Fokus gambar hero', type: 'select', helper: 'Pilih posisi objek utama agar crop tetap baik di berbagai ukuran layar.', options: [
+        { value: 'left', label: 'Kiri' }, { value: 'center', label: 'Tengah' }, { value: 'right', label: 'Kanan' },
+      ] },
       area('lead', 'Paragraf pembuka'), { key: 'takeaways', label: 'Ringkasan utama', type: 'list', wide: true, helper: 'Satu poin per baris.' },
       { key: 'sections', label: 'Isi artikel', type: 'articleSections', wide: true, helper: 'Tambahkan bagian artikel satu per satu.' },
       area('quote', 'Kutipan penekanan'), text('closingHeading', 'Judul penutup'), area('closing', 'Penutup'),
       text('seoTitle', 'Judul untuk mesin pencari', { helper: 'Opsional. Jika kosong, judul artikel digunakan.' }),
       area('seoDescription', 'Deskripsi untuk mesin pencari', { helper: 'Opsional. Tulis ringkasan singkat sekitar 120–160 karakter.' }),
-      { key: 'seoImage', label: 'Gambar saat dibagikan', type: 'image', wide: true, helper: 'Opsional. Digunakan ketika artikel dibagikan.' },
+      { key: 'seoImage', label: 'Gambar saat dibagikan', type: 'image', wide: true, helper: 'Opsional. Jika kosong, gambar hero artikel digunakan.' },
     ],
   },
   {
