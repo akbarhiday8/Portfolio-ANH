@@ -507,6 +507,9 @@ function ContentEditor({
     title: previewTitle(module, data),
     summary: previewSummary(module, data),
     image: previewImage(data),
+    imagePosition: stringValue(data, 'heroPosition') === 'left'
+      ? 'left center'
+      : stringValue(data, 'heroPosition') === 'right' ? 'right center' : 'center center',
     meta: [stringValue(data, 'category'), stringValue(data, 'year') || stringValue(data, 'period'), stringValue(data, 'issuer')].filter(Boolean).join(' / '),
   }), [data, module]);
 
@@ -810,6 +813,7 @@ function ContentEditor({
 
   function renderField(field: CmsField) {
     const isBuffered = field.type === 'list';
+    const isProjectList = module.collection === 'projects' && (field.key === 'scope' || field.key === 'outcome');
     const value = field.type === 'steps' || field.type === 'articleSections'
       ? ''
       : isBuffered ? bufferedValues[field.key] ?? '' : fieldText(field, getPath(data, field.key));
@@ -890,7 +894,7 @@ function ContentEditor({
             <Button type="button" variant="outline" onClick={() => setArticleDrafts((current) => ({ ...current, [field.key]: [...(current[field.key] ?? []), { heading: '', body: '' }] }))}><Plus size={15} />Tambah bagian</Button>
           </div>
         ) : field.type === 'textarea' || field.type === 'list' ? (
-          <Textarea id={inputId} {...fieldControlProps} value={value} required={field.required} rows={field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder}
+          <Textarea id={inputId} {...fieldControlProps} className={isProjectList ? `cms-list-textarea is-${field.key}` : undefined} value={value} required={field.required} rows={field.type === 'textarea' ? 5 : 7} placeholder={field.placeholder}
             onChange={(event) => {
               clearServerFieldIssue(field.key);
               if (isBuffered) setBufferedValues((current) => ({ ...current, [field.key]: event.target.value }));
@@ -919,6 +923,7 @@ function ContentEditor({
           <Input id={inputId} {...fieldControlProps} type={field.type === 'url' ? 'url' : field.type === 'date' ? 'date' : 'text'} inputMode={field.key === 'year' ? 'numeric' : undefined} value={value} required={field.required} placeholder={field.placeholder} onBlur={() => markTouched(field.key)} onChange={(event) => updateTextField(field, event.target.value)} />
         )}
         {field.key === 'slug' ? <div className="cms-slug-helper"><small>{module.collection === 'projects' ? '/portfolio/' : '/artikel/'}{value || 'alamat-halaman'} · Dibuat otomatis dari judul. Ubah hanya jika diperlukan.</small>{fieldIssue ? <button type="button" onClick={() => { const fixed = slugify(value || stringValue(data, 'title')); clearServerFieldIssue('slug'); setData((current) => setPath(current, 'slug', fixed)); markTouched('slug'); }}>Perbaiki otomatis</button> : null}</div> : field.helper ? <small>{field.helper}</small> : null}
+        {module.collection === 'projects' && field.key === 'heroImage' && value && value === fieldText(field, getPath(data, 'image')) ? <small className="cms-field-note">Latar hero saat ini memakai file yang sama dengan Gambar utama. File tetap tampil sebagai background penuh; unggah gambar berbeda jika ingin suasana hero yang berbeda.</small> : null}
         {fieldIssue ? <small id={`${inputId}-error`} className="cms-field-error" role="alert">{fieldIssue.detail}</small> : null}
       </div>
     );
@@ -969,10 +974,10 @@ function ContentEditor({
             {previewOpen && module === brandingModule ? <BrandingPreview data={data} profile={profileData} /> : null}
 
             {previewOpen && module !== brandingModule ? (
-              <section className="cms-preview-panel" aria-label="Preview konten">
-                <header><Eye size={17} /><div><strong>Preview ringkas</strong><p>Tampilan ini membantu mengecek judul, visual, dan ringkasan sebelum disimpan.</p></div></header>
+              <section className={`cms-preview-panel${module.collection === 'projects' ? ' is-project' : ''}`} aria-label="Preview konten">
+                <header><Eye size={17} /><div><strong>Preview ringkas</strong><p>{module.collection === 'projects' ? 'Preview menampilkan crop Latar hero detail sesuai Fokus latar hero yang dipilih.' : 'Tampilan ini membantu mengecek judul, visual, dan ringkasan sebelum disimpan.'}</p></div></header>
                 <article>
-                  {preview.image ? <Image src={preview.image} width={420} height={210} unoptimized alt="" /> : <div className="cms-preview-empty"><ImageIcon size={26} /><span>Belum ada visual</span></div>}
+                  {preview.image ? <Image src={preview.image} width={420} height={210} unoptimized alt="" style={{ objectPosition: preview.imagePosition }} /> : <div className="cms-preview-empty"><ImageIcon size={26} /><span>Belum ada visual</span></div>}
                   <div><span>{module.label}{preview.meta ? ` / ${preview.meta}` : ''}</span><h3>{preview.title}</h3><p>{preview.summary}</p></div>
                 </article>
               </section>
