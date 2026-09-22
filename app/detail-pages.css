@@ -593,6 +593,8 @@
 }
 
 @media (max-width: 650px) {
+  .project-detail-page,
+  .certification-detail-page { padding-top: 78px; }
   .case-content-grid { grid-template-areas: 'about' 'objective' 'contribution' 'outcome'; grid-template-columns: 1fr; }
   .case-content article { padding-bottom: 26px; }
   .case-story-objective,
@@ -617,6 +619,8 @@
 }
 
 @media (max-width: 520px) {
+  .project-detail-page,
+  .certification-detail-page { padding-top: 68px; }
   .certification-hero-grid,
   .certification-hero-grid.without-media { gap: 28px; padding-block: 34px 46px; }
   .case-hero-shell { padding-block: 22px 42px; }
