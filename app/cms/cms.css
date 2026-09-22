@@ -39,14 +39,14 @@
 .cms-field label span { margin-left:4px; color:var(--red-bright); }
 .cms-field input,.cms-field textarea,.cms-field select { width:100%; height:46px; border:1px solid var(--cms-line); border-radius:6px; padding:0 14px; background:var(--cms-surface); color:var(--ink); font-family:var(--sans); font-size:14px; outline:none; transition:border-color .18s,box-shadow .18s,background .18s; }
 .cms-field textarea { min-height:132px; height:auto; padding:13px 14px; resize:vertical; line-height:1.65; }
-.cms-field textarea.cms-list-textarea {
+.cms-field textarea.cms-list-textarea.has-list-lines {
   padding-left:40px;
   background-image:radial-gradient(circle,var(--red-bright) 0 2.3px,transparent 2.7px);
   background-position:9px 13px;
   background-size:23px 23.1px;
   background-repeat:repeat-y;
 }
-.cms-field textarea.cms-list-textarea.is-outcome {
+.cms-field textarea.cms-list-textarea.has-list-lines.is-outcome {
   background-image:radial-gradient(circle,var(--green,#287d5c) 0 2.3px,transparent 2.7px);
 }
 .cms-field select { appearance:auto; }

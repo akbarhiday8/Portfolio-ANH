@@ -135,8 +135,8 @@ export const cmsModules: CmsModuleDefinition[] = [
       area('displayTitle', 'Susunan judul pada halaman detail', { helper: 'Opsional. Gunakan Enter hanya jika judul memang perlu dipisah menjadi beberapa baris. Jika kosong, judul proyek digunakan apa adanya.' }),
       text('category', 'Kategori', { required: true }), text('year', 'Tahun'),
       { key: 'image', label: 'Gambar utama', type: 'image', wide: true, helper: 'Visual utama pada kartu dan hero detail. Gunakan gambar paling representatif; portrait dan landscape ditangani otomatis.' },
-      { key: 'heroImage', label: 'Latar hero detail', type: 'image', wide: true, helper: 'Gambar ini mengisi seluruh latar hero di belakang judul. Jika kosong, Gambar utama dipakai otomatis. Gunakan visual landscape minimal 1600×900 px agar crop tetap baik.' },
-      { key: 'heroPosition', label: 'Fokus latar hero', type: 'select', helper: 'Mengatur posisi crop gambar latar pada halaman detail. Hasilnya dapat diperiksa melalui Preview ringkas.', options: [
+      { key: 'heroImage', label: 'Latar suasana preview', type: 'image', wide: true, helper: 'Opsional. Gambar ini menjadi lapisan suasana yang sangat samar di belakang kartu preview, bukan mengganti Gambar utama. Kosongkan jika tidak diperlukan.' },
+      { key: 'heroPosition', label: 'Fokus latar suasana', type: 'select', helper: 'Mengatur titik fokus lapisan suasana pada halaman detail. Pengaturan ini tidak memengaruhi posisi Gambar utama.', options: [
         { value: '', label: 'Tengah (otomatis)' }, { value: 'left', label: 'Kiri' }, { value: 'center', label: 'Tengah' }, { value: 'right', label: 'Kanan' },
       ] },
       text('role', 'Peran'), text('discipline', 'Bidang'),
@@ -155,9 +155,9 @@ export const cmsModules: CmsModuleDefinition[] = [
       area('objective', 'Tujuan proyek', { helper: 'Jelaskan hasil yang ingin dicapai secara singkat dan terukur.' }),
       area('approach', 'Pendekatan / Solusi', { helper: 'Jelaskan strategi, keputusan utama, atau cara masalah diselesaikan.' }),
       { key: 'evidence.href', label: 'Link publik proyek atau dokumen', type: 'url', wide: true, placeholder: 'https://alamat-proyek.com', helper: 'Masukkan alamat website, dashboard, atau dokumen publik yang ingin dibuka pengunjung. Jangan isi dengan URL gambar pratinjau.' },
-      { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Tekan Enter untuk membuat butir kontribusi baru. Pilih pekerjaan yang benar-benar Anda lakukan.' },
+      { key: 'scope', label: 'Kontribusi utama', type: 'list', wide: true, helper: 'Tulis kontribusi pertama seperti teks biasa. Setelah menekan Enter untuk menambah baris, tampilan bullet akan aktif otomatis.' },
       { key: 'process', label: 'Proses singkat', type: 'steps', wide: true, helper: 'Disarankan 3–5 langkah. Urutan di CMS sama dengan urutan pada detail proyek.' },
-      area('outcome', 'Hasil akhir', { helper: 'Tekan Enter untuk membuat butir hasil atau dampak baru. Setiap baris tampil sebagai daftar pada website.' }),
+      area('outcome', 'Hasil akhir', { helper: 'Tulis hasil pertama seperti teks biasa. Setelah menekan Enter untuk menambah baris, tampilan bullet akan aktif otomatis.' }),
       { key: 'gallery', label: 'Galeri proyek', type: 'gallery', wide: true, helper: 'Disarankan 2–4 gambar berbeda dari gambar utama. Semua rasio didukung dan dapat diperbesar.' },
       text('seoTitle', 'Judul untuk mesin pencari', { helper: 'Opsional. Jika kosong, judul proyek digunakan.' }),
       area('seoDescription', 'Deskripsi untuk mesin pencari', { helper: 'Opsional. Tulis ringkasan singkat sekitar 120–160 karakter.' }),
