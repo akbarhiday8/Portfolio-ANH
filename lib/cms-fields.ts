@@ -10,6 +10,7 @@ export type CmsField = {
   placeholder?: string;
   options?: { value: string; label: string }[];
   wide?: boolean;
+  accept?: string;
 };
 
 export type CmsModuleDefinition = {
@@ -173,6 +174,7 @@ export const cmsModules: CmsModuleDefinition[] = [
       text('credentialId', 'ID kredensial', { helper: 'Opsional. Isi hanya jika penerbit memberikan nomor kredensial.' }),
       { key: 'issuedAt', label: 'Tanggal terbit', type: 'date', helper: 'Tanggal akan diformat otomatis pada halaman publik.' },
       { key: 'credentialUrl', label: 'Link verifikasi kredensial', type: 'url', wide: true, helper: 'Gunakan halaman verifikasi resmi penerbit, bukan URL gambar sertifikat.' },
+      { key: 'documentUrl', label: 'Berkas sertifikat PDF', type: 'asset', accept: 'application/pdf,.pdf', wide: true, helper: 'Opsional. Saat PDF diunggah, halaman pertama otomatis diubah menjadi preview WebP. PDF asli tetap tersedia sebagai bukti lengkap.' },
       { key: 'image', label: 'Halaman utama / depan', type: 'image', wide: true, helper: 'Unggah sisi depan atau halaman pertama. Portrait, landscape, dan rasio lain dikenali otomatis tanpa memilih ukuran manual.' },
       { key: 'pages', label: 'Halaman tambahan', type: 'gallery', wide: true, helper: 'Opsional untuk sisi belakang atau lampiran. Susun sesuai urutan baca; gambar utama selalu menjadi halaman pertama.' },
       area('description', 'Deskripsi', { helper: 'Gunakan 1–3 kalimat untuk menjelaskan kompetensi atau manfaat sertifikasi.' }),

@@ -96,7 +96,7 @@ const editorSections: Partial<Record<CmsCollection, EditorSection[]>> = {
   ],
   certifications: [
     { title: 'Informasi sertifikasi', description: 'Identitas, status, dan kredensial yang tampil terstruktur pada halaman detail.', fields: ['name', 'issuer', 'year', 'category', 'type', 'status', 'credentialId', 'issuedAt', 'credentialUrl'] },
-    { title: 'Bukti sertifikat', description: 'Halaman utama, sisi belakang, dan lampiran ditampilkan berurutan. Ukuran gambar menyesuaikan otomatis.', fields: ['image', 'pages'] },
+    { title: 'Bukti sertifikat', description: 'PDF dapat menghasilkan preview WebP otomatis. Gambar tambahan tetap dapat disusun sebagai sisi belakang atau lampiran.', fields: ['documentUrl', 'image', 'pages'] },
     { title: 'Ringkasan pembelajaran', description: 'Deskripsi singkat serta daftar materi yang dapat dibuka jika isinya panjang.', fields: ['description', 'topics'] },
   ],
   articles: [
@@ -615,14 +615,53 @@ function ContentEditor({
 
   async function upload(field: CmsField, file?: File) {
     if (!file) return;
+    const isCertificatePdf = module.collection === 'certifications' && field.key === 'documentUrl';
     setUploading(field.key);
     setUploadProgress(0);
-    setMessage(file.type.startsWith('image/') ? 'Mengoptimalkan gambar sebelum diunggah...' : 'Memeriksa dokumen sebelum diunggah...');
+    setMessage(isCertificatePdf ? 'Membaca PDF dan membuat preview halaman pertama...' : file.type.startsWith('image/') ? 'Mengoptimalkan gambar sebelum diunggah...' : 'Memeriksa dokumen sebelum diunggah...');
+    const controller = new AbortController();
+    uploadRequest.current = controller;
+    let uploadedDocument: MediaItem | undefined;
+    let uploadedPreview: MediaItem | undefined;
     try {
+      if (isCertificatePdf) {
+        if (file.type !== 'application/pdf') throw new Error('Gunakan berkas PDF untuk dokumen sertifikat.');
+        const { createPdfPreview } = await import('@/lib/pdf-preview-client');
+        const preview = await createPdfPreview(file, controller.signal);
+        controller.signal.throwIfAborted();
+        const [preparedDocument, preparedPreview] = await Promise.all([
+          prepareMediaFile(file),
+          prepareMediaFile(preview.file, 'content'),
+        ]);
+        setMessage('Mengunggah PDF asli dan preview WebP...');
+        uploadedDocument = await uploadPreparedMedia(preparedDocument, {
+          signal: controller.signal,
+          onProgress: (percentage) => setUploadProgress(Math.round(percentage * 0.55)),
+        });
+        uploadedPreview = await uploadPreparedMedia(preparedPreview, {
+          signal: controller.signal,
+          onProgress: (percentage) => setUploadProgress(55 + Math.round(percentage * 0.45)),
+        });
+
+        const previousDocument = temporaryUploads.current[field.key];
+        const previousPreview = temporaryUploads.current.image;
+        temporaryUploads.current[field.key] = uploadedDocument;
+        temporaryUploads.current.image = uploadedPreview;
+        setData((current) => setPath(
+          setPath(setPath(current, field.key, uploadedDocument!.url), 'image', uploadedPreview!.url),
+          'documentPageCount',
+          preview.pageCount,
+        ));
+        clearServerFieldIssue(field.key);
+        clearServerFieldIssue('image');
+        if (previousDocument) void discardTemporaryMedia(previousDocument);
+        if (previousPreview) void discardTemporaryMedia(previousPreview);
+        setMessage(`PDF ${preview.pageCount} halaman tersimpan. Preview WebP ${preview.width}Ã—${preview.height} dibuat otomatis dari halaman pertama.`);
+        return;
+      }
+
       const prepared = await prepareMediaFile(file, field.key === 'customIcon' || field.key.startsWith('branding.') ? 'icon' : 'content');
       setMessage('Mengunggah media teroptimasi...');
-      const controller = new AbortController();
-      uploadRequest.current = controller;
       const uploaded = await uploadPreparedMedia(prepared, { signal: controller.signal, onProgress: setUploadProgress });
       const previousTemporary = temporaryUploads.current[field.key];
       temporaryUploads.current[field.key] = uploaded;
@@ -630,6 +669,8 @@ function ContentEditor({
       if (previousTemporary) void discardTemporaryMedia(previousTemporary);
       setMessage(prepared.message);
     } catch (error) {
+      if (uploadedPreview) void discardTemporaryMedia(uploadedPreview);
+      if (uploadedDocument) void discardTemporaryMedia(uploadedDocument);
       setMessage(error instanceof DOMException && error.name === 'AbortError' ? 'Unggahan dibatalkan.' : error instanceof Error ? error.message : 'Media tidak dapat diunggah.');
     } finally {
       uploadRequest.current = null;
@@ -704,7 +745,12 @@ function ContentEditor({
       delete temporaryUploads.current[field.key];
       void discardTemporaryMedia(temporary);
     }
-    setData((current) => setPath(current, field.key, value));
+    setData((current) => {
+      const next = setPath(current, field.key, value);
+      return module.collection === 'certifications' && field.key === 'documentUrl'
+        ? setPath(next, 'documentPageCount', undefined)
+        : next;
+    });
     setServerFieldIssues((current) => current.filter((issue) => issue.field !== field.key));
   }
 
@@ -914,9 +960,9 @@ function ContentEditor({
             {field.type === 'image' && value ? <CmsAdaptiveImage src={value} alt="Pratinjau media" /> : <div className="cms-media-empty">{field.type === 'asset' ? <FileText size={24} /> : <ImageIcon size={24} />}<span>{value ? 'Tautan media siap' : 'Belum ada media'}</span></div>}
             <div>
               <Input id={inputId} {...fieldControlProps} value={value} placeholder={field.type === 'asset' ? 'https://contoh.com atau unggah dokumen' : 'Unggah gambar atau masukkan link'} onBlur={() => markTouched(field.key)} onChange={(event) => updateMediaValue(field, event.target.value)} />
-              <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
+              <input ref={(element) => { fileInputs.current[field.key] = element; }} type="file" accept={field.accept ?? (field.type === 'asset' ? MEDIA_ACCEPT : IMAGE_ACCEPT)} hidden onChange={(event) => { void upload(field, event.target.files?.[0]); event.currentTarget.value = ''; }} />
               <div className="cms-media-field-actions"><Button type="button" variant="outline" onClick={() => fileInputs.current[field.key]?.click()} disabled={uploading === field.key}><Upload size={15} />{uploading === field.key ? uploadProgress ? `Mengunggah ${uploadProgress}%` : 'Memproses...' : field.type === 'asset' ? 'Unggah dokumen' : 'Unggah gambar'}</Button>{uploading === field.key ? <button className="cms-cancel-upload" type="button" onClick={() => uploadRequest.current?.abort()}>Batalkan</button> : null}{value ? <><a href={value} target="_blank" rel="noreferrer"><Eye size={14} />Buka media</a><button className="cms-remove-media" type="button" onClick={() => updateMediaValue(field, '')} aria-label={`Hapus ${field.label}`} title={`Hapus ${field.label}`}><Trash2 size={14} />Hapus</button></> : null}</div>
-              <small className="cms-upload-policy">Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.</small>
+              <small className="cms-upload-policy">{module.collection === 'certifications' && field.key === 'documentUrl' ? 'PDF maksimal 24 MB. Halaman pertama otomatis menjadi preview WebP; PDF asli tetap disimpan.' : 'Gambar otomatis menjadi WebP. Dokumen maksimal 24 MB dan diperiksa sebelum disimpan.'}</small>
             </div>
           </div>
         ) : (

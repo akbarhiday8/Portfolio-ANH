@@ -150,6 +150,8 @@ const baseSchemas: Record<CmsCollection, z.ZodType<Record<string, unknown>>> = {
     credentialId: optionalShortText,
     issuedAt: isoDate,
     credentialUrl: optionalLink,
+    documentUrl: optionalLink,
+    documentPageCount: z.number().int().positive().max(1_000).optional(),
     image: optionalLink,
     pages: galleryItems,
     description: optionalLongText,

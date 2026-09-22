@@ -10,7 +10,19 @@ export type CertificatePage = {
   label: string;
 };
 
-export function CertificateShowcase({ pages, alt, status = '' }: { pages: CertificatePage[]; alt: string; status?: string }) {
+export function CertificateShowcase({
+  pages,
+  alt,
+  status = '',
+  documentUrl = '',
+  documentPageCount,
+}: {
+  pages: CertificatePage[];
+  alt: string;
+  status?: string;
+  documentUrl?: string;
+  documentPageCount?: number;
+}) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +75,10 @@ export function CertificateShowcase({ pages, alt, status = '' }: { pages: Certif
         </nav> : null}
         <div className="certificate-showcase-actions">
           <span>{activePage.label}</span>
-          <a href={activePage.src} target="_blank" rel="noreferrer"><ExternalLink size={15} />Buka di tab baru</a>
+          <div className="certificate-showcase-links">
+            {documentUrl ? <a href={documentUrl} target="_blank" rel="noreferrer"><FileBadge2 size={15} />Buka PDF asli{documentPageCount ? ` (${documentPageCount} halaman)` : ''}</a> : null}
+            <a href={activePage.src} target="_blank" rel="noreferrer"><ExternalLink size={15} />Buka gambar</a>
+          </div>
         </div>
       </figure>
 

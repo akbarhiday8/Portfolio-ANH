@@ -103,6 +103,8 @@ export default async function CertificationDetailPage({ params }: CertificationP
     credentialId?: unknown;
     issuedAt?: unknown;
     credentialUrl?: unknown;
+    documentUrl?: unknown;
+    documentPageCount?: unknown;
     pages?: unknown;
   };
   const issuer = meaningfulPublicText(certification.issuer);
@@ -122,6 +124,10 @@ export default async function CertificationDetailPage({ params }: CertificationP
   const visibleTopics = topics.slice(0, 6);
   const additionalTopics = topics.slice(6);
   const credentialUrl = publicLink(extra.credentialUrl);
+  const documentUrl = publicLink(extra.documentUrl);
+  const documentPageCount = Number.isInteger(extra.documentPageCount) && Number(extra.documentPageCount) > 0
+    ? Number(extra.documentPageCount)
+    : undefined;
   const related = certifications.filter((item) => item !== certification).slice(0, 3);
   const pages = certificatePages(certification.image, extra.pages);
 
@@ -140,7 +146,7 @@ export default async function CertificationDetailPage({ params }: CertificationP
             </div>
 
             {pages.length ? <div className="certification-hero-media">
-              <CertificateShowcase pages={pages} alt={`Bukti ${certification.name}`} status={status} />
+              <CertificateShowcase pages={pages} alt={`Bukti ${certification.name}`} status={status} documentUrl={documentUrl} documentPageCount={documentPageCount} />
             </div> : null}
 
             <div className="certification-details">
